@@ -1,0 +1,23 @@
+.actionButtons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+}
+
+.enumSection {
+    margin-top: 2rem;
+}
+
+.addEnumButton {
+    margin-bottom: 1rem;
+}
+
+.dragHandleCol {
+    width: 40px;
+}
+
+.dragging {
+    opacity: 0.5;
+    background-color: #f0f0f0;
+}

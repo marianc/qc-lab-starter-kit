@@ -1,0 +1,18 @@
+{
+  "name": "qc-lab",
+  "version": "0.1.0",
+  "description": "Aplication support for Quality Control Laboratories",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Marian Cruceru",
+  "license": "",
+  "type": "module",
+  "workspaces": [
+    "packages/client_react"
+  ],
+  "devDependencies": {
+    "vite": "7.3.6"
+  }
+}

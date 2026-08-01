@@ -1,0 +1,8 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+# Preserve LF line endings for Atlas migrations and checksums across all OS platform checkouts
+migrations/*.sql text eol=lf
+migrations/atlas.sum text eol=lf

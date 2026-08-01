@@ -1,0 +1,48 @@
+.formParamEditForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkboxGroup input {
+    width: auto;
+}
+
+.checkboxGroup label {
+    margin-bottom: 0;
+}
+
+.evaluationsTitle {
+    margin-top: 1.5rem;
+}
+
+.tableContainer {
+    margin-top: 0.5rem;
+}
+
+.colValue {
+    width: 45%;
+}
+
+.colExpected {
+    width: 15%;
+}
+
+.colNote {
+    width: 30%;
+}
+
+.colActions {
+    width: 10%;
+}
+
+:global(.add-eval-button) {
+    margin-top: 0.5rem;
+}

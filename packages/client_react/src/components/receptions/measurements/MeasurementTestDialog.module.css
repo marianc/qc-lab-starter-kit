@@ -1,0 +1,25 @@
+.arrayItemList {
+    margin-bottom: 10px;
+}
+
+.arrayItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.arrayItemActions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.arrayInputContainer {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.dragging {
+    opacity: 0.5;
+}

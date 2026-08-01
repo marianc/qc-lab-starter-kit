@@ -1,0 +1,20 @@
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkboxGroup input {
+    width: auto;
+}
+
+.checkboxGroup label {
+    margin-bottom: 0;
+}
+
+.materialEditForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}

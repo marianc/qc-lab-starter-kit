@@ -1,0 +1,30 @@
+.errorMessage {
+    color: #dc3545;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.emptyMessage {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin: 1rem 0;
+}
+
+.actionsBar {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.footnote {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.5rem;
+    font-style: italic;
+}

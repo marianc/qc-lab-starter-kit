@@ -1,0 +1,20 @@
+.formGroupList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkboxItem input {
+    width: auto;
+}
+
+.checkboxItem label {
+    margin-bottom: 0;
+    cursor: pointer;
+}

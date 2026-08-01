@@ -1,0 +1,14 @@
+.column {
+  flex: 1;
+  min-width: 300px; /* Adjust as needed */
+}
+
+.columnTitle {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #34495e;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}

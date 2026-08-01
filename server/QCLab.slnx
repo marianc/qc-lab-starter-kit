@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../server_formula/QCFormula/QCFormula.csproj" />
+  <Project Path="QCLab/QCLab.csproj" />
+</Solution>

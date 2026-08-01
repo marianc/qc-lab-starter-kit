@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="QCFormula/QCFormula.csproj" />
+  <Project Path="QCFormulaSample/QCFormulaSample.csproj" />
+  <Project Path="QCFormulaTests/QCFormulaTests.csproj" Id="34292de5-eaba-4082-839d-0e1460ba06ad" />
+</Solution>

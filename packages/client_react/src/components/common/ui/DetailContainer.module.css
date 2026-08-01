@@ -1,0 +1,6 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem; /* Space between columns */
+  margin-bottom: 1.5rem;
+}

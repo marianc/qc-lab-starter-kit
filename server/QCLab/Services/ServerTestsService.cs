@@ -1,0 +1,331 @@
+using Microsoft.EntityFrameworkCore;
+using QCLab.Client.Dtos;
+using QCLab.Client.Services.Interfaces;
+using QCLab.Models;
+
+namespace QCLab.Services;
+
+public class ServerTestsService : ITestsService
+{
+    private readonly QualityControlContext _context;
+
+    public ServerTestsService(QualityControlContext context)
+    {
+        _context = context;
+    }
+
+    // GET /tests
+    public async Task<List<TestDto>> GetAllTests()
+    {
+        var tests = await _context.Tests
+            .Include(t => t.Type)
+            .Include(t => t.Unit)
+            .Include(t => t.TestEnums.OrderBy(e => e.NrOrd))
+            .ToListAsync();
+
+        var testsList = tests.Select(test => new TestDto
+        {
+            Id = test.Id,
+            Name = test.Name,
+            Code = test.Code,
+            Description = test.Description,
+            TypeId = test.TypeId,
+            TypeName = test.Type.Name,
+            UnitId = test.UnitId,
+            UnitName = test.Unit?.Name,
+            NormId = test.NormId,
+            NormRef = test.NormRef,
+            IsParam = test.IsParam,
+            IsArray = test.IsArray,
+            ForCertification = test.ForCertification,
+            IsFormValidated = test.IsFormValidated,
+            NrOrd = test.NrOrd,
+            IsObsolete = test.IsObsolete,
+            DateCreated = test.DateCreated,
+            DateObsolete = test.DateObsolete,
+            CommentsObsolete = test.CommentsObsolete,
+            Enums = test.TypeId == 4 ? test.TestEnums.Select(e => new TestEnumDto
+            {
+                TestId = e.TestId,
+                Value = e.Value,
+                Name = e.Name,
+                NrOrd = e.NrOrd
+            }).ToList() : null
+        }).ToList();
+
+        return testsList;
+    }
+
+    public async Task<List<long>> GetCertifiedTestIds()
+    {
+        return await _context.Tests
+            .Where(t => t.ForCertification && !t.IsObsolete)
+            .Select(t => t.Id)
+            .ToListAsync();
+    }
+
+    // GET /tests/check_code_uniqueness
+    public async Task<bool> CheckCodeUniqueness(string code, long? id)
+    {
+        var query = _context.Tests.AsQueryable();
+        query = query.Where(t => t.Code == code);
+        
+        if (id.HasValue)
+        {
+            query = query.Where(t => t.Id != id.Value);
+        }
+
+        var count = await query.CountAsync();
+        return count == 0;
+    }
+
+    // GET /tests/{id}
+    public async Task<TestDto?> GetTest(long id)
+    {
+        var test = await _context.Tests
+            .Include(t => t.Type)
+            .Include(t => t.Unit)
+            .Include(t => t.TestEnums.OrderBy(e => e.NrOrd))
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (test == null) return null;
+
+        return new TestDto
+        {
+            Id = test.Id,
+            Name = test.Name,
+            Code = test.Code,
+            Description = test.Description,
+            TypeId = test.TypeId,
+            TypeName = test.Type.Name,
+            UnitId = test.UnitId,
+            UnitName = test.Unit?.Name,
+            NormId = test.NormId,
+            NormRef = test.NormRef,
+            IsParam = test.IsParam,
+            IsArray = test.IsArray,
+            ForCertification = test.ForCertification,
+            IsFormValidated = test.IsFormValidated,
+            NrOrd = test.NrOrd,
+            IsObsolete = test.IsObsolete,
+            DateCreated = test.DateCreated,
+            DateObsolete = test.DateObsolete,
+            CommentsObsolete = test.CommentsObsolete,
+            Enums = test.TypeId == 4 ? test.TestEnums.Select(e => new TestEnumDto
+            {
+                TestId = e.TestId,
+                Value = e.Value,
+                Name = e.Name,
+                NrOrd = e.NrOrd
+            }).ToList() : null
+        };
+    }
+
+    // GET /tests/{id}/enums
+    public async Task<List<TestEnumDto>> GetTestEnums(long id)
+    {
+        var enums = await _context.TestEnums
+            .Where(e => e.TestId == id)
+            .OrderBy(e => e.NrOrd)
+            .Select(e => new TestEnumDto 
+            {
+                TestId = e.TestId,
+                Value = e.Value,
+                Name = e.Name,
+                NrOrd = e.NrOrd
+            })
+            .ToListAsync();
+
+        return enums;
+    }
+
+    // POST /tests/{id}/enums
+    public async Task<IdDto> AddTestEnum(long id, CreateTestEnumDto newEnum)
+    {
+        var enumEntity = new TestEnum
+        {
+            TestId = id,
+            Value = newEnum.Value,
+            Name = newEnum.Name,
+            NrOrd = newEnum.NrOrd
+        };
+
+        _context.TestEnums.Add(enumEntity);
+        await _context.SaveChangesAsync();
+
+        return new() { Id = enumEntity.TestId }; // Returning IdDto, assuming TestId is the relevant ID.
+    }
+
+    // PUT /tests/{id}/enums/reorder
+    public async Task ReorderTestEnums(long id, List<ReorderTestEnumDto> enumsData)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            foreach (var item in enumsData)
+            {
+                var enumItem = await _context.TestEnums.FirstOrDefaultAsync(e => e.TestId == id && e.Value == item.Value);
+                if (enumItem != null)
+                {
+                    enumItem.NrOrd = item.NrOrd;
+                }
+            }
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw ex;
+        }
+    }
+
+    // PUT /tests/{id}/enums/{enum_id}
+    public async Task UpdateTestEnum(long id, long enumId, UpdateTestEnumDto enumData)
+    {
+        var enumItem = await _context.TestEnums.FirstOrDefaultAsync(e => e.TestId == id && e.Value == enumId);
+        if (enumItem == null) throw new ArgumentException("Enum not found");
+
+        if (enumItem.Value != enumData.Value)
+        {
+            var newEnum = new TestEnum
+            {
+                TestId = id,
+                Value = enumData.Value,
+                Name = enumData.Name,
+                NrOrd = enumData.NrOrd,
+                IsObsolete = enumItem.IsObsolete
+            };
+            _context.TestEnums.Add(newEnum);
+            _context.TestEnums.Remove(enumItem);
+        }
+        else
+        {
+            enumItem.Name = enumData.Name;
+            enumItem.NrOrd = enumData.NrOrd;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    // DELETE /tests/{id}/enums/{enum_id}
+    public async Task DeleteTestEnum(long id, long enumId)
+    {
+        var enumItem = await _context.TestEnums.FirstOrDefaultAsync(e => e.TestId == id && e.Value == enumId);
+        if (enumItem != null)
+        {
+            _context.TestEnums.Remove(enumItem);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    // POST /tests
+    public async Task<IdDto> CreateTest(CreateTestDto newTest)
+    {
+        var test = new Test
+        {
+            Name = newTest.Name,
+            Description = newTest.Description,
+            Code = newTest.Code,
+            TypeId = newTest.TypeId,
+            IsParam = newTest.IsParam,
+            UnitId = newTest.UnitId,
+            NormId = newTest.NormId,
+            NormRef = newTest.NormRef,
+            NrOrd = newTest.NrOrd,
+            IsObsolete = newTest.IsObsolete,
+            IsArray = newTest.IsArray,
+            ForCertification = newTest.ForCertification,
+            DateCreated = DateTime.UtcNow
+        };
+
+        if (newTest.TypeId == 4 && newTest.Enums != null && newTest.Enums.Count > 0)
+        {
+            foreach (var e in newTest.Enums)
+            {
+                test.TestEnums.Add(new TestEnum
+                {
+                    Value = e.Value,
+                    Name = e.Name,
+                    NrOrd = e.NrOrd
+                });
+            }
+        }
+
+        _context.Tests.Add(test);
+        await _context.SaveChangesAsync();
+
+        return new() { Id = test.Id };
+    }
+
+    // PUT /tests/reorder
+    public async Task ReorderTests(List<ReorderTestDto> testsData)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            foreach (var item in testsData)
+            {
+                var test = await _context.Tests.FindAsync(item.Id);
+                if (test != null)
+                {
+                    test.NrOrd = item.NrOrd;
+                }
+            }
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw ex;
+        }
+    }
+
+    // PUT /tests/{id}
+    public async Task UpdateTest(long id, UpdateTestDto testData)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var test = await _context.Tests.Include(t => t.TestEnums).FirstOrDefaultAsync(t => t.Id == id);
+            if (test == null) throw new ArgumentException("Test not found");
+
+            test.Name = testData.Name;
+            test.Description = testData.Description;
+            test.Code = testData.Code;
+            test.TypeId = testData.TypeId;
+            test.IsParam = testData.IsParam;
+            test.UnitId = testData.UnitId;
+            test.NormId = testData.NormId;
+            test.NormRef = testData.NormRef;
+            test.NrOrd = testData.NrOrd;
+            test.IsObsolete = testData.IsObsolete;
+            test.IsArray = testData.IsArray;
+            test.ForCertification = testData.ForCertification;
+
+            if (test.TypeId != 4)
+            {
+                _context.TestEnums.RemoveRange(test.TestEnums);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw ex;
+        }
+    }
+    public async Task ToggleObsolete(long id, ToggleObsoleteDto dto)
+    {
+        var test = await _context.Tests.FindAsync(id);
+        if (test == null) throw new ArgumentException("Test not found");
+
+        test.IsObsolete = dto.IsObsolete;
+        test.DateObsolete = dto.IsObsolete ? DateTime.UtcNow : null;
+        test.CommentsObsolete = dto.IsObsolete ? dto.Comments : null;
+        await _context.SaveChangesAsync();
+    }
+}

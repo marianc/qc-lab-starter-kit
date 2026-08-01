@@ -1,0 +1,22 @@
+.testingFormA {
+  padding: 20px;
+}
+
+.buttonRed {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.buttonRed:hover {
+  background-color: #c82333 !important;
+}
+
+.commentActions {
+    margin-top: 0.5rem;
+}
+
+.formActionsBar {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}

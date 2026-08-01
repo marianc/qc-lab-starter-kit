@@ -1,0 +1,33 @@
+.accordionContainer {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.accordionHeaderBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+}
+
+.accordionHeaderBar h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.accordionControls {
+    display: flex;
+    gap: 10px;
+}
+
+.accordionBody {
+    padding: 0;
+}

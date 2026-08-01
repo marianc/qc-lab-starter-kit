@@ -1,0 +1,16 @@
+.dragHandle {
+    cursor: grab;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    padding: 4px;
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+}
+
+.dragHandle:hover {
+    color: #666;
+}

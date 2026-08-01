@@ -1,0 +1,7 @@
+
+'migrations/20260725134952_initial.sql' represents 'backups/qc_pg_dump_20260626_184558.sql'
+
+'migrations/20260725143544_release_001.sql' represents 'backups/qc_pg_dump_20260725_130836.sql'
+
+
+

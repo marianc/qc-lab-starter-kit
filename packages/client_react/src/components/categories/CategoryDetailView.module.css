@@ -1,0 +1,11 @@
+.actionButtons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+}
+
+.manageTestsContainer {
+  text-align: left;
+  margin-top: 1rem;
+}

@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qc_lab_demo_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass@word1
+      - POSTGRES_DB=quality_control
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/backups/qc_pg_dump_20260725_130836.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d quality_control"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  reporting_pdf:
+    build:
+      context: ./reporting_pdf
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+
+  reporting_xl:
+    build:
+      context: ./reporting_xl
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+
+  qclab_app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9090:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - CONNECTION_STRING=Host=postgres;Username=postgres;Password=Pass@word1;Database=quality_control
+      - PYTHON_REPORTING_URL=http://reporting_pdf:8000
+      - REPORTING_SERVICE_URL=http://reporting_pdf:8000
+      - REPORTING_XL_URL=http://reporting_xl:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      reporting_pdf:
+        condition: service_started
+      reporting_xl:
+        condition: service_started
+
+volumes:
+  postgres_data:

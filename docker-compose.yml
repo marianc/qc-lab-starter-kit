@@ -1,0 +1,36 @@
+services:
+  reporting_pdf:
+    build:
+      context: ./reporting_pdf
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+
+  reporting_xl:
+    build:
+      context: ./reporting_xl
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+
+  qclab_app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9090:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - CONNECTION_STRING=Host=host.docker.internal;Username=postgres;Password=Pass@word1;Database=quality_control
+      - PYTHON_REPORTING_URL=http://reporting_pdf:8000
+      - REPORTING_SERVICE_URL=http://reporting_pdf:8000
+      - REPORTING_XL_URL=http://reporting_xl:8000
+    depends_on:
+      - reporting_pdf
+      - reporting_xl
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

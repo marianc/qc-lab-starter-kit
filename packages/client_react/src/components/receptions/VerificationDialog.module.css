@@ -1,0 +1,34 @@
+.ccSelectionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.flex1 {
+    flex: 1;
+}
+
+.checkboxListContainer {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.checkboxInput {
+    width: auto;
+    margin: 0;
+}
+
+.checkboxLabel {
+    margin: 0;
+    display: inline-block;
+    font-weight: normal;
+}

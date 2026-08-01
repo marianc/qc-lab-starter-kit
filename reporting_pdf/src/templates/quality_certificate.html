@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quality Certificate {{ report.id }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 20mm 15mm 20mm 15mm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+            @bottom-left {
+                content: "QC Lab LIMS - Quality Certificate #{{ report.id }}";
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 10pt;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 18pt;
+            color: #1a365d;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #3182ce;
+            padding-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 10pt;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .col {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+        .col:first-child {
+            padding-right: 15px;
+        }
+        .col:last-child {
+            padding-left: 15px;
+        }
+        .card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .card h3 {
+            margin-top: 0;
+            font-size: 11pt;
+            color: #2d3748;
+            border-bottom: 1px solid #cbd5e0;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+        }
+        .field {
+            margin-bottom: 6px;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #4a5568;
+            display: inline-block;
+            width: 130px;
+        }
+        .field-value {
+            color: #1a202c;
+        }
+        .cancellation {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .cancellation h4 {
+            margin: 0 0 5px 0;
+            color: #c53030;
+            font-size: 10pt;
+        }
+        h3.section-title {
+            font-size: 12pt;
+            color: #2d3748;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #cbd5e0;
+            padding-bottom: 4px;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 9.5pt;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        table.data-table th {
+            background-color: #edf2f7;
+            color: #2d3748;
+            font-weight: bold;
+        }
+        table.data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .footnote {
+            font-size: 8.5pt;
+            color: #718096;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .analysisResultMessage {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border-left: 5px solid #ccc;
+            white-space: pre-wrap;
+            font-weight: bold;
+        }
+        .analysisResultMessage.conforming {
+            border-left-color: #007bff;
+            color: #007bff;
+        }
+        .analysisResultMessage.nonConforming {
+            border-left-color: #dc3545;
+            color: #dc3545;
+        }
+        .textSuccess {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .textDanger {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quality Certificate #{{ report.id }}</h1>
+    <div class="subtitle">Quality Control LIMS - Generated on {{ generated_date }}</div>
+
+    <div class="grid">
+        <div class="col">
+            <div class="card">
+                <h3>Info</h3>
+                <div class="field">
+                    <span class="field-label">Material Name:</span>
+                    <span class="field-value">{{ report.materialName or '-' }}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Control Code:</span>
+                    <span class="field-value">{{ report.controlCode or '-' }}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Spec ID:</span>
+                    <span class="field-value">{{ report.specId or '-' }}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Is Conforming Spec:</span>
+                    <span class="field-value {% if report.isConformingSpec %}textSuccess{% else %}textDanger{% endif %}">
+                        {{ 'Yes' if report.isConformingSpec else 'No' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <h3>Status</h3>
+                <div class="field">
+                    <span class="field-label">Status:</span>
+                    <span class="field-value">{{ report.status or ('Submitted' if report.isSubmitted else 'Draft') }}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">{% if report.isSubmitted %}Submitted By:{% else %}Created By:{% endif %}</span>
+                    <span class="field-value">{{ report.userSubmittedTag or '-' }}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">{% if report.isSubmitted %}Submission Date:{% else %}Created Date:{% endif %}</span>
+                    <span class="field-value">{{ report.dateSubmitted or '-' }}</span>
+                </div>
+                {% if report.commentsSubmitted %}
+                <div class="field">
+                    <span class="field-label">Submission Comments:</span>
+                    <span class="field-value">{{ report.commentsSubmitted }}</span>
+                </div>
+                {% endif %}
+
+                {% if report.isCancelled %}
+                <div class="cancellation">
+                    <h4>Cancellation Information</h4>
+                    <div class="field">
+                        <span class="field-label">Cancelled By:</span>
+                        <span class="field-value">{{ report.userCancelledTag or '-' }}</span>
+                    </div>
+                    <div class="field">
+                        <span class="field-label">Cancellation Date:</span>
+                        <span class="field-value">{{ report.dateCancelled or '-' }}</span>
+                    </div>
+                    {% if report.commentsCancelled %}
+                    <div class="field">
+                        <span class="field-label">Comments:</span>
+                        <span class="field-value">{{ report.commentsCancelled }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <h3 class="section-title">Certificate Tests</h3>
+    {% if report.tests and report.tests | length > 0 %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Test Name</th>
+                <th>Unit</th>
+                <th>Value</th>
+                <th>Test Count</th>
+                <th>Spec Note</th>
+                <th>Conforming</th>
+                <th>Source Report</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(prev_mid=None, rowspans={}, current_row=0) %}
+            {# First pass to count rowspans for each measurementId #}
+            {% set counts = {} %}
+            {% for test in report.tests %}
+                {% set mid = test.measurementId | string %}
+                {% if mid in counts %}
+                    {% set _ = counts.update({mid: counts[mid] + 1}) %}
+                {% else %}
+                    {% set _ = counts.update({mid: 1}) %}
+                {% endif %}
+            {% endfor %}
+
+            {% for test in report.tests %}
+                {% set mid = test.measurementId | string %}
+                {% set is_first = (loop.index0 == 0 or report.tests[loop.index0 - 1].measurementId != test.measurementId) %}
+            <tr>
+                {% if is_first %}
+                <td rowspan="{{ counts[mid] }}">{{ test.measurementId }}{% if test.hasForm %}*{% endif %}</td>
+                {% endif %}
+                <td>{{ test.testName }} ({{ test.typeName }})</td>
+                <td>{{ test.unitName or '-' }}</td>
+                <td>
+                    {% if test.formattedValues %}
+                        {% for val in test.formattedValues %}
+                            <div>{{ val }}</div>
+                        {% endfor %}
+                    {% else %}
+                        {{ test.value }}
+                    {% endif %}
+                </td>
+                <td>{{ test.testCount }} / {{ test.testFrequency }}</td>
+                <td>{{ test.noteSpec or '-' }}</td>
+                <td>
+                    <span class="{% if test.isConformingSpec %}textSuccess{% else %}textDanger{% endif %}">
+                        {{ 'Yes' if test.isConformingSpec else 'No' }}
+                    </span>
+                </td>
+                <td>Report #{{ test.reportId }}{% if test.reportIsCancelled %} !{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="footnote">* Measurement performed using a testing form.</p>
+    {% else %}
+    <p>No certificate tests found.</p>
+    {% endif %}
+
+    {% if report.analysisResultMessage %}
+    <div class="analysisResultMessage {% if report.isConformingSpec %}conforming{% else %}nonConforming{% endif %}">
+        {{ report.analysisResultMessage }}
+    </div>
+    {% endif %}
+</body>
+</html>

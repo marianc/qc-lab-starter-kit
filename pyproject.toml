@@ -1,0 +1,14 @@
+[project]
+name = "qc-lab-monorepo"
+version = "0.1.0"
+description = "A monorepo for Quality Control laboratory management system python projects"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "server_test",
+    "database",
+    "reporting_pdf",
+    "reporting_xl",
+]

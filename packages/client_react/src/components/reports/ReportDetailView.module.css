@@ -1,0 +1,28 @@
+.reportDetailView {
+    padding: 1rem;
+}
+
+.cancellationInfo {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #fff3f3;
+    border-left: 4px solid #dc3545;
+    border-radius: 4px;
+}
+
+.cancellationInfo h4 {
+    color: #dc3545;
+    margin-top: 0;
+}
+
+.actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.errorMessage {
+    margin-top: 1rem;
+    color: #dc3545;
+    font-weight: bold;
+}

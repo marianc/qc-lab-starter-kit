@@ -1,0 +1,22 @@
+.item {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: baseline;
+}
+
+.label {
+  flex: 0 0 195px; /* Fixed width for alignment in horizontal mode */
+  padding-right: 1rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #6c757d; /* Gray color */
+}
+
+.value {
+  flex: 1;
+  min-width: 200px; /* If space is less than this, wrap to next line */
+  font-size: 1rem;
+  font-weight: normal;
+  color: #212529; /* Darker color for emphasis */
+}

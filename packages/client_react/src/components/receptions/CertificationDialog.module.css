@@ -1,0 +1,8 @@
+.ccSelectionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.flex1 {
+    flex: 1;
+}

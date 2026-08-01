@@ -1,0 +1,13 @@
+.overlay {
+  position: fixed;
+  top: 60px; /* Match header height */
+  left: 200px; /* Match sidebar width */
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-background, #fff);
+  padding: 0;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1); /* Optional: shadow to separate layers */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

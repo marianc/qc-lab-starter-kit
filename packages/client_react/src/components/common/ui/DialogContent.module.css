@@ -1,0 +1,8 @@
+.content {
+  padding: var(--spacing-md, 16px);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: block;
+  max-height: 65vh; /* Reusable fixed constraint to ensure footer visibility */
+}

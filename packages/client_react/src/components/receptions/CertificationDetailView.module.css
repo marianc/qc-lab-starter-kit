@@ -1,0 +1,9 @@
+.buttonGroup {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.previewReportContainer {
+    margin-top: 20px;
+}

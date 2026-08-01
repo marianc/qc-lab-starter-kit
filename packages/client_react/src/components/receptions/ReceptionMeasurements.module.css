@@ -1,0 +1,132 @@
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.th, .td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.buttonGreen {
+  background-color: #28a745 !important;
+}
+
+.buttonGray {
+  background-color: #6c757d !important;
+}
+
+.cardContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.card {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex: 0 0 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cardContent {
+  margin-bottom: 15px;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cardItem {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.cardItemLabel {
+  text-align: left;
+  font-weight: bold;
+}
+
+.cardItemValue {
+  text-align: left;
+}
+
+.tableTestHeaderCol,
+.tableMeasurementCol {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+}
+
+.cardCommentsValue,
+.tableCommentsValue {
+  white-space: pre-wrap;
+}
+
+.cardComments {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.cardCommentsLabel {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.measurementId {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  font-size: 0.8em;
+  color: #aaa;
+}
+
+.formSelectionRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.formSelectFixed {
+    width: auto !important;
+    min-width: 200px;
+}
+
+.tableScrollContainer {
+    overflow-x: auto;
+}
+
+.tableScrollContainer table {
+    table-layout: fixed;
+    width: max-content;
+}
+
+.actionsCellContainer {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.conditionNote {
+    color: red;
+    font-size: 0.8em;
+    margin-left: 5px;
+}

@@ -1,0 +1,43 @@
+.addButtons {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.warning-mark {
+    color: red;
+    font-weight: bold;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filters .filterGroup {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filters label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.filters button {
+    height: 38px;
+}
+
+.loadMoreContainer {
+    text-align: center;
+    margin-top: 20px;
+}
