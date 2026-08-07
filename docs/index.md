@@ -1,4 +1,9 @@
-# LIMS for Quality Control Laboratories, Starter Kit (QC Lab LIMS Starter Kit)
+---
+layout: default
+title: QC Lab LIMS Starter Kit
+---
+
+# LIMS for Quality Control Laboratories, Starter Kit
 
 This repository contains the Quality Control Laboratory Information Management System, composed of:
 1. **.NET C# Server (`server/`)**: Backend API and application core.
@@ -50,7 +55,7 @@ The author of the original implementation, that had to deal with the pain of usi
 
 However, in recent years, the AI appeared, and he had decided to explore some new ideas, by using AI as it's coding assistant, while he was mostly focus on the solution architecture. He developed the LIMS application over a span of approximately 6 months and used Gemini CLI (with Gemini models) almost exclusively. He barely written any manual code (almost none), but kept the project structure and code organization under his control. He experimented various ideas and 'sculpted' this application prompt by prompt.
 
-For a preview, without installing the software, you can check YouTube video presentation channel https://www.youtube.com/@qualityassistant5648, where you can experience the core functionality in a guided concise manner.
+For a preview, without installing the software, you can check YouTube video presentation channel [https://www.youtube.com/@qualityassistant5648](https://www.youtube.com/@qualityassistant5648), where you can experience the core functionality in a guided concise manner.
 
 ---
 
@@ -64,7 +69,7 @@ If you need a specific feature for your laboratory, you are encouraged to fork t
 
 ## Licensing
 
-This project is licensed [Apache-2.0](LICENSE.txt) and it may contain portions from other free and/or open source resources (e.g. code, documentation or binaries).
-For more information on licensing please check [NOTICE.md](NOTICE.md) and sub-project/NOTICE.md and the content of '_thirdPartyLicenses' folder located in each of the sub-projects.
+This project is licensed [Apache-2.0](../LICENSE.txt) and it may contain portions from other free and/or open source resources (e.g. code, documentation or binaries).
+For more information on licensing please check [NOTICE.md](../NOTICE.md) and sub-project/NOTICE.md and the content of '_thirdPartyLicenses' folder located in each of the sub-projects.
 
 Copyright (c) 2026 Marian Cruceru.
