@@ -386,7 +386,7 @@ const ReceptionMeasurements: React.FC<Props> = ({
                                   <div key={vidx}>
                                     {v.value}
                                     {v.conditionPass === false && p.conditionNote && (
-                                      <span className={styles.conditionNote}> ??? {p.conditionNote}</span>
+                                      <span className={styles.conditionNote}> {p.conditionNote}</span>
                                     )}
                                   </div>
                                 ))}
@@ -445,7 +445,7 @@ const ReceptionMeasurements: React.FC<Props> = ({
                                   <div key={vidx}>
                                     {v.value}
                                     {v.conditionPass === false && p.conditionNote && (
-                                      <span className={styles.conditionNote}> ??? {p.conditionNote}</span>
+                                      <span className={styles.conditionNote}> {p.conditionNote}</span>
                                     )}
                                   </div>
                                 ))}
