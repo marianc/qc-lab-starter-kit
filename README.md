@@ -1,6 +1,6 @@
 # LIMS for Quality Control Laboratories, Starter Kit (QC Lab LIMS Starter Kit)
 
-This repository contains the Quality Control Laboratory Information Management System, composed of:
+This open source repository contains the Quality Control Laboratory Information Management System, composed of:
 1. **.NET C# Server (`server/`)**: Backend API and application core.
 2. **React Client (`packages/client_react/`)**: Modern frontend user interface.
 3. **Python PDF Reporting Service (`reporting_pdf/`)**: FastAPI & WeasyPrint microservice for generating professional paged PDF reports.
@@ -38,7 +38,7 @@ docker compose -f docker-compose.demo.yml down
 
 This software is only about processing testing data. No inventory management or equipment calibration or metrological verification or other aspects that need to be managed by the laboratories.
 
-Also this application is working, it represent just a minimum viable product (MVP) or a proof of concept (PoC), and it is not recommended to be used as is in high risk production environments, but rather in low risk environments, in the situation where *'anything is better than Excel spreadsheets'*.
+Also this application is working, it represent just a minimum viable product (MVP) or a proof of concept (PoC), a prototype, and it is not recommended to be used as is in high risk production environments, but rather in low risk environments, in the situation where *'anything is better than Excel spreadsheets'*.
 
 Another use for this 'Starter Kit' is for the situations where a quality control laboratory is looking for implementing a LIMS system, but often is so difficult to convey the expectations to the software suppliers. Having this 'Starter Kit' as a reference implementation, that is working out of the box, it becomes very simple to explain, on this concrete example, what features are expected the LIMS to have or not (do's and don'ts).
 
