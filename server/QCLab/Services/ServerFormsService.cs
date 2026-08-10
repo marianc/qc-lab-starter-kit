@@ -982,21 +982,43 @@ public class ServerFormsService : IFormsService
             await SaveChangesWithDetailedException();
 
             // Copy Form Parameters
-            var originalParams = await _context.FormParams.Where(fp => fp.FormId == id).ToListAsync();
+            var originalParams = await _context.FormParams
+                .Include(fp => fp.FormConditionEvals)
+                .Where(fp => fp.FormId == id)
+                .ToListAsync();
+
             foreach (var p in originalParams)
             {
-                _context.FormParams.Add(new FormParam
+                var newParam = new FormParam
                 {
                     FormId = newForm.Id,
                     TestId = p.TestId,
                     IsCalculated = p.IsCalculated,
                     Formula = p.Formula,
                     CodeRelatedArrays = p.CodeRelatedArrays,
+                    HasCondition = p.HasCondition,
+                    Condition = p.Condition,
+                    ConditionNote = p.ConditionNote,
                     IsRequired = p.IsRequired,
                     DefaultValue = p.DefaultValue,
                     NrOrd = p.NrOrd,
                     NrOrdCalc = p.NrOrdCalc
-                });
+                };
+                _context.FormParams.Add(newParam);
+
+                foreach (var ce in p.FormConditionEvals)
+                {
+                    _context.FormConditionEvals.Add(new FormConditionEval
+                    {
+                        FormId = newForm.Id,
+                        TestId = ce.TestId,
+                        Value = ce.Value,
+                        Result = ce.Result,
+                        ExpectedResult = ce.ExpectedResult,
+                        IsMatch = ce.IsMatch,
+                        Note = ce.Note
+                    });
+                }
             }
 
             // Copy Evaluation Test Cases (Test Data for Formula Validation)
