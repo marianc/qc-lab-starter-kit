@@ -14,6 +14,7 @@ import ReportsPage from '@/pages/reports/ReportsPage';
 import SpecificationsPage from '@/pages/specifications/SpecificationsPage';
 import CertificatesPage from '@/pages/certificates/CertificatesPage';
 import ReceptionsPage from '@/pages/receptions/ReceptionsPage';
+import AuditLogsPage from '@/pages/audit/AuditLogsPage';
 import MainLayout from '@/components/layout/MainLayout';
 
 const router = createBrowserRouter([
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
           { path: '/reports', element: <ReportsPage /> },
           { path: '/certificates', element: <CertificatesPage /> },
           { path: '/specifications', element: <SpecificationsPage /> },
+          { path: '/audit', element: <AuditLogsPage /> },
         ]
       },
       { path: '/login', element: <LoginPage /> },

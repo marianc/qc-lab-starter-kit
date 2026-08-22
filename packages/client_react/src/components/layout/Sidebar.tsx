@@ -108,6 +108,14 @@ const Sidebar: React.FC = () => {
                 Specifications
               </NavLink>
             </li>
+            <li>
+              <NavLink 
+                to="/audit" 
+                className={({ isActive }) => isActive ? styles.active : undefined}
+              >
+                Audit Logs
+              </NavLink>
+            </li>
           </>
           {/* Other menu items will be added here later */}
         </ul>

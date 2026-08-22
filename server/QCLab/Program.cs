@@ -8,6 +8,7 @@ using QCLab.Client.Validation;
 using QCLab.Middleware;
 using QCLab.Models;
 using QCLab.Services;
+using QCLab.Interceptors;
 
 namespace QCLab
 {
@@ -26,11 +27,17 @@ namespace QCLab
 
             // Add services to the container.
             builder.Services.AddRazorComponents();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddSingleton<AuditSessionDbCommandInterceptor>();
 
-            builder.Services.AddDbContext<QualityControlContext>(options =>
-                options.UseNpgsql(connectionString),
-                ServiceLifetime.Transient,
-                ServiceLifetime.Transient);
+            builder.Services.AddDbContext<QualityControlContext>((sp, options) =>
+            {
+                options.UseNpgsql(connectionString);
+                var interceptor = sp.GetRequiredService<AuditSessionDbCommandInterceptor>();
+                options.AddInterceptors(interceptor);
+            },
+            ServiceLifetime.Transient,
+            ServiceLifetime.Transient);
 
             builder.Services.AddHttpClient();
             builder.Services.AddTransient<IUniquenessChecker, ServerUniquenessChecker>();
@@ -619,6 +626,59 @@ namespace QCLab
             });
             apiGroup.MapPut("/users/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IUsersService s) => s.ToggleObsolete(id, dto));
             apiGroup.MapPut("/users/{id}/reset_password", (long id, [FromBody] ResetPasswordDto dto, IUsersService s) => s.ResetPassword(id, dto));
+
+            // Audit Logs API
+            apiGroup.MapGet("/audit_logs", async (
+                [FromQuery] int page = 1,
+                [FromQuery] int pageSize = 15,
+                [FromQuery] string? tableName = null,
+                [FromQuery] string? action = null,
+                [FromQuery] long? userId = null,
+                [FromServices] QualityControlContext dbContext = null!) =>
+            {
+                var query = dbContext.AuditLogs
+                    .Include(a => a.User)
+                    .AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(tableName))
+                    query = query.Where(a => a.TableName.ToLower() == tableName.ToLower());
+
+                if (!string.IsNullOrWhiteSpace(action))
+                    query = query.Where(a => a.Action.ToUpper() == action.ToUpper());
+
+                if (userId.HasValue)
+                    query = query.Where(a => a.UserId == userId.Value);
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderByDescending(a => a.Timestamp)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(a => new AuditLogDto
+                    {
+                        Id = a.Id,
+                        TableName = a.TableName,
+                        RecordKeys = a.RecordKeys,
+                        Action = a.Action,
+                        OldData = a.OldData,
+                        NewData = a.NewData,
+                        ChangedFields = a.ChangedFields,
+                        UserId = a.UserId,
+                        UserTag = a.User != null ? a.User.Tag : $"User #{a.UserId}",
+                        ReasonForChange = a.ReasonForChange,
+                        Timestamp = a.Timestamp,
+                        ClientIp = a.ClientIp
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(new PaginatedAuditLogsDto
+                {
+                    AuditLogs = items,
+                    TotalCount = totalCount,
+                    PageSize = pageSize,
+                    CurrentPage = page
+                });
+            });
 
             // Value Types
             apiGroup.MapGet("/value_types", (IValueTypesService s) => s.GetAllValueTypes());

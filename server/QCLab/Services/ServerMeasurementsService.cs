@@ -143,20 +143,30 @@ public class ServerMeasurementsService : IMeasurementsService
     // POST /measurements
     public async Task<IdDto> CreateMeasurement(CreateMeasurementDto dto)
     {
-        var measurement = new Measurement
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            ReceptionId = dto.ReceptionId,
-            Comments = dto.Comments,
-            IsReported = dto.IsReported,
-            FormId = dto.FormId,
-            UserUpdateId = dto.UserUpdateId,
-            DateUpdate = DateTime.UtcNow
-        };
+            var measurement = new Measurement
+            {
+                ReceptionId = dto.ReceptionId,
+                Comments = dto.Comments,
+                IsReported = dto.IsReported,
+                FormId = dto.FormId,
+                UserUpdateId = dto.UserUpdateId,
+                DateUpdate = DateTime.UtcNow
+            };
 
-        _context.Measurements.Add(measurement);
-        await _context.SaveChangesAsync();
+            _context.Measurements.Add(measurement);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
-        return new() { Id = measurement.Id };
+            return new() { Id = measurement.Id };
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     // PUT /measurement_tests/{id}
@@ -247,16 +257,26 @@ public class ServerMeasurementsService : IMeasurementsService
 
     public async Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto)
     {
-        var measurement = await _context.Measurements.FindAsync(id);
-        if (measurement == null) throw new ArgumentException("Measurement not found");
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var measurement = await _context.Measurements.FindAsync(id);
+            if (measurement == null) throw new ArgumentException("Measurement not found");
 
-        measurement.Comments = dto.Comments;
-        measurement.IsReported = dto.IsReported;
-        measurement.UserUpdateId = dto.UserUpdateId;
-        measurement.DateUpdate = DateTime.UtcNow;
+            measurement.Comments = dto.Comments;
+            measurement.IsReported = dto.IsReported;
+            measurement.UserUpdateId = dto.UserUpdateId;
+            measurement.DateUpdate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
-        await SaveMeasurementFormData(id, dto.MeasurementData);
+            await _context.SaveChangesAsync();
+            await SaveMeasurementFormDataInternal(id, dto.MeasurementData);
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw ex;
+        }
     }
 
     // DELETE /measurements/{id}
@@ -290,118 +310,141 @@ public class ServerMeasurementsService : IMeasurementsService
     // PUT /measurements/{id}/toggle_reported
     public async Task ToggleReported(long id, long userId)
     {
-        var measurement = await _context.Measurements.FindAsync(id);
-        if (measurement == null) throw new ArgumentException("Measurement not found");
-
-        if (measurement.IsReported)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            measurement.IsReported = false;
-            measurement.UserReportedId = null;
-            await _context.SaveChangesAsync();
-            return;
+            var measurement = await _context.Measurements.FindAsync(id);
+            if (measurement == null) throw new ArgumentException("Measurement not found");
+
+            if (measurement.IsReported)
+            {
+                measurement.IsReported = false;
+                measurement.UserReportedId = null;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return;
+            }
+
+            if (!measurement.FormId.HasValue)
+            {
+                measurement.IsReported = true;
+                measurement.UserReportedId = userId;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var form = await _context.Forms.FindAsync(measurement.FormId.Value);
+                if (form == null) throw new ArgumentException("Form not found");
+
+                if (!(form.IsSubmitted && form.IsValidated && !form.IsCancelled))
+                {
+                    throw new InvalidOperationException("The form is not submitted, validated, or is cancelled.");
+                }
+
+                var nonParamTestExists = await _context.MeasurementParams
+                    .Include(mp => mp.Test)
+                    .AnyAsync(mp => mp.MeasurementId == id && mp.FormId == measurement.FormId.Value && !mp.Test.IsParam);
+
+                if (!nonParamTestExists)
+                {
+                    throw new InvalidOperationException("Cannot report: No non-parameter test found for this measurement and form.");
+                }
+
+                // Check for invalid condition values
+                var invalidConditionExists = await _context.MeasurementParams
+                    .Where(mp => mp.MeasurementId == id && mp.ConditionValue == 0)
+                    .AnyAsync();
+                
+                if (invalidConditionExists)
+                {
+                    throw new InvalidOperationException("Cannot report data: one or more form parameters have an invalid condition value (0).");
+                }
+
+                measurement.IsReported = true;
+                measurement.UserReportedId = userId;
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
         }
-
-        if (!measurement.FormId.HasValue)
+        catch (Exception)
         {
-            measurement.IsReported = true;
-            measurement.UserReportedId = userId;
-            await _context.SaveChangesAsync();
-        }
-        else
-        {
-            var form = await _context.Forms.FindAsync(measurement.FormId.Value);
-            if (form == null) throw new ArgumentException("Form not found");
-
-            if (!(form.IsSubmitted && form.IsValidated && !form.IsCancelled))
-            {
-                throw new InvalidOperationException("The form is not submitted, validated, or is cancelled.");
-            }
-
-            var nonParamTestExists = await _context.MeasurementParams
-                .Include(mp => mp.Test)
-                .AnyAsync(mp => mp.MeasurementId == id && mp.FormId == measurement.FormId.Value && !mp.Test.IsParam);
-
-            if (!nonParamTestExists)
-            {
-                throw new InvalidOperationException("Cannot report: No non-parameter test found for this measurement and form.");
-            }
-
-            // Check for invalid condition values
-            var invalidConditionExists = await _context.MeasurementParams
-                .Where(mp => mp.MeasurementId == id && mp.ConditionValue == 0)
-                .AnyAsync();
-            
-            if (invalidConditionExists)
-            {
-                throw new InvalidOperationException("Cannot report data: one or more form parameters have an invalid condition value (0).");
-            }
-
-            measurement.IsReported = true;
-            measurement.UserReportedId = userId;
-            await _context.SaveChangesAsync();
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
     // POST /measurements/{id}/tests
     public async Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto)
     {
-        var testInfo = await _context.Tests.FindAsync(dto.TestId);
-        var isArray = testInfo?.IsArray ?? false;
-
-        // Remove existing tests for this measurement and test ID to avoid conflicts
-        var existingTests = await _context.MeasurementTests
-            .Where(mt => mt.MeasurementId == id && mt.TestId == dto.TestId)
-            .ToListAsync();
-        _context.MeasurementTests.RemoveRange(existingTests);
-
-        if (isArray && dto.Value != null)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            var values = new List<decimal>();
-            if (dto.Value is JsonElement je && je.ValueKind == JsonValueKind.Array)
+            var testInfo = await _context.Tests.FindAsync(dto.TestId);
+            var isArray = testInfo?.IsArray ?? false;
+
+            // Remove existing tests for this measurement and test ID to avoid conflicts
+            var existingTests = await _context.MeasurementTests
+                .Where(mt => mt.MeasurementId == id && mt.TestId == dto.TestId)
+                .ToListAsync();
+            _context.MeasurementTests.RemoveRange(existingTests);
+
+            if (isArray && dto.Value != null)
             {
-                foreach (var item in je.EnumerateArray())
+                var values = new List<decimal>();
+                if (dto.Value is JsonElement je && je.ValueKind == JsonValueKind.Array)
                 {
-                    if (item.TryGetDecimal(out decimal val)) values.Add(val);
-                    else if (decimal.TryParse(item.GetString(), out decimal vals)) values.Add(vals);
+                    foreach (var item in je.EnumerateArray())
+                    {
+                        if (item.TryGetDecimal(out decimal val)) values.Add(val);
+                        else if (decimal.TryParse(item.GetString(), out decimal vals)) values.Add(vals);
+                    }
+                }
+                else if (dto.Value is IEnumerable<decimal> doubleEnum) values.AddRange(doubleEnum);
+                else if (dto.Value is string s)
+                {
+                    values = s.Split(',').Select(v => decimal.TryParse(v.Trim(), out decimal val) ? val : 0.0m).ToList();
+                }
+
+                for (int i = 0; i < values.Count; i++)
+                {
+                    _context.MeasurementTests.Add(new MeasurementTest
+                    {
+                        MeasurementId = id,
+                        TestId = dto.TestId,
+                        Idx = i,
+                        Value = values[i],
+                        Note = dto.Note
+                    });
                 }
             }
-            else if (dto.Value is IEnumerable<decimal> doubleEnum) values.AddRange(doubleEnum);
-            else if (dto.Value is string s)
+            else if (dto.Value != null)
             {
-                values = s.Split(',').Select(v => decimal.TryParse(v.Trim(), out decimal val) ? val : 0.0m).ToList();
-            }
+                decimal val = 0;
+                if (dto.Value is JsonElement je && je.ValueKind == JsonValueKind.Number) val = je.GetDecimal();
+                else if (dto.Value is JsonElement jes && jes.ValueKind == JsonValueKind.String) decimal.TryParse(jes.GetString(), out val);
+                else if (decimal.TryParse(dto.Value.ToString(), out decimal parsedVal)) val = parsedVal;
 
-            for (int i = 0; i < values.Count; i++)
-            {
                 _context.MeasurementTests.Add(new MeasurementTest
                 {
                     MeasurementId = id,
                     TestId = dto.TestId,
-                    Idx = i,
-                    Value = values[i],
+                    Idx = 0,
+                    Value = val,
                     Note = dto.Note
                 });
             }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new() { Id = dto.TestId };
         }
-        else if (dto.Value != null)
+        catch (Exception)
         {
-            decimal val = 0;
-            if (dto.Value is JsonElement je && je.ValueKind == JsonValueKind.Number) val = je.GetDecimal();
-            else if (dto.Value is JsonElement jes && jes.ValueKind == JsonValueKind.String) decimal.TryParse(jes.GetString(), out val);
-            else if (decimal.TryParse(dto.Value.ToString(), out decimal parsedVal)) val = parsedVal;
-
-            _context.MeasurementTests.Add(new MeasurementTest
-            {
-                MeasurementId = id,
-                TestId = dto.TestId,
-                Idx = 0,
-                Value = val,
-                Note = dto.Note
-            });
+            await transaction.RollbackAsync();
+            throw;
         }
-
-        await _context.SaveChangesAsync();
-        return new() { Id = dto.TestId };
     }
 
     // POST/PUT /measurements/{id}/form_data (Internal helper now)
@@ -410,87 +453,7 @@ public class ServerMeasurementsService : IMeasurementsService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var measurement = await _context.Measurements.FindAsync(id);
-            if (measurement == null || !measurement.FormId.HasValue)
-            {
-                throw new ArgumentException("Form not associated with this measurement");
-            }
-            var formId = measurement.FormId.Value;
-
-            // Ensure is_reported is set to false and UserReportedId is cleared when saving measurement params
-            measurement.IsReported = false;
-            measurement.UserReportedId = null;
-            await _context.SaveChangesAsync();
-
-            var formParamsSchema = await _formsService.GetFormParams(formId);
-
-            // 1. Prepare measurementData (Inputs)
-            var inputParams = formParamsSchema.Where(p => !p.IsCalculated).ToList();
-            var flatInputs = FormEvalMapper.MapDictToFlat(data, inputParams);
-            var measurementData = FormEvalMapper.MapFlatToDict(flatInputs, inputParams);
-
-            // 2. Call EvaluateFormCalculations from FormsService
-            Dictionary<string, object> results;
-            try
-            {
-                results = await _formsService.EvaluateFormCalculations(formId, measurementData!);
-            }
-            catch (Exception ex)
-            {
-                 throw new Exception($"Evaluation error: {ex.Message}", ex);
-            }
-
-            // 3. Update database with results
-            var flatResults = FormEvalMapper.MapDictToFlat(results!, formParamsSchema.Where(p => p.IsCalculated).ToList());
-
-            // Clear all existing params first
-            var allParams = await _context.MeasurementParams.Where(mp => mp.MeasurementId == id).ToListAsync();
-            _context.MeasurementParams.RemoveRange(allParams);
-            await _context.SaveChangesAsync();
-
-            // Save Inputs
-            foreach (var item in flatInputs)
-            {
-                var param = new MeasurementParam
-                {
-                    MeasurementId = id,
-                    FormId = formId,
-                    TestId = item.TestId,
-                    Idx = item.Idx,
-                    Value = item.Value
-                };
-
-                var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
-                if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
-                {
-                    param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
-                }
-
-                _context.MeasurementParams.Add(param);
-            }
-
-            // Save Results
-            foreach (var item in flatResults)
-            {
-                var param = new MeasurementParam
-                {
-                    MeasurementId = id,
-                    FormId = formId,
-                    TestId = item.TestId,
-                    Idx = item.Idx,
-                    Value = item.Value
-                };
-
-                var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
-                if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
-                {
-                    param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
-                }
-
-                _context.MeasurementParams.Add(param);
-            }
-
-            await _context.SaveChangesAsync();
+            await SaveMeasurementFormDataInternal(id, data);
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -498,5 +461,90 @@ public class ServerMeasurementsService : IMeasurementsService
             await transaction.RollbackAsync();
             throw ex;
         }
+    }
+
+    private async Task SaveMeasurementFormDataInternal(long id, Dictionary<string, object?> data)
+    {
+        var measurement = await _context.Measurements.FindAsync(id);
+        if (measurement == null || !measurement.FormId.HasValue)
+        {
+            throw new ArgumentException("Form not associated with this measurement");
+        }
+        var formId = measurement.FormId.Value;
+
+        // Ensure is_reported is set to false and UserReportedId is cleared when saving measurement params
+        measurement.IsReported = false;
+        measurement.UserReportedId = null;
+        await _context.SaveChangesAsync();
+
+        var formParamsSchema = await _formsService.GetFormParams(formId);
+
+        // 1. Prepare measurementData (Inputs)
+        var inputParams = formParamsSchema.Where(p => !p.IsCalculated).ToList();
+        var flatInputs = FormEvalMapper.MapDictToFlat(data, inputParams);
+        var measurementData = FormEvalMapper.MapFlatToDict(flatInputs, inputParams);
+
+        // 2. Call EvaluateFormCalculations from FormsService
+        Dictionary<string, object> results;
+        try
+        {
+            results = await _formsService.EvaluateFormCalculations(formId, measurementData!);
+        }
+        catch (Exception ex)
+        {
+             throw new Exception($"Evaluation error: {ex.Message}", ex);
+        }
+
+        // 3. Update database with results
+        var flatResults = FormEvalMapper.MapDictToFlat(results!, formParamsSchema.Where(p => p.IsCalculated).ToList());
+
+        // Clear all existing params first
+        var allParams = await _context.MeasurementParams.Where(mp => mp.MeasurementId == id).ToListAsync();
+        _context.MeasurementParams.RemoveRange(allParams);
+        await _context.SaveChangesAsync();
+
+        // Save Inputs
+        foreach (var item in flatInputs)
+        {
+            var param = new MeasurementParam
+            {
+                MeasurementId = id,
+                FormId = formId,
+                TestId = item.TestId,
+                Idx = item.Idx,
+                Value = item.Value
+            };
+
+            var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
+            if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+            {
+                param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+            }
+
+            _context.MeasurementParams.Add(param);
+        }
+
+        // Save Results
+        foreach (var item in flatResults)
+        {
+            var param = new MeasurementParam
+            {
+                MeasurementId = id,
+                FormId = formId,
+                TestId = item.TestId,
+                Idx = item.Idx,
+                Value = item.Value
+            };
+
+            var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
+            if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+            {
+                param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+            }
+
+            _context.MeasurementParams.Add(param);
+        }
+
+        await _context.SaveChangesAsync();
     }
 }
