@@ -12,7 +12,7 @@ This project provides an automated API testing framework for the Quality Control
 
 1.  Install dependencies:
     ```bash
-    cd test_servers
+    cd server_test
     uv sync
     ```
 

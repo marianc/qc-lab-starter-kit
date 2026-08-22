@@ -47,9 +47,13 @@ public partial class User
 
     public string? CommentsObsolete { get; set; }
 
+    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
     public virtual ICollection<Certificate> CertificateUserCancelleds { get; set; } = new List<Certificate>();
 
     public virtual ICollection<Certificate> CertificateUserSubmitteds { get; set; } = new List<Certificate>();
+
+    public virtual ICollection<ElectronicSignature> ElectronicSignatures { get; set; } = new List<ElectronicSignature>();
 
     public virtual ICollection<Form> FormUserCancelleds { get; set; } = new List<Form>();
 

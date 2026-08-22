@@ -2,7 +2,8 @@ from typing import Optional
 import datetime
 import decimal
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKeyConstraint, Identity, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
+from sqlalchemy import ARRAY, BigInteger, Boolean, Column, DateTime, ForeignKeyConstraint, Identity, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -123,6 +124,8 @@ class Users(Base):
     date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
+    audit_logs: Mapped[list['AuditLogs']] = relationship('AuditLogs', back_populates='user')
+    electronic_signatures: Mapped[list['ElectronicSignatures']] = relationship('ElectronicSignatures', back_populates='signer_user')
     forms_user_cancelled: Mapped[list['Forms']] = relationship('Forms', foreign_keys='[Forms.user_cancelled_id]', back_populates='user_cancelled')
     forms_user_submitted: Mapped[list['Forms']] = relationship('Forms', foreign_keys='[Forms.user_submitted_id]', back_populates='user_submitted')
     forms_user_validated: Mapped[list['Forms']] = relationship('Forms', foreign_keys='[Forms.user_validated_id]', back_populates='user_validated')
@@ -149,6 +152,48 @@ class ValueTypes(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
 
     tests: Mapped[list['Tests']] = relationship('Tests', back_populates='type')
+
+
+class AuditLogs(Base):
+    __tablename__ = 'audit_logs'
+    __table_args__ = (
+        ForeignKeyConstraint(['user_id'], ['users.id'], name='audit_logs_user_id_fkey'),
+        PrimaryKeyConstraint('id', name='audit_logs_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    table_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    action: Mapped[str] = mapped_column(String(10), nullable=False)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    record_keys: Mapped[Optional[dict]] = mapped_column(JSONB)
+    old_data: Mapped[Optional[dict]] = mapped_column(JSONB)
+    new_data: Mapped[Optional[dict]] = mapped_column(JSONB)
+    changed_fields: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text()))
+    reason_for_change: Mapped[Optional[str]] = mapped_column(Text)
+    client_ip: Mapped[Optional[str]] = mapped_column(String(45))
+
+    user: Mapped['Users'] = relationship('Users', back_populates='audit_logs')
+
+
+class ElectronicSignatures(Base):
+    __tablename__ = 'electronic_signatures'
+    __table_args__ = (
+        ForeignKeyConstraint(['signer_user_id'], ['users.id'], name='electronic_signatures_signer_user_id_fkey'),
+        PrimaryKeyConstraint('id', name='electronic_signatures_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    entity_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    entity_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    signer_user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    signature_meaning: Mapped[str] = mapped_column(String(50), nullable=False)
+    signing_timestamp: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    signature_manifest_text: Mapped[str] = mapped_column(Text, nullable=False)
+    client_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+
+    signer_user: Mapped['Users'] = relationship('Users', back_populates='electronic_signatures')
 
 
 class Forms(Base):

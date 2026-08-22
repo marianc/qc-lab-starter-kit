@@ -15,6 +15,8 @@ public partial class QualityControlContext : DbContext
     {
     }
 
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
+
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Certificate> Certificates { get; set; }
@@ -22,6 +24,8 @@ public partial class QualityControlContext : DbContext
     public virtual DbSet<CertificateTest> CertificateTests { get; set; }
 
     public virtual DbSet<ControlCode> ControlCodes { get; set; }
+
+    public virtual DbSet<ElectronicSignature> ElectronicSignatures { get; set; }
 
     public virtual DbSet<Form> Forms { get; set; }
 
@@ -77,6 +81,46 @@ public partial class QualityControlContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("audit_logs_pkey");
+
+            entity.ToTable("audit_logs");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Action)
+                .HasMaxLength(10)
+                .HasColumnName("action");
+            entity.Property(e => e.ChangedFields).HasColumnName("changed_fields");
+            entity.Property(e => e.ClientIp)
+                .HasMaxLength(45)
+                .HasColumnName("client_ip");
+            entity.Property(e => e.NewData)
+                .HasColumnType("jsonb")
+                .HasColumnName("new_data");
+            entity.Property(e => e.OldData)
+                .HasColumnType("jsonb")
+                .HasColumnName("old_data");
+            entity.Property(e => e.ReasonForChange).HasColumnName("reason_for_change");
+            entity.Property(e => e.RecordKeys)
+                .HasColumnType("jsonb")
+                .HasColumnName("record_keys");
+            entity.Property(e => e.TableName)
+                .HasMaxLength(100)
+                .HasColumnName("table_name");
+            entity.Property(e => e.Timestamp)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("timestamp");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AuditLogs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("audit_logs_user_id_fkey");
+        });
+
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("categories_pkey");
@@ -230,6 +274,40 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.MaterialId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("control_codes_material_id_fkey");
+        });
+
+        modelBuilder.Entity<ElectronicSignature>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("electronic_signatures_pkey");
+
+            entity.ToTable("electronic_signatures");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.ClientIp)
+                .HasMaxLength(45)
+                .HasColumnName("client_ip");
+            entity.Property(e => e.EntityId).HasColumnName("entity_id");
+            entity.Property(e => e.EntityName)
+                .HasMaxLength(50)
+                .HasColumnName("entity_name");
+            entity.Property(e => e.PayloadSha256)
+                .HasMaxLength(64)
+                .HasColumnName("payload_sha256");
+            entity.Property(e => e.SignatureManifestText).HasColumnName("signature_manifest_text");
+            entity.Property(e => e.SignatureMeaning)
+                .HasMaxLength(50)
+                .HasColumnName("signature_meaning");
+            entity.Property(e => e.SignerUserId).HasColumnName("signer_user_id");
+            entity.Property(e => e.SigningTimestamp)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("signing_timestamp");
+
+            entity.HasOne(d => d.SignerUser).WithMany(p => p.ElectronicSignatures)
+                .HasForeignKey(d => d.SignerUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("electronic_signatures_signer_user_id_fkey");
         });
 
         modelBuilder.Entity<Form>(entity =>
@@ -987,7 +1065,7 @@ public partial class QualityControlContext : DbContext
 
         modelBuilder.Entity<ValueType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("form_param_types_pkey");
+            entity.HasKey(e => e.Id).HasName("value_types_pkey");
 
             entity.ToTable("value_types");
 
