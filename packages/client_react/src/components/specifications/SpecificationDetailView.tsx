@@ -13,6 +13,7 @@ import {
 } from '@/components/common/ui';
 import { ConfirmationDialog, CommentDialog } from '@/components/common';
 import SpecTestDialog from './SpecTestDialog';
+import SignatureManifestBlock from '@/components/common/SignatureManifestBlock';
 import styles from './SpecificationDetailView.module.css';
 import type { UserSessionDto } from '@/types/auth';
 import type { TestDto } from '@/types/test';
@@ -55,6 +56,7 @@ const SpecificationDetailView: React.FC<Props> = ({
   const [editableTest, setEditableTest] = useState<SpecTestDto | null>(null);
   const [editableTestOriginalId, setEditableTestOriginalId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [signatureRefreshKey, setSignatureRefreshKey] = useState(0);
 
   useEffect(() => {
     setIsQCPersonnel(currentUser?.roles.includes('QcPers') || false);
@@ -188,7 +190,8 @@ const SpecificationDetailView: React.FC<Props> = ({
         commentsCancelled: null
       });
       setShowSubmitDialog(false);
-      onClose(spec.id);
+      setSignatureRefreshKey(prev => prev + 1);
+      await loadData();
     } catch (err: any) {
       setErrorMessage(err.message);
       setShowSubmitDialog(false);
@@ -203,6 +206,7 @@ const SpecificationDetailView: React.FC<Props> = ({
       commentsSubmitted: null
     });
     setShowCancelDialog(false);
+    setSignatureRefreshKey(prev => prev + 1);
     await loadData();
   };
 
@@ -353,6 +357,8 @@ const SpecificationDetailView: React.FC<Props> = ({
               </table>
             </>
           )}
+
+          <SignatureManifestBlock key={signatureRefreshKey} entityName="specs" entityId={spec.id} />
 
           <div className={styles.formActionsBar}>
             {isQCPersonnel && !spec.isSubmitted && !spec.dateCancelled && (

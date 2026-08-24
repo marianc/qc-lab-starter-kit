@@ -9,12 +9,14 @@ namespace QCLab.Services;
 public class ServerFormsService : IFormsService
 {
     private readonly QualityControlContext _context;
+    private readonly ElectronicSignatureService _signatureService;
     private readonly IFormEvalsService _evalsService;
 
-    public ServerFormsService(QualityControlContext context, IFormEvalsService evalsService)
+    public ServerFormsService(QualityControlContext context, IFormEvalsService evalsService, ElectronicSignatureService signatureService)
     {
         _context = context;
         _evalsService = evalsService;
+        _signatureService = signatureService;
     }
 
     // GET /forms
@@ -914,6 +916,14 @@ public class ServerFormsService : IFormsService
 
             await SaveChangesWithDetailedException();
             await transaction.CommitAsync();
+
+            await _signatureService.SignEntityAsync(
+                "forms",
+                id,
+                dto.UserId,
+                "Approval",
+                "127.0.0.1",
+                dto.CommentsValidated);
         }
         catch (Exception)
         {

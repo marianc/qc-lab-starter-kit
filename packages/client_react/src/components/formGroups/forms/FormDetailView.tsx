@@ -17,6 +17,7 @@ import FormParamDialog from './FormParamDialog';
 import FormulaDialog from './FormulaDialog';
 import TestDialog from '../../tests/TestDialog';
 import FormValidationDetailView from './FormValidationDetailView';
+import SignatureManifestBlock from '@/components/common/SignatureManifestBlock';
 import styles from './FormDetailView.module.css';
 import type { TestDto, TestEnumDto } from '@/types/test';
 import type { FormDetailDto, FormParamDto, ReorderFormParamDto } from '@/types/form';
@@ -65,6 +66,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
   const [showConfirmReactivate, setShowConfirmReactivate] = useState(false);
 
   const [detailViewConfig, setDetailViewConfig] = useState<{ type: string; evalId?: number | null } | null>(null);
+  const [signatureRefreshKey, setSignatureRefreshKey] = useState(0);
 
   const canReorder = form && !(form.isValidated || form.isCancelled);
 
@@ -294,9 +296,11 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
         await formsService.cancelForm(formId, { userId: user.id, commentsCancelled: comments });
       }
       setShowCommentDialog(false);
+      setSignatureRefreshKey(prev => prev + 1);
       loadData();
     } catch (err: any) {
       setError(err.message);
+      setShowCommentDialog(false);
     }
   };
 
@@ -634,6 +638,8 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
               )}
             </div>
           )}
+
+          <SignatureManifestBlock key={signatureRefreshKey} entityName="forms" entityId={form.id} />
 
           <div className={styles.formActionsBar}>
             {!form.isCancelled ? (

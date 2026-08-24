@@ -12,6 +12,7 @@ import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import SpecificationDetailView from '@/components/specifications/SpecificationDetailView';
 import ReportDetailView from '@/components/reports/ReportDetailView';
 import CertificateSubmitDialog from './CertificateSubmitDialog';
+import SignatureManifestBlock from '@/components/common/SignatureManifestBlock';
 import styles from './CertificateDetailView.module.css';
 import type { TestDto } from '@/types/test';
 import type { UserSessionDto } from '@/types/auth';
@@ -53,6 +54,7 @@ const CertificateDetailView: React.FC<Props> = ({
   const [showConfirmReplace, setShowConfirmReplace] = useState(false);
   const [pendingCombinedComment, setPendingCombinedComment] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [signatureRefreshKey, setSignatureRefreshKey] = useState(0);
 
   const fetchCertificate = useCallback(async () => {
     try {
@@ -146,6 +148,7 @@ const CertificateDetailView: React.FC<Props> = ({
       setShowConfirmReplace(false);
       setPendingCombinedComment(null);
       setAnalysisResultMessage(null);
+      setSignatureRefreshKey(prev => prev + 1);
       await fetchCertificate();
     } catch (err) {
       console.error('Error submitting certificate:', err);
@@ -161,6 +164,7 @@ const CertificateDetailView: React.FC<Props> = ({
         commentsSubmitted: null
       });
       setShowCancelDialog(false);
+      setSignatureRefreshKey(prev => prev + 1);
       await fetchCertificate();
     } catch (err) {
       console.error('Error cancelling certificate:', err);
@@ -301,6 +305,8 @@ const CertificateDetailView: React.FC<Props> = ({
                 </tbody>
               </table>
               <p className={styles.footnote}>* Measurement performed using a testing form.</p>
+
+              <SignatureManifestBlock key={signatureRefreshKey} entityName="certificates" entityId={certificate.id} />
 
               {analysisResultMessage && (
                 <div className={`${styles.analysisResultMessage} ${certificate.isConformingSpec ? styles.conforming : styles.nonConforming}`}>

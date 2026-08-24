@@ -8,6 +8,7 @@ import {
   DetailItem 
 } from '../common/ui';
 import { CommentDialog } from '../common';
+import SignatureManifestBlock from '../common/SignatureManifestBlock';
 import styles from './ReportDetailView.module.css';
 import type { UserSessionDto } from '@/types/auth';
 import type { ReportDetailDto } from '@/types/report';
@@ -33,6 +34,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [canCancelReport, setCanCancelReport] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [signatureRefreshKey, setSignatureRefreshKey] = useState(0);
 
   const fetchReportDetails = useCallback(async () => {
     try {
@@ -80,6 +82,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
           commentsCancelled: comments
         });
         setShowCommentDialog(false);
+        setSignatureRefreshKey(prev => prev + 1);
         await fetchReportDetails();
         if (onChanged) {
           onChanged();
@@ -183,6 +186,8 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
               <h3 className="section-title">Tests</h3>
               {renderTestsTable()}
               <p className="footnote">* Measurement performed using a testing form.</p>
+
+              <SignatureManifestBlock key={signatureRefreshKey} entityName="reports" entityId={report.id} />
 
               {errorMessage && (
                 <div className={styles.errorMessage}>{errorMessage}</div>

@@ -12,12 +12,14 @@ public class ServerReceptionsService : IReceptionsService
     private readonly QualityControlContext _context;
     private readonly IFormsService _formsService;
     private readonly ICertificatesService _certificatesService;
+    private readonly ElectronicSignatureService _signatureService;
 
-    public ServerReceptionsService(QualityControlContext context, IFormsService formsService, ICertificatesService certificatesService)
+    public ServerReceptionsService(QualityControlContext context, IFormsService formsService, ICertificatesService certificatesService, ElectronicSignatureService signatureService)
     {
         _context = context;
         _formsService = formsService;
         _certificatesService = certificatesService;
+        _signatureService = signatureService;
     }
 
     private async Task<MeasurementTestDetailDto?> GetMeasurementTestData(long measurementId)
@@ -610,14 +612,14 @@ public class ServerReceptionsService : IReceptionsService
     {
         if (dto.UserId == 0) throw new ArgumentException("User ID is required");
 
-        var reception = await _context.Receptions.FindAsync(reception_id);
-        if (reception == null) throw new ArgumentException("Reception not found");
-        if (!reception.IsSubmitted) throw new InvalidOperationException("Reception not submitted yet");
-        if (reception.IsReceived || reception.IsRejected) throw new InvalidOperationException("Reception already processed (received or rejected)");
-
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            var reception = await _context.Receptions.FindAsync(reception_id);
+            if (reception == null) throw new ArgumentException("Reception not found");
+            if (!reception.IsSubmitted) throw new InvalidOperationException("Reception not submitted yet");
+            if (reception.IsReceived || reception.IsRejected) throw new InvalidOperationException("Reception already processed (received or rejected)");
+
             reception.IsReceived = true;
             reception.UserReceivedId = dto.UserId;
             reception.DateReceived = DateTime.UtcNow;
@@ -699,7 +701,7 @@ public class ServerReceptionsService : IReceptionsService
                 existingReport.IsCancelled = true;
                 existingReport.UserCancelledId = dto.UserId;
                 existingReport.DateCancelled = DateTime.UtcNow;
-                existingReport.CommentsCancelled = "Replaced by new report";
+                existingReport.CommentsCancelled = $"Replaced by new report for reception {reception_id}";
             }
 
             var newReport = new Report
@@ -719,6 +721,16 @@ public class ServerReceptionsService : IReceptionsService
             if (existingReport != null)
             {
                 existingReport.CommentsCancelled = $"Replaced by new report #{newReport.Id}";
+                await _context.SaveChangesAsync();
+
+                await _signatureService.SignEntityAsync(
+                    "reports",
+                    existingReport.Id,
+                    dto.UserId,
+                    "Cancellation",
+                    "127.0.0.1",
+                    existingReport.CommentsCancelled,
+                    _context);
             }
 
             var reportTestData = await GetReportTestDataInternal(reception_id);
@@ -757,6 +769,17 @@ public class ServerReceptionsService : IReceptionsService
             }
 
             await _context.SaveChangesAsync();
+
+            // Refresh change tracker or ensure context has persisted data ready for signing
+            await _signatureService.SignEntityAsync(
+                "reports",
+                newReport.Id,
+                dto.UserId,
+                "Submission",
+                "127.0.0.1",
+                dto.Comments,
+                _context);
+
             await transaction.CommitAsync();
 
             return new() { Id = newReport.Id };

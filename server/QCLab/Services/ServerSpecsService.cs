@@ -9,10 +9,12 @@ namespace QCLab.Services;
 public class ServerSpecsService : ISpecsService
 {
     private readonly QualityControlContext _context;
+    private readonly ElectronicSignatureService _signatureService;
 
-    public ServerSpecsService(QualityControlContext context)
+    public ServerSpecsService(QualityControlContext context, ElectronicSignatureService signatureService)
     {
         _context = context;
+        _signatureService = signatureService;
     }
 
     // GET /specs
@@ -351,7 +353,28 @@ public class ServerSpecsService : ISpecsService
             spec.SpecReplacedId = existingSpecs.FirstOrDefault()?.Id;
 
             await _context.SaveChangesAsync();
+
+            foreach (var existing in existingSpecs)
+            {
+                await _signatureService.SignEntityAsync(
+                    "specs",
+                    existing.Id,
+                    dto.UserId,
+                    "Cancellation",
+                    "127.0.0.1",
+                    existing.CommentsCancelled,
+                    _context);
+            }
+
             await transaction.CommitAsync();
+
+            await _signatureService.SignEntityAsync(
+                "specs",
+                id,
+                dto.UserId,
+                "Approval",
+                "127.0.0.1",
+                dto.CommentsSubmitted);
 
             return await GetSpecDto(id);
         }
@@ -374,6 +397,14 @@ public class ServerSpecsService : ISpecsService
         spec.CommentsCancelled = dto.CommentsCancelled;
 
         await _context.SaveChangesAsync();
+
+        await _signatureService.SignEntityAsync(
+            "specs",
+            id,
+            dto.UserId,
+            "Cancellation",
+            "127.0.0.1",
+            dto.CommentsCancelled);
     }
 
     // POST /specs/{id}/duplicate

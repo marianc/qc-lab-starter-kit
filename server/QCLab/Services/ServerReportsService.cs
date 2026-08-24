@@ -8,10 +8,12 @@ namespace QCLab.Services;
 public class ServerReportsService : IReportsService
 {
     private readonly QualityControlContext _context;
+    private readonly ElectronicSignatureService _signatureService;
 
-    public ServerReportsService(QualityControlContext context)
+    public ServerReportsService(QualityControlContext context, ElectronicSignatureService signatureService)
     {
         _context = context;
+        _signatureService = signatureService;
     }
 
     // GET /reports
@@ -232,6 +234,14 @@ public class ServerReportsService : IReportsService
         report.CommentsCancelled = dto.CommentsCancelled;
 
         await _context.SaveChangesAsync();
+
+        await _signatureService.SignEntityAsync(
+            "reports",
+            id,
+            dto.UserId,
+            "Cancellation",
+            "127.0.0.1",
+            dto.CommentsCancelled);
     }
 
     public async Task<bool> CheckReportConflict(long id)

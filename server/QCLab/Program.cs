@@ -41,6 +41,7 @@ namespace QCLab
 
             builder.Services.AddHttpClient();
             builder.Services.AddTransient<IUniquenessChecker, ServerUniquenessChecker>();
+            builder.Services.AddTransient<ElectronicSignatureService>();
 
             // Auth Services
             builder.Services.AddTransient<ServerAuthService>();
@@ -626,6 +627,13 @@ namespace QCLab
             });
             apiGroup.MapPut("/users/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IUsersService s) => s.ToggleObsolete(id, dto));
             apiGroup.MapPut("/users/{id}/reset_password", (long id, [FromBody] ResetPasswordDto dto, IUsersService s) => s.ResetPassword(id, dto));
+
+            // Electronic Signatures API
+            apiGroup.MapGet("/signatures/{entityName}/{entityId}", async (string entityName, long entityId, ElectronicSignatureService s) =>
+            {
+                try { return Results.Ok(await s.VerifyEntitySignatureAsync(entityName, entityId)); }
+                catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
 
             // Audit Logs API
             apiGroup.MapGet("/audit_logs", async (

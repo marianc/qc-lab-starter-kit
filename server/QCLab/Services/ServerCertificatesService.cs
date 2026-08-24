@@ -10,11 +10,13 @@ public class ServerCertificatesService : ICertificatesService
 {
     private readonly QualityControlContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ElectronicSignatureService _signatureService;
 
-    public ServerCertificatesService(QualityControlContext context, IHttpContextAccessor httpContextAccessor)
+    public ServerCertificatesService(QualityControlContext context, IHttpContextAccessor httpContextAccessor, ElectronicSignatureService signatureService)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
+        _signatureService = signatureService;
     }
 
     // Helper to calculate and save certificate tests
@@ -661,7 +663,28 @@ public class ServerCertificatesService : ICertificatesService
             }
 
             await _context.SaveChangesAsync();
+
+            foreach (var oldCert in existingValidCerts)
+            {
+                await _signatureService.SignEntityAsync(
+                    "certificates",
+                    oldCert.Id,
+                    dto.UserId,
+                    "Cancellation",
+                    "127.0.0.1",
+                    oldCert.CommentsCancelled,
+                    _context);
+            }
+
             await transaction.CommitAsync();
+
+            await _signatureService.SignEntityAsync(
+                "certificates",
+                id,
+                dto.UserId,
+                "Approval",
+                "127.0.0.1",
+                dto.CommentsSubmitted);
         }
         catch (Exception)
         {
@@ -684,6 +707,14 @@ public class ServerCertificatesService : ICertificatesService
         certificate.CommentsCancelled = dto.CommentsCancelled;
 
         await _context.SaveChangesAsync();
+
+        await _signatureService.SignEntityAsync(
+            "certificates",
+            id,
+            dto.UserId,
+            "Cancellation",
+            "127.0.0.1",
+            dto.CommentsCancelled);
     }
 
     // DELETE /certificates/{id}
