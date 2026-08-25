@@ -12,6 +12,7 @@ import NormsPage from '@/pages/norms/NormsPage';
 import FormGroupsPage from '@/pages/formGroups/FormGroupsPage';
 import ReportsPage from '@/pages/reports/ReportsPage';
 import SpecificationsPage from '@/pages/specifications/SpecificationsPage';
+import EquipmentsPage from '@/pages/equipments/EquipmentsPage';
 import CertificatesPage from '@/pages/certificates/CertificatesPage';
 import ReceptionsPage from '@/pages/receptions/ReceptionsPage';
 import AuditLogsPage from '@/pages/audit/AuditLogsPage';
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
           { path: '/reports', element: <ReportsPage /> },
           { path: '/certificates', element: <CertificatesPage /> },
           { path: '/specifications', element: <SpecificationsPage /> },
+          { path: '/equipment', element: <EquipmentsPage /> },
           { path: '/audit', element: <AuditLogsPage /> },
         ]
       },

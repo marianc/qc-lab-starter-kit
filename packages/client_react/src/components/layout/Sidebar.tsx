@@ -108,6 +108,16 @@ const Sidebar: React.FC = () => {
                 Specifications
               </NavLink>
             </li>
+            {isQcPers && (
+              <li>
+                <NavLink 
+                  to="/equipment" 
+                  className={({ isActive }) => isActive ? styles.active : undefined}
+                >
+                  Equipment
+                </NavLink>
+              </li>
+            )}
             <li>
               <NavLink 
                 to="/audit" 

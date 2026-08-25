@@ -80,6 +80,23 @@ public class ServerUniquenessChecker : IUniquenessChecker
                 return !_context.Units.AsEnumerable().Any(u => string.Equals(u.Name, strValue, StringComparison.Ordinal) && u.Id != unitId);
             }
         }
+        else if (entityName == "Equipment")
+        {
+            long equipmentId = 0;
+            if (entityId != null)
+            {
+                if (entityId is long idInt) equipmentId = idInt;
+                else if (long.TryParse(entityId.ToString(), out long parsedId)) equipmentId = parsedId;
+            }
+
+            string? strValue = value as string;
+            if (string.IsNullOrEmpty(strValue)) return true;
+
+            if (propertyName == "EquipmentCode")
+            {
+                return !_context.Equipments.Any(e => e.EquipmentCode == strValue && e.Id != equipmentId);
+            }
+        }
         else if (entityName == "Norm")
         {
             long normId = 0;

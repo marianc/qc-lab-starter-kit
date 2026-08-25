@@ -70,6 +70,7 @@ namespace QCLab
             builder.Services.AddTransient<IFormGroupsService, ServerFormGroupsService>();
             builder.Services.AddTransient<IFormsService, ServerFormsService>();
             builder.Services.AddTransient<IMaterialsService, ServerMaterialsService>();
+            builder.Services.AddTransient<IEquipmentsService, ServerEquipmentsService>();
             builder.Services.AddTransient<IMeasurementsService, ServerMeasurementsService>();
             builder.Services.AddTransient<INormsService, ServerNormsService>();
             builder.Services.AddTransient<IReceptionsService, ServerReceptionsService>();
@@ -367,6 +368,26 @@ namespace QCLab
             apiGroup.MapPut("/form-evals/{id}", (long id, [FromBody] UpdateFormEvalDto dto, IFormEvalsService s) => s.UpdateFormEval(id, dto));
             apiGroup.MapDelete("/form-evals/{id}", (long id, IFormEvalsService s) => s.DeleteFormEval(id));
             apiGroup.MapPost("/form-evals/{id}/calculate", (long id, IFormEvalsService s) => s.CalculateFormEval(id));
+
+            // Equipments
+            apiGroup.MapGet("/equipments", (IEquipmentsService s) => s.GetAllEquipments());
+            apiGroup.MapGet("/equipments/{id}", (long id, IEquipmentsService s) => s.GetEquipment(id));
+            apiGroup.MapPost("/equipments", async ([FromBody] CreateEquipmentDto dto, IEquipmentsService s) =>
+            {
+                try { return Results.Ok(await s.CreateEquipment(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/equipments/{id}", async (long id, [FromBody] UpdateEquipmentDto dto, IEquipmentsService s) =>
+            {
+                try { await s.UpdateEquipment(id, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapGet("/equipments/{id}/calibrations", (long id, IEquipmentsService s) => s.GetEquipmentCalibrations(id));
+            apiGroup.MapPost("/equipments/{id}/calibrations", async (long id, [FromBody] CreateEquipmentCalibrationDto dto, IEquipmentsService s) =>
+            {
+                try { return Results.Ok(await s.AddEquipmentCalibration(id, dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
 
             // Materials
             apiGroup.MapGet("/materials", (IMaterialsService s) => s.GetAllMaterials());
