@@ -36,6 +36,15 @@ const equipmentsService = {
   async addEquipmentCalibration(equipmentId: number, dto: CreateEquipmentCalibrationDto): Promise<IdDto> {
     const response = await apiClient.post<IdDto>(`/api/equipments/${equipmentId}/calibrations`, dto);
     return response.data;
+  },
+
+  async updateEquipmentCalibration(calibrationId: number, dto: CreateEquipmentCalibrationDto): Promise<void> {
+    await apiClient.put(`/api/equipment-calibrations/${calibrationId}`, dto);
+  },
+
+  async validateUniqueness(property: string, value: string, id: number): Promise<boolean> {
+    const response = await apiClient.get<{ is_unique: boolean }>(`api/validate/unique?entity=Equipment&property=${property}&value=${encodeURIComponent(value)}&id=${id}`);
+    return response.data.is_unique;
   }
 };
 

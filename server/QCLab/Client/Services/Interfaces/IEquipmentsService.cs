@@ -10,4 +10,5 @@ public interface IEquipmentsService
     Task UpdateEquipment(long id, UpdateEquipmentDto dto);
     Task<List<EquipmentCalibrationDto>> GetEquipmentCalibrations(long equipmentId);
     Task<IdDto> AddEquipmentCalibration(long equipmentId, CreateEquipmentCalibrationDto dto);
+    Task UpdateEquipmentCalibration(long calibrationId, CreateEquipmentCalibrationDto dto);
 }

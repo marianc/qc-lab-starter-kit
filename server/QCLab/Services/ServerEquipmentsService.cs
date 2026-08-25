@@ -135,15 +135,36 @@ public class ServerEquipmentsService : IEquipmentsService
 
         _context.EquipmentCalibrations.Add(calibration);
 
-        // Update equipment NextCalibrationDue if calibration interval days is set
         equipment.NextCalibrationDue = dto.ExpirationDate;
-        if (dto.ResultStatus == "Pass" && equipment.CalibrationIntervalDays.HasValue)
-        {
-            // Next calibration due can be set by expiration date or calculation, but ExpirationDate from dto is very explicit
-        }
+        equipment.Status = "Active";
 
         await _context.SaveChangesAsync();
 
         return new() { Id = calibration.Id };
+    }
+
+    public async Task UpdateEquipmentCalibration(long calibrationId, CreateEquipmentCalibrationDto dto)
+    {
+        var calibration = await _context.EquipmentCalibrations
+            .Include(c => c.Equipment)
+            .FirstOrDefaultAsync(c => c.Id == calibrationId);
+
+        if (calibration == null) throw new ArgumentException("Equipment calibration not found");
+
+        calibration.CalibrationDate = dto.CalibrationDate;
+        calibration.ExpirationDate = dto.ExpirationDate;
+        calibration.CertificateNumber = dto.CertificateNumber;
+        calibration.CalibratedBy = dto.CalibratedBy;
+        calibration.ResultStatus = dto.ResultStatus;
+        calibration.ReferenceStandardsUsed = dto.ReferenceStandardsUsed;
+        calibration.ExpandedUncertainty = dto.ExpandedUncertainty;
+
+        if (calibration.Equipment != null)
+        {
+            calibration.Equipment.NextCalibrationDue = dto.ExpirationDate;
+            calibration.Equipment.Status = "Active";
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

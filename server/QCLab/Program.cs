@@ -388,6 +388,11 @@ namespace QCLab
                 try { return Results.Ok(await s.AddEquipmentCalibration(id, dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
             });
+            apiGroup.MapPut("/equipment-calibrations/{calibrationId}", async (long calibrationId, [FromBody] CreateEquipmentCalibrationDto dto, IEquipmentsService s) =>
+            {
+                try { await s.UpdateEquipmentCalibration(calibrationId, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
 
             // Materials
             apiGroup.MapGet("/materials", (IMaterialsService s) => s.GetAllMaterials());

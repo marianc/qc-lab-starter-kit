@@ -21,6 +21,7 @@ const EquipmentsPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<EquipmentDto | null>(null);
   const [lastEditedEquipmentId, setLastEditedEquipmentId] = useState<number | null>(null);
+  const [currentEquipment, setCurrentEquipment] = useState<EquipmentDto | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -49,14 +50,16 @@ const EquipmentsPage: React.FC = () => {
     return statusMatch && searchMatch;
   });
 
-  const handleViewDetails = (id: number) => {
-    setSelectedEquipmentId(id);
+  const handleViewDetails = (equipment: EquipmentDto) => {
+    setSelectedEquipmentId(equipment.id);
+    setCurrentEquipment(equipment);
     setIsDetailOpen(true);
   };
 
   const handleDetailClose = async (savedId?: number | null) => {
     setIsDetailOpen(false);
     setSelectedEquipmentId(null);
+    setCurrentEquipment(null);
     await fetchEquipments();
     if (savedId !== undefined && savedId !== null) {
       setLastEditedEquipmentId(savedId);
@@ -70,11 +73,15 @@ const EquipmentsPage: React.FC = () => {
       setEditingEquipment(null);
       await fetchEquipments();
       setLastEditedEquipmentId(editingEquipment.id);
-      if (isDetailOpen && selectedEquipmentId === editingEquipment.id) {
-        // Refresh details
-        setSelectedEquipmentId(null);
-        setTimeout(() => setSelectedEquipmentId(editingEquipment.id), 50);
-      }
+      
+      // Update currentEquipment optimistically without unmounting/remounting or flickering
+      const updatedEq: EquipmentDto = {
+        ...editingEquipment,
+        ...dto,
+        id: editingEquipment.id,
+        dateCreated: editingEquipment.dateCreated
+      };
+      setCurrentEquipment(updatedEq);
     } else {
       const res = await equipmentsService.createEquipment(dto);
       setShowDialog(false);
@@ -161,7 +168,7 @@ const EquipmentsPage: React.FC = () => {
                 <td style={{ fontWeight: 'bold' }}>{eq.status}</td>
                 <td>{eq.nextCalibrationDue ? formatDate(eq.nextCalibrationDue) : 'N/A'}</td>
                 <td>
-                  <button onClick={() => handleViewDetails(eq.id)} className="action-button secondary">
+                  <button onClick={() => handleViewDetails(eq)} className="action-button secondary">
                     Details
                   </button>
                 </td>
@@ -174,6 +181,7 @@ const EquipmentsPage: React.FC = () => {
       {isDetailOpen && selectedEquipmentId !== null && (
         <EquipmentDetailView 
           equipmentId={selectedEquipmentId}
+          equipmentUpdated={currentEquipment}
           onClose={handleDetailClose}
           onEdit={handleOpenEdit}
         />

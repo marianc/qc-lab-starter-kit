@@ -11,22 +11,28 @@ import EquipmentCalibrationDialog from './EquipmentCalibrationDialog';
 import equipmentsService from '@/services/equipmentsService';
 import type { EquipmentDto, EquipmentCalibrationDto, CreateEquipmentCalibrationDto } from '@/types/equipment';
 import { formatDate } from '@/lib/utils';
+import styles from './EquipmentDetailView.module.css';
 
 interface Props {
   equipmentId: number;
   onClose: (savedId?: number | null) => void;
   onEdit: (equipment: EquipmentDto) => void;
   breadcrumbs?: string[];
+  equipmentUpdated?: EquipmentDto | null;
 }
 
-const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, breadcrumbs = [] }) => {
-  const [equipment, setEquipment] = useState<EquipmentDto | null>(null);
+const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, breadcrumbs = [], equipmentUpdated }) => {
+  const [equipment, setEquipment] = useState<EquipmentDto | null>(equipmentUpdated || null);
   const [calibrations, setCalibrations] = useState<EquipmentCalibrationDto[]>([]);
   const [showCalibrationDialog, setShowCalibrationDialog] = useState(false);
+  const [editingCalibration, setEditingCalibration] = useState<EquipmentCalibrationDto | null>(null);
 
   useEffect(() => {
+    if (equipmentUpdated) {
+      setEquipment(equipmentUpdated);
+    }
     loadData();
-  }, [equipmentId]);
+  }, [equipmentId, equipmentUpdated]);
 
   const loadData = async () => {
     try {
@@ -41,15 +47,29 @@ const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, br
     }
   };
 
-  const handleAddCalibration = async (dto: CreateEquipmentCalibrationDto) => {
+  const handleSaveCalibration = async (dto: CreateEquipmentCalibrationDto) => {
     try {
-      await equipmentsService.addEquipmentCalibration(equipmentId, dto);
+      if (editingCalibration) {
+        await equipmentsService.updateEquipmentCalibration(editingCalibration.id, dto);
+      } else {
+        await equipmentsService.addEquipmentCalibration(equipmentId, dto);
+      }
       setShowCalibrationDialog(false);
+      setEditingCalibration(null);
       await loadData();
-      onClose(equipmentId);
     } catch (err) {
-      console.error('Failed to add equipment calibration', err);
+      console.error('Failed to save equipment calibration', err);
     }
+  };
+
+  const handleOpenAddCalibration = () => {
+    setEditingCalibration(null);
+    setShowCalibrationDialog(true);
+  };
+
+  const handleOpenEditCalibration = (calibration: EquipmentCalibrationDto) => {
+    setEditingCalibration(calibration);
+    setShowCalibrationDialog(true);
   };
 
   if (!equipment) return null;
@@ -58,17 +78,11 @@ const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, br
     <DetailView>
       <DetailViewHeader 
         title={`${equipment.equipmentCode} - ${equipment.name}`}
-        onBack={() => onClose()}
+        onBack={() => onClose(equipmentId)}
         breadcrumbs={['Equipment', equipment.equipmentCode]}
       />
       
       <DetailViewContent>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <button onClick={() => onEdit(equipment)} className="action-button primary" style={{ marginRight: '0.5rem' }}>
-            Edit Equipment
-          </button>
-        </div>
-
         <DetailContainer>
           <DetailColumn>
             <DetailItem label="Equipment Code" value={equipment.equipmentCode} />
@@ -85,55 +99,70 @@ const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, br
           </DetailColumn>
         </DetailContainer>
 
-        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Equipment Calibrations</h3>
-          <button onClick={() => setShowCalibrationDialog(true)} className="action-button primary">
+        <div className={styles.actionSection}>
+          <button onClick={() => onEdit(equipment)} className="action-button primary">
+            Edit Equipment
+          </button>
+        </div>
+
+        <div className={styles.calibrationsHeaderSection}>
+          <h3 className={styles.calibrationsTitle}>Equipment Calibrations</h3>
+          <button onClick={handleOpenAddCalibration} className="action-button primary">
             Add Calibration
           </button>
         </div>
 
-        <table className="data-table" style={{ marginTop: '1rem' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Calibration Date</th>
-              <th>Expiration Date</th>
-              <th>Certificate No.</th>
-              <th>Calibrated By</th>
-              <th>Status</th>
-              <th>Ref. Standards</th>
-              <th>Uncertainty</th>
-            </tr>
-          </thead>
-          <tbody>
-            {calibrations.length === 0 ? (
+        <div className={styles.tableContainer}>
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center' }}>No calibrations recorded.</td>
+                <th>ID</th>
+                <th>Calibration Date</th>
+                <th>Expiration Date</th>
+                <th>Certificate No.</th>
+                <th>Calibrated By</th>
+                <th>Status</th>
+                <th>Ref. Standards</th>
+                <th>Uncertainty</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              calibrations.map(cal => (
-                <tr key={cal.id}>
-                  <td>{cal.id}</td>
-                  <td>{formatDate(cal.calibrationDate)}</td>
-                  <td>{formatDate(cal.expirationDate)}</td>
-                  <td>{cal.certificateNumber}</td>
-                  <td>{cal.calibratedBy}</td>
-                  <td style={{ color: cal.resultStatus === 'Pass' ? 'green' : 'red', fontWeight: 'bold' }}>
-                    {cal.resultStatus}
-                  </td>
-                  <td>{cal.referenceStandardsUsed || 'N/A'}</td>
-                  <td>{cal.expandedUncertainty !== null && cal.expandedUncertainty !== undefined ? cal.expandedUncertainty : 'N/A'}</td>
+            </thead>
+            <tbody>
+              {calibrations.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className={styles.textCenter}>No calibrations recorded.</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                calibrations.map(cal => (
+                  <tr key={cal.id}>
+                    <td>{cal.id}</td>
+                    <td>{formatDate(cal.calibrationDate)}</td>
+                    <td>{formatDate(cal.expirationDate)}</td>
+                    <td>{cal.certificateNumber}</td>
+                    <td>{cal.calibratedBy}</td>
+                    <td className={cal.resultStatus === 'Pass' ? styles.statusPass : styles.statusFail}>
+                      {cal.resultStatus}
+                    </td>
+                    <td>{cal.referenceStandardsUsed || 'N/A'}</td>
+                    <td>{cal.expandedUncertainty !== null && cal.expandedUncertainty !== undefined ? cal.expandedUncertainty : 'N/A'}</td>
+                    <td>
+                      <button onClick={() => handleOpenEditCalibration(cal)} className="action-button secondary">
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </DetailViewContent>
 
       <EquipmentCalibrationDialog 
         open={showCalibrationDialog}
-        onSave={handleAddCalibration}
-        onClose={() => setShowCalibrationDialog(false)}
+        calibration={editingCalibration}
+        onSave={handleSaveCalibration}
+        onClose={() => { setShowCalibrationDialog(false); setEditingCalibration(null); }}
       />
     </DetailView>
   );

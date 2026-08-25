@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,8 +9,10 @@ import {
   DialogFooter 
 } from '@/components/common/ui';
 import type { EquipmentDto, CreateEquipmentDto } from '@/types/equipment';
+import equipmentsService from '@/services/equipmentsService';
 
 const equipmentSchema = z.object({
+  id: z.number().optional(),
   equipmentCode: z.string().min(2, 'Code must be at least 2 characters').max(20, 'Code must be at most 20 characters'),
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters'),
   manufacturer: z.string().max(100).nullable().optional(),
@@ -31,9 +33,21 @@ interface Props {
 }
 
 const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const [error, setError] = useState<string | null>(null);
+
+  const { 
+    register, 
+    handleSubmit, 
+    reset, 
+    getValues,
+    setError: setFormFieldError,
+    clearErrors,
+    formState: { errors } 
+  } = useForm<FormData>({
     resolver: zodResolver(equipmentSchema),
+    mode: 'onBlur',
     defaultValues: {
+      id: equipment?.id || 0,
       equipmentCode: equipment?.equipmentCode || '',
       name: equipment?.name || '',
       manufacturer: equipment?.manufacturer || '',
@@ -47,7 +61,9 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
 
   React.useEffect(() => {
     if (open) {
+      setError(null);
       reset({
+        id: equipment?.id || 0,
         equipmentCode: equipment?.equipmentCode || '',
         name: equipment?.name || '',
         manufacturer: equipment?.manufacturer || '',
@@ -60,17 +76,45 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
     }
   }, [open, equipment, reset]);
 
-  const onSubmit = (data: FormData) => {
-    onSave({
-      equipmentCode: data.equipmentCode,
-      name: data.name,
-      manufacturer: data.manufacturer || null,
-      model: data.model || null,
-      serialNumber: data.serialNumber,
-      location: data.location || null,
-      status: data.status,
-      calibrationIntervalDays: data.calibrationIntervalDays ? Number(data.calibrationIntervalDays) : null
-    });
+  const validateCodeUniqueness = async (): Promise<boolean> => {
+    const code = getValues('equipmentCode');
+    const id = getValues('id') || 0;
+    if (!code || code.length < 2) return true;
+
+    try {
+      const isUnique = await equipmentsService.validateUniqueness('EquipmentCode', code, id);
+      if (!isUnique) {
+        setFormFieldError('equipmentCode', { type: 'manual', message: 'Equipment code is already in use.' });
+        return false;
+      } else {
+        clearErrors('equipmentCode');
+        return true;
+      }
+    } catch (err) {
+      console.error('Uniqueness check failed:', err);
+      return true;
+    }
+  };
+
+  const onSubmit = async (data: FormData) => {
+    setError(null);
+    try {
+      const isUnique = await validateCodeUniqueness();
+      if (!isUnique) return;
+
+      onSave({
+        equipmentCode: data.equipmentCode,
+        name: data.name,
+        manufacturer: data.manufacturer || null,
+        model: data.model || null,
+        serialNumber: data.serialNumber,
+        location: data.location || null,
+        status: data.status,
+        calibrationIntervalDays: data.calibrationIntervalDays ? Number(data.calibrationIntervalDays) : null
+      });
+    } catch (err: any) {
+      setError(err.response?.data?.msg || err.message || 'An error occurred while saving.');
+    }
   };
 
   if (!open) return null;
@@ -81,6 +125,7 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
         {equipment ? 'Edit Equipment' : 'Add New Equipment'}
       </DialogHeader>
       <DialogContent>
+        {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
         <form id="equipment-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="form-group">
             <label htmlFor="equipmentCode">Equipment Code</label>
@@ -88,7 +133,11 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
               id="equipmentCode" 
               type="text" 
               className={`form-control ${errors.equipmentCode ? 'invalid' : ''}`}
-              {...register('equipmentCode')} 
+              {...register('equipmentCode', {
+                onBlur: async () => {
+                  await validateCodeUniqueness();
+                }
+              })} 
             />
             {errors.equipmentCode && <div className="validation-message">{errors.equipmentCode.message}</div>}
           </div>

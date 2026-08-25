@@ -8,7 +8,7 @@ import {
   DialogContent, 
   DialogFooter 
 } from '@/components/common/ui';
-import type { CreateEquipmentCalibrationDto } from '@/types/equipment';
+import type { EquipmentCalibrationDto, CreateEquipmentCalibrationDto } from '@/types/equipment';
 
 const calibrationSchema = z.object({
   calibrationDate: z.string().min(1, 'Calibration date is required'),
@@ -24,37 +24,38 @@ type FormData = z.infer<typeof calibrationSchema>;
 
 interface Props {
   open: boolean;
+  calibration?: EquipmentCalibrationDto | null;
   onSave: (data: CreateEquipmentCalibrationDto) => void;
   onClose: () => void;
 }
 
-const EquipmentCalibrationDialog: React.FC<Props> = ({ open, onSave, onClose }) => {
+const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave, onClose }) => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(calibrationSchema),
     defaultValues: {
-      calibrationDate: new Date().toISOString().split('T')[0],
-      expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      certificateNumber: '',
-      calibratedBy: '',
-      resultStatus: 'Pass',
-      referenceStandardsUsed: '',
-      expandedUncertainty: null
+      calibrationDate: calibration?.calibrationDate || new Date().toISOString().split('T')[0],
+      expirationDate: calibration?.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      certificateNumber: calibration?.certificateNumber || '',
+      calibratedBy: calibration?.calibratedBy || '',
+      resultStatus: calibration?.resultStatus || 'Pass',
+      referenceStandardsUsed: calibration?.referenceStandardsUsed || '',
+      expandedUncertainty: calibration?.expandedUncertainty !== null && calibration?.expandedUncertainty !== undefined ? calibration.expandedUncertainty : null
     }
   });
 
   React.useEffect(() => {
     if (open) {
       reset({
-        calibrationDate: new Date().toISOString().split('T')[0],
-        expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        certificateNumber: '',
-        calibratedBy: '',
-        resultStatus: 'Pass',
-        referenceStandardsUsed: '',
-        expandedUncertainty: null
+        calibrationDate: calibration?.calibrationDate || new Date().toISOString().split('T')[0],
+        expirationDate: calibration?.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        certificateNumber: calibration?.certificateNumber || '',
+        calibratedBy: calibration?.calibratedBy || '',
+        resultStatus: calibration?.resultStatus || 'Pass',
+        referenceStandardsUsed: calibration?.referenceStandardsUsed || '',
+        expandedUncertainty: calibration?.expandedUncertainty !== null && calibration?.expandedUncertainty !== undefined ? calibration.expandedUncertainty : null
       });
     }
-  }, [open, reset]);
+  }, [open, calibration, reset]);
 
   const onSubmit = (data: FormData) => {
     onSave({
@@ -72,7 +73,7 @@ const EquipmentCalibrationDialog: React.FC<Props> = ({ open, onSave, onClose }) 
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogHeader>Add Equipment Calibration</DialogHeader>
+      <DialogHeader>{calibration ? 'Edit Equipment Calibration' : 'Add Equipment Calibration'}</DialogHeader>
       <DialogContent>
         <form id="calibration-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="form-group">
