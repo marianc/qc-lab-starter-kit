@@ -38,4 +38,6 @@ public partial class Measurement
     public virtual User? UserReported { get; set; }
 
     public virtual User UserUpdate { get; set; } = null!;
+
+    public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
 }

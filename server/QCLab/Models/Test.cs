@@ -67,6 +67,8 @@ public partial class Test
 
     public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
 
+    public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
+
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
     public virtual ICollection<Reception> Receptions { get; set; } = new List<Reception>();

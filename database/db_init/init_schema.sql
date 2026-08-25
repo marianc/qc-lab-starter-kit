@@ -320,6 +320,75 @@ ALTER TABLE public.electronic_signatures ALTER COLUMN id ADD GENERATED ALWAYS AS
 
 
 --
+-- Name: equipment_calibrations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.equipment_calibrations (
+    id bigint NOT NULL,
+    equipment_id bigint NOT NULL,
+    calibration_date date NOT NULL,
+    expiration_date date NOT NULL,
+    certificate_number character varying(100) NOT NULL,
+    calibrated_by character varying(100) NOT NULL,
+    result_status character varying(20) NOT NULL,
+    reference_standards_used text,
+    expanded_uncertainty numeric,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+ALTER TABLE public.equipment_calibrations OWNER TO postgres;
+
+--
+-- Name: equipment_calibrations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.equipment_calibrations ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.equipment_calibrations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: equipments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.equipments (
+    id bigint NOT NULL,
+    equipment_code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    manufacturer character varying(100),
+    model character varying(100),
+    serial_number character varying(100) NOT NULL,
+    location character varying(100),
+    status character varying(20) DEFAULT 'Active'::character varying NOT NULL,
+    calibration_interval_days integer DEFAULT 365,
+    next_calibration_due date,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+ALTER TABLE public.equipments OWNER TO postgres;
+
+--
+-- Name: equipment_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.equipments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.equipment_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: form_condition_evals; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -567,6 +636,18 @@ ALTER TABLE public.measurements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
     CACHE 1
 );
 
+
+--
+-- Name: measurement_equipments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.measurement_equipments (
+    measurement_id bigint NOT NULL,
+    equipment_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.measurement_equipments OWNER TO postgres;
 
 --
 -- Name: measurement_params; Type: TABLE; Schema: public; Owner: postgres
@@ -857,6 +938,18 @@ CREATE TABLE public.test_enums (
 ALTER TABLE public.test_enums OWNER TO postgres;
 
 --
+-- Name: test_equipments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.test_equipments (
+    test_id bigint NOT NULL,
+    equipment_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.test_equipments OWNER TO postgres;
+
+--
 -- Name: tests; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1069,6 +1162,30 @@ ALTER TABLE ONLY public.electronic_signatures
 
 
 --
+-- Name: equipment_calibrations equipment_calibrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_calibrations
+    ADD CONSTRAINT equipment_calibrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: equipments equipment_equipment_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipment_equipment_code_key UNIQUE (equipment_code);
+
+
+--
+-- Name: equipments equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipment_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: form_condition_evals form_condition_evals_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1146,6 +1263,14 @@ ALTER TABLE ONLY public.materials
 
 ALTER TABLE ONLY public.materials
     ADD CONSTRAINT materials_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_pkey PRIMARY KEY (measurement_id, equipment_id);
 
 
 --
@@ -1269,6 +1394,14 @@ ALTER TABLE ONLY public.test_enums
 
 
 --
+-- Name: test_equipments test_equipments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_pkey PRIMARY KEY (test_id, equipment_id);
+
+
+--
 -- Name: tests tests_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1354,22 +1487,6 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.value_types
     ADD CONSTRAINT value_types_pkey PRIMARY KEY (id);
-
-
---
--- Name: audit_logs audit_logs_no_delete; Type: RULE; Schema: public; Owner: postgres
---
-
-CREATE RULE audit_logs_no_delete AS
-    ON DELETE TO public.audit_logs DO INSTEAD NOTHING;
-
-
---
--- Name: audit_logs audit_logs_no_update; Type: RULE; Schema: public; Owner: postgres
---
-
-CREATE RULE audit_logs_no_update AS
-    ON UPDATE TO public.audit_logs DO INSTEAD NOTHING;
 
 
 --
@@ -1514,6 +1631,14 @@ ALTER TABLE ONLY public.electronic_signatures
 
 
 --
+-- Name: equipment_calibrations equipment_calibrations_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_calibrations
+    ADD CONSTRAINT equipment_calibrations_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id);
+
+
+--
 -- Name: form_condition_evals form_condition_evals_form_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1647,6 +1772,22 @@ ALTER TABLE ONLY public.material_tests
 
 ALTER TABLE ONLY public.materials
     ADD CONSTRAINT materials_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
 
 
 --
@@ -1927,6 +2068,22 @@ ALTER TABLE ONLY public.specs
 
 ALTER TABLE ONLY public.test_enums
     ADD CONSTRAINT test_enums_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id);
+
+
+--
+-- Name: test_equipments test_equipments_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id) NOT VALID;
+
+
+--
+-- Name: test_equipments test_equipments_test_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) NOT VALID;
 
 
 --

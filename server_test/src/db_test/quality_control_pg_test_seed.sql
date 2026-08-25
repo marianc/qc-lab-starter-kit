@@ -19,6 +19,8 @@ SET row_security = off;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_value_type_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_unit_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_norm_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_test_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_equipment_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.specs DROP CONSTRAINT IF EXISTS specs_user_submitted_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.specs DROP CONSTRAINT IF EXISTS specs_user_cancelled_id_fkey;
@@ -54,6 +56,8 @@ ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS m
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_measurement_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_form_id_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_form_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_equipments DROP CONSTRAINT IF EXISTS measurement_equipments_measurement_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_equipments DROP CONSTRAINT IF EXISTS measurement_equipments_equipment_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_norm_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.material_tests DROP CONSTRAINT IF EXISTS material_tests_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.material_tests DROP CONSTRAINT IF EXISTS material_tests_material_id_fkey;
@@ -71,6 +75,7 @@ ALTER TABLE IF EXISTS ONLY public.form_eval_params DROP CONSTRAINT IF EXISTS for
 ALTER TABLE IF EXISTS ONLY public.form_condition_evals DROP CONSTRAINT IF EXISTS form_condition_evals_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.form_condition_evals DROP CONSTRAINT IF EXISTS form_condition_evals_form_id_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.form_condition_evals DROP CONSTRAINT IF EXISTS form_condition_evals_form_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.equipment_calibrations DROP CONSTRAINT IF EXISTS equipment_calibrations_equipment_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.electronic_signatures DROP CONSTRAINT IF EXISTS electronic_signatures_signer_user_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.control_codes DROP CONSTRAINT IF EXISTS control_codes_material_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.certificates DROP CONSTRAINT IF EXISTS certificates_user_submitted_id_fkey;
@@ -89,8 +94,6 @@ ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_log
 DROP TRIGGER IF EXISTS audit_measurements_trigger ON public.measurements;
 DROP TRIGGER IF EXISTS audit_measurement_tests_trigger ON public.measurement_tests;
 DROP TRIGGER IF EXISTS audit_measurement_params_trigger ON public.measurement_params;
-DROP RULE IF EXISTS audit_logs_no_update ON public.audit_logs;
-DROP RULE IF EXISTS audit_logs_no_delete ON public.audit_logs;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tag_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_session_id_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
@@ -101,6 +104,7 @@ ALTER TABLE IF EXISTS ONLY public.units DROP CONSTRAINT IF EXISTS units_name_key
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_name_key;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_code_key;
+ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_pkey;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_test_id_name_key;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_pkey;
 ALTER TABLE IF EXISTS ONLY public.specs DROP CONSTRAINT IF EXISTS specs_pkey;
@@ -116,6 +120,7 @@ ALTER TABLE IF EXISTS ONLY public.norms DROP CONSTRAINT IF EXISTS norms_name_key
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_pkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_equipments DROP CONSTRAINT IF EXISTS measurement_equipments_pkey;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_pkey;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_name_key;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_code_key;
@@ -127,6 +132,9 @@ ALTER TABLE IF EXISTS ONLY public.form_groups DROP CONSTRAINT IF EXISTS form_gro
 ALTER TABLE IF EXISTS ONLY public.form_evals DROP CONSTRAINT IF EXISTS form_evals_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_eval_params DROP CONSTRAINT IF EXISTS form_eval_params_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_condition_evals DROP CONSTRAINT IF EXISTS form_condition_evals_pkey;
+ALTER TABLE IF EXISTS ONLY public.equipments DROP CONSTRAINT IF EXISTS equipment_pkey;
+ALTER TABLE IF EXISTS ONLY public.equipments DROP CONSTRAINT IF EXISTS equipment_equipment_code_key;
+ALTER TABLE IF EXISTS ONLY public.equipment_calibrations DROP CONSTRAINT IF EXISTS equipment_calibrations_pkey;
 ALTER TABLE IF EXISTS ONLY public.electronic_signatures DROP CONSTRAINT IF EXISTS electronic_signatures_pkey;
 ALTER TABLE IF EXISTS ONLY public.control_codes DROP CONSTRAINT IF EXISTS control_codes_pkey;
 ALTER TABLE IF EXISTS ONLY public.certificates DROP CONSTRAINT IF EXISTS certificates_pkey;
@@ -140,6 +148,7 @@ DROP TABLE IF EXISTS public.value_types;
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.units;
 DROP TABLE IF EXISTS public.tests;
+DROP TABLE IF EXISTS public.test_equipments;
 DROP TABLE IF EXISTS public.test_enums;
 DROP TABLE IF EXISTS public.spec_tests;
 DROP TABLE IF EXISTS public.spec_test_evals;
@@ -152,6 +161,7 @@ DROP TABLE IF EXISTS public.reception_tests;
 DROP TABLE IF EXISTS public.norms;
 DROP TABLE IF EXISTS public.measurement_tests;
 DROP TABLE IF EXISTS public.measurement_params;
+DROP TABLE IF EXISTS public.measurement_equipments;
 DROP TABLE IF EXISTS public.measurements;
 DROP TABLE IF EXISTS public.materials;
 DROP TABLE IF EXISTS public.material_tests;
@@ -161,6 +171,8 @@ DROP TABLE IF EXISTS public.form_groups;
 DROP TABLE IF EXISTS public.form_evals;
 DROP TABLE IF EXISTS public.form_eval_params;
 DROP TABLE IF EXISTS public.form_condition_evals;
+DROP TABLE IF EXISTS public.equipments;
+DROP TABLE IF EXISTS public.equipment_calibrations;
 DROP TABLE IF EXISTS public.electronic_signatures;
 DROP TABLE IF EXISTS public.control_codes;
 DROP TABLE IF EXISTS public.certificates;
@@ -457,6 +469,71 @@ ALTER TABLE public.electronic_signatures ALTER COLUMN id ADD GENERATED ALWAYS AS
 
 
 --
+-- Name: equipment_calibrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.equipment_calibrations (
+    id bigint NOT NULL,
+    equipment_id bigint NOT NULL,
+    calibration_date date NOT NULL,
+    expiration_date date NOT NULL,
+    certificate_number character varying(100) NOT NULL,
+    calibrated_by character varying(100) NOT NULL,
+    result_status character varying(20) NOT NULL,
+    reference_standards_used text,
+    expanded_uncertainty numeric,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+--
+-- Name: equipment_calibrations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.equipment_calibrations ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.equipment_calibrations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: equipments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.equipments (
+    id bigint NOT NULL,
+    equipment_code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    manufacturer character varying(100),
+    model character varying(100),
+    serial_number character varying(100) NOT NULL,
+    location character varying(100),
+    status character varying(20) DEFAULT 'Active'::character varying NOT NULL,
+    calibration_interval_days integer DEFAULT 365,
+    next_calibration_due date,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+--
+-- Name: equipment_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.equipments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.equipment_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: form_condition_evals; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -684,6 +761,16 @@ ALTER TABLE public.measurements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+
+--
+-- Name: measurement_equipments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.measurement_equipments (
+    measurement_id bigint NOT NULL,
+    equipment_id bigint NOT NULL
 );
 
 
@@ -948,6 +1035,16 @@ CREATE TABLE public.test_enums (
     name character varying(50) NOT NULL,
     nr_ord bigint DEFAULT 0 NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: test_equipments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.test_equipments (
+    test_id bigint NOT NULL,
+    equipment_id bigint NOT NULL
 );
 
 
@@ -1231,6 +1328,18 @@ INSERT INTO public.control_codes (id, material_id, code, is_reception_received) 
 
 --
 -- Data for Name: electronic_signatures; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: equipment_calibrations; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: equipments; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 
@@ -1572,6 +1681,12 @@ INSERT INTO public.materials (id, name, code, description, norm_id, is_product, 
 INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (19, 'Material S', 'MS', 'Description for Material S', 2, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
 INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (20, 'Material T', 'MT', 'Description for Material T', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
 INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (21, 'Finished Product A', 'FPA', 'A product made from various materials', 3, true, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+
+
+--
+-- Data for Name: measurement_equipments; Type: TABLE DATA; Schema: public; Owner: -
+--
+
 
 
 --
@@ -2187,6 +2302,12 @@ INSERT INTO public.test_enums (test_id, value, name, nr_ord, is_obsolete) VALUES
 
 
 --
+-- Data for Name: test_equipments; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: tests; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2299,6 +2420,20 @@ SELECT pg_catalog.setval('public.certification_headers_id_seq', 9, false);
 --
 
 SELECT pg_catalog.setval('public.electronic_signatures_id_seq', 1, false);
+
+
+--
+-- Name: equipment_calibrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.equipment_calibrations_id_seq', 1, false);
+
+
+--
+-- Name: equipment_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.equipment_id_seq', 1, false);
 
 
 --
@@ -2486,6 +2621,30 @@ ALTER TABLE ONLY public.electronic_signatures
 
 
 --
+-- Name: equipment_calibrations equipment_calibrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.equipment_calibrations
+    ADD CONSTRAINT equipment_calibrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: equipments equipment_equipment_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipment_equipment_code_key UNIQUE (equipment_code);
+
+
+--
+-- Name: equipments equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipment_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: form_condition_evals form_condition_evals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2571,6 +2730,14 @@ ALTER TABLE ONLY public.materials
 
 ALTER TABLE ONLY public.materials
     ADD CONSTRAINT materials_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_pkey PRIMARY KEY (measurement_id, equipment_id);
 
 
 --
@@ -2694,6 +2861,14 @@ ALTER TABLE ONLY public.test_enums
 
 
 --
+-- Name: test_equipments test_equipments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_pkey PRIMARY KEY (test_id, equipment_id);
+
+
+--
 -- Name: tests tests_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2771,22 +2946,6 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_tag_key UNIQUE (tag);
-
-
---
--- Name: audit_logs audit_logs_no_delete; Type: RULE; Schema: public; Owner: -
---
-
-CREATE RULE audit_logs_no_delete AS
-    ON DELETE TO public.audit_logs DO INSTEAD NOTHING;
-
-
---
--- Name: audit_logs audit_logs_no_update; Type: RULE; Schema: public; Owner: -
---
-
-CREATE RULE audit_logs_no_update AS
-    ON UPDATE TO public.audit_logs DO INSTEAD NOTHING;
 
 
 --
@@ -2931,6 +3090,14 @@ ALTER TABLE ONLY public.electronic_signatures
 
 
 --
+-- Name: equipment_calibrations equipment_calibrations_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.equipment_calibrations
+    ADD CONSTRAINT equipment_calibrations_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id);
+
+
+--
 -- Name: form_condition_evals form_condition_evals_form_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3064,6 +3231,22 @@ ALTER TABLE ONLY public.material_tests
 
 ALTER TABLE ONLY public.materials
     ADD CONSTRAINT materials_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id);
+
+
+--
+-- Name: measurement_equipments measurement_equipments_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_equipments
+    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
 
 
 --
@@ -3344,6 +3527,22 @@ ALTER TABLE ONLY public.specs
 
 ALTER TABLE ONLY public.test_enums
     ADD CONSTRAINT test_enums_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id);
+
+
+--
+-- Name: test_equipments test_equipments_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id) NOT VALID;
+
+
+--
+-- Name: test_equipments test_equipments_test_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_equipments
+    ADD CONSTRAINT test_equipments_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) NOT VALID;
 
 
 --

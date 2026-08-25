@@ -27,6 +27,10 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<ElectronicSignature> ElectronicSignatures { get; set; }
 
+    public virtual DbSet<Equipment> Equipments { get; set; }
+
+    public virtual DbSet<EquipmentCalibration> EquipmentCalibrations { get; set; }
+
     public virtual DbSet<Form> Forms { get; set; }
 
     public virtual DbSet<FormConditionEval> FormConditionEvals { get; set; }
@@ -310,6 +314,81 @@ public partial class QualityControlContext : DbContext
                 .HasConstraintName("electronic_signatures_signer_user_id_fkey");
         });
 
+        modelBuilder.Entity<Equipment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("equipment_pkey");
+
+            entity.ToTable("equipments");
+
+            entity.HasIndex(e => e.EquipmentCode, "equipment_equipment_code_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.CalibrationIntervalDays)
+                .HasDefaultValue(365)
+                .HasColumnName("calibration_interval_days");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
+            entity.Property(e => e.EquipmentCode)
+                .HasMaxLength(50)
+                .HasColumnName("equipment_code");
+            entity.Property(e => e.Location)
+                .HasMaxLength(100)
+                .HasColumnName("location");
+            entity.Property(e => e.Manufacturer)
+                .HasMaxLength(100)
+                .HasColumnName("manufacturer");
+            entity.Property(e => e.Model)
+                .HasMaxLength(100)
+                .HasColumnName("model");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+            entity.Property(e => e.NextCalibrationDue).HasColumnName("next_calibration_due");
+            entity.Property(e => e.SerialNumber)
+                .HasMaxLength(100)
+                .HasColumnName("serial_number");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'Active'::character varying")
+                .HasColumnName("status");
+        });
+
+        modelBuilder.Entity<EquipmentCalibration>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("equipment_calibrations_pkey");
+
+            entity.ToTable("equipment_calibrations");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.CalibratedBy)
+                .HasMaxLength(100)
+                .HasColumnName("calibrated_by");
+            entity.Property(e => e.CalibrationDate).HasColumnName("calibration_date");
+            entity.Property(e => e.CertificateNumber)
+                .HasMaxLength(100)
+                .HasColumnName("certificate_number");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
+            entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
+            entity.Property(e => e.ExpandedUncertainty).HasColumnName("expanded_uncertainty");
+            entity.Property(e => e.ExpirationDate).HasColumnName("expiration_date");
+            entity.Property(e => e.ReferenceStandardsUsed).HasColumnName("reference_standards_used");
+            entity.Property(e => e.ResultStatus)
+                .HasMaxLength(20)
+                .HasColumnName("result_status");
+
+            entity.HasOne(d => d.Equipment).WithMany(p => p.EquipmentCalibrations)
+                .HasForeignKey(d => d.EquipmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("equipment_calibrations_equipment_id_fkey");
+        });
+
         modelBuilder.Entity<Form>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("forms_pkey");
@@ -585,6 +664,25 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.UserUpdateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurements_user_update_id_fkey");
+
+            entity.HasMany(d => d.Equipment).WithMany(p => p.Measurements)
+                .UsingEntity<Dictionary<string, object>>(
+                    "MeasurementEquipment",
+                    r => r.HasOne<Equipment>().WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("measurement_equipments_equipment_id_fkey"),
+                    l => l.HasOne<Measurement>().WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("measurement_equipments_measurement_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("MeasurementId", "EquipmentId").HasName("measurement_equipments_pkey");
+                        j.ToTable("measurement_equipments");
+                        j.IndexerProperty<long>("MeasurementId").HasColumnName("measurement_id");
+                        j.IndexerProperty<long>("EquipmentId").HasColumnName("equipment_id");
+                    });
         });
 
         modelBuilder.Entity<MeasurementParam>(entity =>
@@ -968,6 +1066,25 @@ public partial class QualityControlContext : DbContext
             entity.HasOne(d => d.Unit).WithMany(p => p.Tests)
                 .HasForeignKey(d => d.UnitId)
                 .HasConstraintName("tests_unit_id_fkey");
+
+            entity.HasMany(d => d.Equipment).WithMany(p => p.Tests)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TestEquipment",
+                    r => r.HasOne<Equipment>().WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("test_equipments_equipment_id_fkey"),
+                    l => l.HasOne<Test>().WithMany()
+                        .HasForeignKey("TestId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("test_equipments_test_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("TestId", "EquipmentId").HasName("test_equipments_pkey");
+                        j.ToTable("test_equipments");
+                        j.IndexerProperty<long>("TestId").HasColumnName("test_id");
+                        j.IndexerProperty<long>("EquipmentId").HasColumnName("equipment_id");
+                    });
         });
 
         modelBuilder.Entity<TestEnum>(entity =>

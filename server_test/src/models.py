@@ -2,7 +2,7 @@ from typing import Optional
 import datetime
 import decimal
 
-from sqlalchemy import ARRAY, BigInteger, Boolean, Column, DateTime, ForeignKeyConstraint, Identity, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
+from sqlalchemy import ARRAY, BigInteger, Boolean, Column, Date, DateTime, ForeignKeyConstraint, Identity, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -29,6 +29,30 @@ class Categories(Base):
 
     test: Mapped[list['Tests']] = relationship('Tests', secondary='category_tests', back_populates='category')
     receptions: Mapped[list['Receptions']] = relationship('Receptions', back_populates='category')
+
+
+class Equipments(Base):
+    __tablename__ = 'equipments'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='equipment_pkey'),
+        UniqueConstraint('equipment_code', name='equipment_equipment_code_key')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    equipment_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    serial_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'Active'::character varying"))
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    manufacturer: Mapped[Optional[str]] = mapped_column(String(100))
+    model: Mapped[Optional[str]] = mapped_column(String(100))
+    location: Mapped[Optional[str]] = mapped_column(String(100))
+    calibration_interval_days: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('365'))
+    next_calibration_due: Mapped[Optional[datetime.date]] = mapped_column(Date)
+
+    test: Mapped[list['Tests']] = relationship('Tests', secondary='test_equipments', back_populates='equipment')
+    measurement: Mapped[list['Measurements']] = relationship('Measurements', secondary='measurement_equipments', back_populates='equipment')
+    equipment_calibrations: Mapped[list['EquipmentCalibrations']] = relationship('EquipmentCalibrations', back_populates='equipment')
 
 
 class FormGroups(Base):
@@ -196,6 +220,27 @@ class ElectronicSignatures(Base):
     signer_user: Mapped['Users'] = relationship('Users', back_populates='electronic_signatures')
 
 
+class EquipmentCalibrations(Base):
+    __tablename__ = 'equipment_calibrations'
+    __table_args__ = (
+        ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='equipment_calibrations_equipment_id_fkey'),
+        PrimaryKeyConstraint('id', name='equipment_calibrations_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    equipment_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    calibration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    expiration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    certificate_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    calibrated_by: Mapped[str] = mapped_column(String(100), nullable=False)
+    result_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    reference_standards_used: Mapped[Optional[str]] = mapped_column(Text)
+    expanded_uncertainty: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+
+    equipment: Mapped['Equipments'] = relationship('Equipments', back_populates='equipment_calibrations')
+
+
 class Forms(Base):
     __tablename__ = 'forms'
     __table_args__ = (
@@ -293,6 +338,7 @@ class Tests(Base):
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
     category: Mapped[list['Categories']] = relationship('Categories', secondary='category_tests', back_populates='test')
+    equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='test_equipments', back_populates='test')
     material: Mapped[list['Materials']] = relationship('Materials', secondary='material_tests', back_populates='test')
     norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='tests')
     type: Mapped['ValueTypes'] = relationship('ValueTypes', back_populates='tests')
@@ -438,6 +484,16 @@ class TestEnums(Base):
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
 
     test: Mapped['Tests'] = relationship('Tests', back_populates='test_enums')
+
+
+t_test_equipments = Table(
+    'test_equipments', Base.metadata,
+    Column('test_id', BigInteger, primary_key=True),
+    Column('equipment_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='test_equipments_equipment_id_fkey'),
+    ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_equipments_test_id_fkey'),
+    PrimaryKeyConstraint('test_id', 'equipment_id', name='test_equipments_pkey')
+)
 
 
 class Certificates(Base):
@@ -601,6 +657,7 @@ class Measurements(Base):
     comments: Mapped[Optional[str]] = mapped_column(Text)
     user_reported_id: Mapped[Optional[int]] = mapped_column(BigInteger)
 
+    equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='measurement_equipments', back_populates='measurement')
     form: Mapped[Optional['Forms']] = relationship('Forms', back_populates='measurements')
     reception: Mapped['Receptions'] = relationship('Receptions', back_populates='measurements')
     user_reported: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_reported_id], back_populates='measurements_user_reported')
@@ -673,6 +730,16 @@ class SpecTestEvals(Base):
     spec_tests: Mapped['SpecTests'] = relationship('SpecTests', back_populates='spec_test_evals')
     spec: Mapped['Specs'] = relationship('Specs', back_populates='spec_test_evals')
     test: Mapped['Tests'] = relationship('Tests', back_populates='spec_test_evals')
+
+
+t_measurement_equipments = Table(
+    'measurement_equipments', Base.metadata,
+    Column('measurement_id', BigInteger, primary_key=True),
+    Column('equipment_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='measurement_equipments_equipment_id_fkey'),
+    ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='measurement_equipments_measurement_id_fkey'),
+    PrimaryKeyConstraint('measurement_id', 'equipment_id', name='measurement_equipments_pkey')
+)
 
 
 class MeasurementParams(Base):
