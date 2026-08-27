@@ -13,6 +13,8 @@ public partial class Measurement
 
     public string? Comments { get; set; }
 
+    public bool UseDefaultEquipment { get; set; }
+
     public bool IsReported { get; set; }
 
     public long? UserReportedId { get; set; }

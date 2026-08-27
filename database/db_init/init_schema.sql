@@ -613,6 +613,7 @@ CREATE TABLE public.measurements (
     reception_id bigint NOT NULL,
     form_id bigint,
     comments text,
+    use_default_equipment boolean DEFAULT true NOT NULL,
     is_reported boolean DEFAULT false NOT NULL,
     user_reported_id bigint,
     is_readonly boolean DEFAULT false NOT NULL,
@@ -1787,7 +1788,7 @@ ALTER TABLE ONLY public.measurement_equipments
 --
 
 ALTER TABLE ONLY public.measurement_equipments
-    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
+    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
 
 
 --

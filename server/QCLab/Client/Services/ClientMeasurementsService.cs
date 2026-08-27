@@ -59,6 +59,21 @@ public class ClientMeasurementsService(HttpClient httpClient) : IMeasurementsSer
         }
     }
 
+    public async Task<List<TestEquipmentDto>> GetMeasurementEquipments(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<TestEquipmentDto>>($"/api/measurement_tests/{id}/equipments");
+        return result ?? new List<TestEquipmentDto>();
+    }
+
+    public async Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto)
+    {
+        var response = await httpClient.PutAsJsonAsync($"/api/measurement_tests/{id}/equipments", dto);
+        if (!response.IsSuccessStatusCode)
+        {
+            await HandleErrorResponse(response);
+        }
+    }
+
     public async Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto)
     {
         var response = await httpClient.PostAsJsonAsync($"/api/measurements/{id}/tests", dto);

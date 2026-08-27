@@ -18,6 +18,7 @@ export interface MeasurementTestDetailDto {
   id: number;
   receptionId: number;
   comments: string | null;
+  useDefaultEquipment: boolean;
   isReported: boolean;
   isReadonly: boolean;
   userUpdateId: number;
@@ -32,6 +33,7 @@ export interface MeasurementParamDetailDto {
   receptionId: number;
   formId: number;
   comments: string | null;
+  useDefaultEquipment: boolean;
   isReported: boolean;
   isReadonly: boolean;
   userUpdateId: number;
@@ -60,6 +62,7 @@ export interface CreateMeasurementDto {
 
 export interface UpdateMeasurementTestBulkDto {
   comments: string | null;
+  useDefaultEquipment: boolean;
   isReported: boolean;
   userUpdateId: number;
   tests?: MeasurementTestDto[];
@@ -67,6 +70,7 @@ export interface UpdateMeasurementTestBulkDto {
 
 export interface UpdateMeasurementParamDto {
   comments: string | null;
+  useDefaultEquipment: boolean;
   isReported: boolean;
   userUpdateId: number;
   measurementData: Record<string, any>;

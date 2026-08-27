@@ -11,6 +11,8 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto);
         Task DeleteMeasurement(long id);
         Task ToggleReported(long id, long userId);
+        Task<List<TestEquipmentDto>> GetMeasurementEquipments(long id);
+        Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto);
         Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto);
     }
 }

@@ -649,6 +649,7 @@ class Measurements(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     reception_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    use_default_equipment: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
     is_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_update_id: Mapped[int] = mapped_column(BigInteger, nullable=False)

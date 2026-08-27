@@ -416,6 +416,8 @@ namespace QCLab
 
             // Measurements
             apiGroup.MapGet("/measurement_tests/{id}", (long id, IMeasurementsService s) => s.GetMeasurementTest(id));
+            apiGroup.MapGet("/measurements/{id}/equipments", (long id, IMeasurementsService s) => s.GetMeasurementEquipments(id));
+            apiGroup.MapPut("/measurements/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, IMeasurementsService s) => s.UpdateMeasurementEquipments(id, dto));
             apiGroup.MapPut("/measurement_tests/{id}", (long id, [FromBody] UpdateMeasurementTestBulkDto dto, IMeasurementsService s) => s.UpdateMeasurementTest(id, dto));
             apiGroup.MapGet("/measurement_params/{id}", (long id, IMeasurementsService s) => s.GetMeasurementParam(id));
             apiGroup.MapPut("/measurement_params/{id}", (long id, [FromBody] UpdateMeasurementParamDto dto, IMeasurementsService s) => s.UpdateMeasurementParam(id, dto));
@@ -623,6 +625,8 @@ namespace QCLab
             apiGroup.MapPut("/tests/reorder", ([FromBody] List<ReorderTestDto> dtos, ITestsService s) => s.ReorderTests(dtos));
             apiGroup.MapPut("/tests/{id}", (long id, [FromBody] UpdateTestDto dto, ITestsService s) => s.UpdateTest(id, dto));
             apiGroup.MapPut("/tests/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ITestsService s) => s.ToggleObsolete(id, dto));
+            apiGroup.MapGet("/tests/{id}/equipments", (long id, ITestsService s) => s.GetTestEquipments(id));
+            apiGroup.MapPut("/tests/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, ITestsService s) => s.UpdateTestEquipments(id, dto));
 
             // Units
             apiGroup.MapGet("/units", (IUnitsService s) => s.GetAllUnits());

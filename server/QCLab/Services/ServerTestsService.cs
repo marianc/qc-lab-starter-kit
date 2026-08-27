@@ -328,4 +328,38 @@ public class ServerTestsService : ITestsService
         test.CommentsObsolete = dto.IsObsolete ? dto.Comments : null;
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<TestEquipmentDto>> GetTestEquipments(long id)
+    {
+        var equipments = await _context.Tests
+            .Where(t => t.Id == id)
+            .SelectMany(t => t.Equipment)
+            .Select(e => new TestEquipmentDto
+            {
+                Id = e.Id,
+                EquipmentCode = e.EquipmentCode,
+                Name = e.Name,
+                SerialNumber = e.SerialNumber,
+                Status = e.Status
+            })
+            .ToListAsync();
+
+        return equipments;
+    }
+
+    public async Task UpdateTestEquipments(long id, UpdateTestEquipmentsDto dto)
+    {
+        var test = await _context.Tests.Include(t => t.Equipment).FirstOrDefaultAsync(t => t.Id == id);
+        if (test == null) throw new ArgumentException("Test not found");
+
+        test.Equipment.Clear();
+
+        if (dto.EquipmentIds != null && dto.EquipmentIds.Count > 0)
+        {
+            var equipments = await _context.Equipments.Where(e => dto.EquipmentIds.Contains(e.Id)).ToListAsync();
+            foreach (var eq in equipments) test.Equipment.Add(eq);
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

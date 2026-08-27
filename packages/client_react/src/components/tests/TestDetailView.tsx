@@ -10,15 +10,19 @@ import {
 } from '../common/ui';
 import { 
   ConfirmationDialog, 
-  CommentDialog 
+  CommentDialog,
+  SelectDialog
 } from '../common';
 import TestDialog from './TestDialog';
 import TestEnumDialog from './TestEnumDialog';
 import styles from './TestDetailView.module.css';
-import type { CreateTestEnumDto, ReorderTestEnumDto, TestDto, TestEnumDto, UpdateTestDto, UpdateTestEnumDto } from '@/types/test';
+import type { CreateTestEnumDto, ReorderTestEnumDto, TestDto, TestEnumDto, UpdateTestDto, UpdateTestEnumDto, TestEquipmentDto } from '@/types/test';
 import type { NormDto } from '@/types/norm';
+import type { EquipmentDto } from '@/types/equipment';
+import type { SelectableItem } from '@/types/models';
 import testsService from '@/services/testsService';
 import normsService from '@/services/normsService';
+import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
 
 interface TestDetailViewProps {
@@ -37,8 +41,11 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
   const [test, setTest] = useState<TestDto | null>(null);
   const [enums, setEnums] = useState<TestEnumDto[]>([]);
   const [norms, setNorms] = useState<NormDto[]>([]);
+  const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
+  const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showEnumDialog, setShowEnumDialog] = useState(false);
+  const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
   const [currentEnum, setCurrentEnum] = useState<TestEnumDto | null>(null);
@@ -56,6 +63,8 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
         const enumData = await testsService.getTestEnums(testId);
         setEnums([...enumData].sort((a, b) => a.nrOrd - b.nrOrd));
       }
+      const equipments = await testsService.getTestEquipments(testId);
+      setAssociatedEquipments(equipments);
     } catch (err) {
       console.error('Failed to fetch test data', err);
     }
@@ -64,7 +73,19 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
   useEffect(() => {
     fetchTestData();
     normsService.getAllNorms().then(setNorms);
+    equipmentsService.getAllEquipments().then(setAllEquipments);
   }, [testId]);
+
+  const handleEquipmentSelectionSave = async (selectedIds: number[]) => {
+    try {
+      await testsService.updateTestEquipments(testId, { equipmentIds: selectedIds });
+      setShowEquipmentDialog(false);
+      const equipments = await testsService.getTestEquipments(testId);
+      setAssociatedEquipments(equipments);
+    } catch (err) {
+      console.error('Failed to update test equipments', err);
+    }
+  };
 
   const handleEditSave = async (updatedTest: TestDto) => {
     try {
@@ -314,6 +335,20 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               </table>
             </div>
           )}
+          <h3 className="section-title">Associated Equipments</h3>
+          {associatedEquipments.length > 0 ? (
+            <ul className="item-list">
+              {associatedEquipments.map(eq => (
+                <li key={eq.id}>{eq.equipmentCode} - {eq.name} {eq.serialNumber ? `(${eq.serialNumber})` : ''}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated equipments</p>
+          )}
+
+          <div className={styles.manageTestsContainer}>
+            <button onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
+          </div>
         </div>
       </DetailViewContent>
 
@@ -333,6 +368,18 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
           isEdit={enums.some(e => e.value === currentEnum.value && currentEnum.name !== '')}
           onSave={handleSaveEnum} 
           onClose={() => setShowEnumDialog(false)} 
+        />
+      )}
+
+      {showEquipmentDialog && (
+        <SelectDialog 
+          open={true}
+          title="Select Equipments"
+          items={allEquipments.map(eq => ({ id: eq.id, name: `${eq.equipmentCode} - ${eq.name}` }))}
+          selectedIds={associatedEquipments.map(eq => eq.id)}
+          onSave={handleEquipmentSelectionSave}
+          onClose={() => setShowEquipmentDialog(false)}
+          idPrefix="equipment"
         />
       )}
 

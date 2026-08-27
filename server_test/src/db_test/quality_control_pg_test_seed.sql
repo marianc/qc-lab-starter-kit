@@ -94,6 +94,7 @@ ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_log
 DROP TRIGGER IF EXISTS audit_measurements_trigger ON public.measurements;
 DROP TRIGGER IF EXISTS audit_measurement_tests_trigger ON public.measurement_tests;
 DROP TRIGGER IF EXISTS audit_measurement_params_trigger ON public.measurement_params;
+ALTER TABLE IF EXISTS ONLY public.value_types DROP CONSTRAINT IF EXISTS value_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tag_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_session_id_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
@@ -127,7 +128,6 @@ ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_
 ALTER TABLE IF EXISTS ONLY public.material_tests DROP CONSTRAINT IF EXISTS material_tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.forms DROP CONSTRAINT IF EXISTS forms_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_params DROP CONSTRAINT IF EXISTS form_params_pkey;
-ALTER TABLE IF EXISTS ONLY public.value_types DROP CONSTRAINT IF EXISTS form_param_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_groups DROP CONSTRAINT IF EXISTS form_groups_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_evals DROP CONSTRAINT IF EXISTS form_evals_pkey;
 ALTER TABLE IF EXISTS ONLY public.form_eval_params DROP CONSTRAINT IF EXISTS form_eval_params_pkey;
@@ -742,6 +742,7 @@ CREATE TABLE public.measurements (
     reception_id bigint NOT NULL,
     form_id bigint,
     comments text,
+    use_default_equipment boolean DEFAULT true NOT NULL,
     is_reported boolean DEFAULT false NOT NULL,
     user_reported_id bigint,
     is_readonly boolean DEFAULT false NOT NULL,
@@ -1896,69 +1897,69 @@ INSERT INTO public.measurement_tests (measurement_id, test_id, idx, value, note)
 -- Data for Name: measurements; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (1, 2, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (2, 2, NULL, 'sdfgsdfgsdf dsfg sdfg sdfg 
-sdf gsdfg sdgf ', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (3, 2, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (4, 2, NULL, 'Gsdfgs dfg sdfg sdfg sdfg.
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (1, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (2, 2, NULL, 'sdfgsdfgsdf dsfg sdfg sdfg 
+sdf gsdfg sdgf ', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (3, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (4, 2, NULL, 'Gsdfgs dfg sdfg sdfg sdfg.
 Sdf gsdfg sdfg.
 Sdfg sdfg sdfg.
-', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (5, 2, 1, 'gsdfg sdfg sdfg sdfg', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (6, 2, 1, 'fgsdfg sdfg sdfg', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (7, 2, 1, ' ghdfgh dfgh dfgh', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (8, 2, 2, 'fgsdfgs dfg sdfg sdfg sdfg ', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (9, 2, 3, '- Dfghd dfgh hgdf hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfg.
+', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (5, 2, 1, 'gsdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (6, 2, 1, 'fgsdfg sdfg sdfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (7, 2, 1, ' ghdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (8, 2, 2, 'fgsdfgs dfg sdfg sdfg sdfg ', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (9, 2, 3, '- Dfghd dfgh hgdf hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfg.
 - Dfg hdfgh dfgh dfgh fdgh.
-- Dfg hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfghdfgh dfgh fg.', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (10, 2, NULL, 'Jfghj fghj fghj fhjf ghj.
-Tghfghfgh dfgdfgdf gdfgd fg.', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (11, 6, NULL, 'hdfgh dfgh dfg gfh dfgh dgfh dfg', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (12, 6, 1, 'hfghdfg hdfgh fd', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (13, 6, 2, 'hjdfg hfdgh dfgh dfgh', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (14, 1, NULL, 'bxb xcvb xcvb xcvb xcvb xcvb', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (15, 1, 3, 'fgh sdfg sdfg sdfg sdfg', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (16, 3, NULL, ' hdfgh dfgh dfgh dfgh dfgh', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (17, 3, 1, ' dfgh dfgh dfgh dfgh dfghdfg ', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (18, 2, 3, ' zzz', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (19, 8, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg s', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (20, 8, 2, ' fghdfgh dfgh', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (21, 8, 3, ' fsdfg sdfg sdfg sdfg sdf', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (22, 8, 1, 'sdfg sdfg sdfgs dfg', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (23, 3, NULL, 'fgh dfgh dfgh dfgh dfgh dfg', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (24, 8, NULL, 'gf hdfgh dfgh dfgh dfg
-cv bcvbn cvbn cvbncbn', false, NULL, false, 8, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (25, 8, 1, 'd dfgh dfgh dfgh dfgh', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (26, 11, NULL, 'fdg dfgh dfgh dfgh dfgh', true, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (27, 11, 3, 'cvbxcvb xcvb xcvbxc vb xcvb', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (28, 11, 2, 'dfg sdfg sdfg sdfg sdfg df', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (29, 1, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (30, 1, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (31, 3, 2, 'dfg sdfg sdfg sdfg sdfg', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (35, 10, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (36, 2, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (37, 2, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (38, 11, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (39, 20, NULL, NULL, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (40, 20, 7, 'Edfgdfg dfg dfg df.
+- Dfg hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfghdfgh dfgh fg.', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (10, 2, NULL, 'Jfghj fghj fghj fhjf ghj.
+Tghfghfgh dfgdfgdf gdfgd fg.', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (11, 6, NULL, 'hdfgh dfgh dfg gfh dfgh dgfh dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (12, 6, 1, 'hfghdfg hdfgh fd', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (13, 6, 2, 'hjdfg hfdgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (14, 1, NULL, 'bxb xcvb xcvb xcvb xcvb xcvb', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (15, 1, 3, 'fgh sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (16, 3, NULL, ' hdfgh dfgh dfgh dfgh dfgh', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (17, 3, 1, ' dfgh dfgh dfgh dfgh dfghdfg ', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (18, 2, 3, ' zzz', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (19, 8, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg s', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (20, 8, 2, ' fghdfgh dfgh', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (21, 8, 3, ' fsdfg sdfg sdfg sdfg sdf', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (22, 8, 1, 'sdfg sdfg sdfgs dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (23, 3, NULL, 'fgh dfgh dfgh dfgh dfgh dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (24, 8, NULL, 'gf hdfgh dfgh dfgh dfg
+cv bcvbn cvbn cvbncbn', true, false, NULL, false, 8, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (25, 8, 1, 'd dfgh dfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (26, 11, NULL, 'fdg dfgh dfgh dfgh dfgh', true, true, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (27, 11, 3, 'cvbxcvb xcvb xcvbxc vb xcvb', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (28, 11, 2, 'dfg sdfg sdfg sdfg sdfg df', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (29, 1, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (30, 1, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (31, 3, 2, 'dfg sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (35, 10, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (36, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (37, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (38, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (39, 20, NULL, NULL, true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (40, 20, 7, 'Edfgdfg dfg dfg df.
 Rfghfgh fghfgh fgh fgh fgh fghfg.
-Trwerwer wer wer wer werer.', false, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (41, 20, 7, 'dfgh dfgh dfghdf ghdfgh dfgh dfgh', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (42, 20, 7, '- Fghj fghj fghj fghj fghj gj
-- Fghj fghj fghj fghj fghj fghj fghj fghj.', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (43, 20, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (44, 20, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (45, 20, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (46, 20, NULL, '- Eterte ert ert ert ert ert ter.
+Trwerwer wer wer wer werer.', true, false, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (41, 20, 7, 'dfgh dfgh dfghdf ghdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (42, 20, 7, '- Fghj fghj fghj fghj fghj gj
+- Fghj fghj fghj fghj fghj fghj fghj fghj.', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (43, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (44, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (45, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (46, 20, NULL, '- Eterte ert ert ert ert ert ter.
 - Gfgdfgdfgdf dfg dfg dfg dfg dfg dgfdf.
-- Ydfgsdfg sdfg sdfgsdf gsdfg sdfg.', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (47, 21, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (48, 22, NULL, 'zxcv zxcv zxcv zxcv', true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (49, 22, NULL, NULL, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (50, 22, 7, 'hdfgh dfgh dfgh', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (51, 22, 7, 'fghj fghj fghj fghj', false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (52, 11, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (53, 11, NULL, NULL, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+- Ydfgsdfg sdfg sdfgsdf gsdfg sdfg.', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (47, 21, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (48, 22, NULL, 'zxcv zxcv zxcv zxcv', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (49, 22, NULL, NULL, true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (50, 22, 7, 'hdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (51, 22, 7, 'fghj fghj fghj fghj', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (52, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update) OVERRIDING SYSTEM VALUE VALUES (53, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02');
 
 
 --
@@ -2677,14 +2678,6 @@ ALTER TABLE ONLY public.form_groups
 
 
 --
--- Name: value_types form_param_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.value_types
-    ADD CONSTRAINT form_param_types_pkey PRIMARY KEY (id);
-
-
---
 -- Name: form_params form_params_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2946,6 +2939,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_tag_key UNIQUE (tag);
+
+
+--
+-- Name: value_types value_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.value_types
+    ADD CONSTRAINT value_types_pkey PRIMARY KEY (id);
 
 
 --

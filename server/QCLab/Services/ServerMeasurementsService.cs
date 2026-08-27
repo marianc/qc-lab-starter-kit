@@ -34,6 +34,7 @@ public class ServerMeasurementsService : IMeasurementsService
                 Id = measurement.Id,
                 ReceptionId = measurement.ReceptionId,
                 Comments = measurement.Comments,
+                UseDefaultEquipment = measurement.UseDefaultEquipment,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
                 UserUpdateId = measurement.UserUpdateId,
@@ -94,6 +95,7 @@ public class ServerMeasurementsService : IMeasurementsService
                 ReceptionId = measurement.ReceptionId,
                 FormId = measurement.FormId.Value,
                 Comments = measurement.Comments,
+                UseDefaultEquipment = measurement.UseDefaultEquipment,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
                 UserUpdateId = measurement.UserUpdateId,
@@ -150,6 +152,7 @@ public class ServerMeasurementsService : IMeasurementsService
             {
                 ReceptionId = dto.ReceptionId,
                 Comments = dto.Comments,
+                UseDefaultEquipment = true,
                 IsReported = dto.IsReported,
                 FormId = dto.FormId,
                 UserUpdateId = dto.UserUpdateId,
@@ -179,6 +182,7 @@ public class ServerMeasurementsService : IMeasurementsService
             if (measurement == null) throw new ArgumentException("Measurement not found");
 
             measurement.Comments = dto.Comments;
+            measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
             measurement.IsReported = false;
             measurement.UserReportedId = null;
             measurement.UserUpdateId = dto.UserUpdateId;
@@ -246,6 +250,11 @@ public class ServerMeasurementsService : IMeasurementsService
                 await _context.SaveChangesAsync();
             }
 
+            if (dto.UseDefaultEquipment)
+            {
+                await RecalculateMeasurementEquipments(id);
+            }
+
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -264,12 +273,19 @@ public class ServerMeasurementsService : IMeasurementsService
             if (measurement == null) throw new ArgumentException("Measurement not found");
 
             measurement.Comments = dto.Comments;
+            measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
             measurement.IsReported = dto.IsReported;
             measurement.UserUpdateId = dto.UserUpdateId;
             measurement.DateUpdate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             await SaveMeasurementFormDataInternal(id, dto.MeasurementData);
+
+            if (dto.UseDefaultEquipment)
+            {
+                await RecalculateMeasurementEquipments(id);
+            }
+
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -436,6 +452,13 @@ public class ServerMeasurementsService : IMeasurementsService
             }
 
             await _context.SaveChangesAsync();
+
+            var meas = await _context.Measurements.FindAsync(id);
+            if (meas != null && meas.UseDefaultEquipment)
+            {
+                await RecalculateMeasurementEquipments(id);
+            }
+
             await transaction.CommitAsync();
 
             return new() { Id = dto.TestId };
@@ -445,6 +468,147 @@ public class ServerMeasurementsService : IMeasurementsService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    private async Task RecalculateMeasurementEquipments(long measurementId)
+    {
+        var measurement = await _context.Measurements
+            .Include(m => m.Equipment)
+            .Include(m => m.Reception)
+            .FirstOrDefaultAsync(m => m.Id == measurementId);
+
+        if (measurement == null) return;
+
+        if (measurement.UseDefaultEquipment)
+        {
+            // Step 1: get the updated list of test id's for the measurement and with this get a list of unique equipment id's from database table 'test_equipments'.
+            var measurementTestIds = new List<long>();
+            if (measurement.FormId.HasValue)
+            {
+                measurementTestIds = await _context.MeasurementParams
+                    .Where(mp => mp.MeasurementId == measurementId)
+                    .Select(mp => mp.TestId)
+                    .Distinct()
+                    .ToListAsync();
+            }
+            else
+            {
+                measurementTestIds = await _context.MeasurementTests
+                    .Where(mt => mt.MeasurementId == measurementId)
+                    .Select(mt => mt.TestId)
+                    .Distinct()
+                    .ToListAsync();
+            }
+
+            var step1EquipmentIds = await _context.Tests
+                .Where(t => measurementTestIds.Contains(t.Id))
+                .SelectMany(t => t.Equipment)
+                .Select(e => e.Id)
+                .Distinct()
+                .ToListAsync();
+
+            // Step 2: get a list of unique equipment id's from database table 'test_equipments' for all applicable tests for the tested material from database table 'material_tests' when field 'type_id' from database table 'receptions' has value 1 or 2 and from database table 'category_tests' when field 'type_id' from database table 'receptions' has value 3.
+            var reception = measurement.Reception;
+            var applicableTestIds = new List<long>();
+
+            if (reception != null)
+            {
+                if (reception.TypeId == 1 || reception.TypeId == 2)
+                {
+                    long? materialId = null;
+                    if (reception.ControlCodeId.HasValue)
+                    {
+                        var cc = await _context.ControlCodes.FindAsync(reception.ControlCodeId.Value);
+                        if (cc != null) materialId = cc.MaterialId;
+                    }
+
+                    if (materialId.HasValue)
+                    {
+                        applicableTestIds = await _context.Materials
+                            .Where(m => m.Id == materialId.Value)
+                            .SelectMany(m => m.Tests)
+                            .Select(t => t.Id)
+                            .Distinct()
+                            .ToListAsync();
+                    }
+                }
+                else if (reception.TypeId == 3)
+                {
+                    long? categoryId = reception.CategoryId;
+                    if (categoryId.HasValue)
+                    {
+                        applicableTestIds = await _context.Categories
+                            .Where(c => c.Id == categoryId.Value)
+                            .SelectMany(c => c.Tests)
+                            .Select(t => t.Id)
+                            .Distinct()
+                            .ToListAsync();
+                    }
+                }
+            }
+
+            var step2EquipmentIds = await _context.Tests
+                .Where(t => applicableTestIds.Contains(t.Id))
+                .SelectMany(t => t.Equipment)
+                .Select(e => e.Id)
+                .Distinct()
+                .ToListAsync();
+
+            // Step 3: get the corresponding list of equipment id's from database table 'measurement_equipments' for the current measurement.
+            var step3EquipmentIds = measurement.Equipment.Select(e => e.Id).ToList();
+
+            // Step 4: from the equipment list resulted from (step 3) remove all equipment id�s that are present in list resulted on (step 2)
+            var step4EquipmentIds = step3EquipmentIds.Except(step2EquipmentIds).ToList();
+
+            // Step 5: to the equipment list resulted on (step 4) add the equipment list resulted on (step 1) and the resulted list has to be saved in database table 'measurement_equipments'
+            var finalEquipmentIds = step4EquipmentIds.Union(step1EquipmentIds).Distinct().ToList();
+
+            measurement.Equipment.Clear();
+            if (finalEquipmentIds.Count > 0)
+            {
+                var equipmentsToAdd = await _context.Equipments.Where(e => finalEquipmentIds.Contains(e.Id)).ToListAsync();
+                foreach (var eq in equipmentsToAdd)
+                {
+                    measurement.Equipment.Add(eq);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+    }
+    
+    public async Task<List<TestEquipmentDto>> GetMeasurementEquipments(long id)
+    {
+        var equipments = await _context.Measurements
+            .Where(m => m.Id == id)
+            .SelectMany(m => m.Equipment)
+            .Select(e => new TestEquipmentDto
+            {
+                Id = e.Id,
+                EquipmentCode = e.EquipmentCode,
+                Name = e.Name,
+                SerialNumber = e.SerialNumber,
+                Status = e.Status
+            })
+            .ToListAsync();
+
+        return equipments;
+    }
+
+    public async Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto)
+    {
+        var measurement = await _context.Measurements.Include(m => m.Equipment).FirstOrDefaultAsync(m => m.Id == id);
+        if (measurement == null) throw new ArgumentException("Measurement not found");
+
+        measurement.Equipment.Clear();
+
+        if (dto.EquipmentIds != null && dto.EquipmentIds.Count > 0)
+        {
+            var equipments = await _context.Equipments.Where(e => dto.EquipmentIds.Contains(e.Id)).ToListAsync();
+            foreach (var eq in equipments) measurement.Equipment.Add(eq);
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     // POST/PUT /measurements/{id}/form_data (Internal helper now)

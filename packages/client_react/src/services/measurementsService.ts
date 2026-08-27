@@ -7,6 +7,7 @@ import type {
   UpdateMeasurementParamDto,
   AddMeasurementTestDto
 } from '../types/measurement';
+import type { TestEquipmentDto, UpdateTestEquipmentsDto } from '../types/test';
 import type { IdDto } from '../types/models';
 
 const measurementsService = {
@@ -44,6 +45,15 @@ const measurementsService = {
   async addMeasurementTest(id: number, dto: AddMeasurementTestDto): Promise<IdDto> {
     const response = await apiClient.post<IdDto>(`api/measurements/${id}/tests`, dto);
     return response.data;
+  },
+
+  async getMeasurementEquipments(id: number): Promise<TestEquipmentDto[]> {
+    const response = await apiClient.get<TestEquipmentDto[]>(`api/measurements/${id}/equipments`);
+    return response.data;
+  },
+
+  async updateMeasurementEquipments(id: number, dto: UpdateTestEquipmentsDto): Promise<void> {
+    await apiClient.put(`api/measurements/${id}/equipments`, dto);
   }
 };
 

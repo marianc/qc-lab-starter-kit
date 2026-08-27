@@ -8,14 +8,17 @@ import {
   DetailColumn, 
   DetailItem 
 } from '@/components/common/ui';
-import CommentDialog from '@/components/common/CommentDialog';
+import MeasurementEditDialog from './MeasurementEditDialog';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import ArrayItemDialog from '@/components/common/ArrayItemDialog';
-import type { TestDto, TestEnumDto } from '@/types/test';
+import SelectDialog from '@/components/common/SelectDialog';
+import type { TestDto, TestEnumDto, TestEquipmentDto } from '@/types/test';
+import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto, FormParamDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
 import type { MeasurementParamDetailDto } from '@/types/measurement';
 import measurementsService from '@/services/measurementsService';
+import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
 
 interface Props {
@@ -45,10 +48,13 @@ const TestFormDetailView: React.FC<Props> = ({
   const [formParams, setFormParams] = useState<FormParamDto[]>([]);
   const [formName, setFormName] = useState('');
   const [allFormParamEnums, setAllFormParamEnums] = useState<TestEnumDto[]>([]);
+  const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
+  const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showArrayItemDialog, setShowArrayItemDialog] = useState(false);
+  const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
   
   const [groupedParamsForDialog, setGroupedParamsForDialog] = useState<FormParamDto[]>([]);
   const [editingArrayIndex, setEditingArrayIndex] = useState<number>(-1);
@@ -56,6 +62,7 @@ const TestFormDetailView: React.FC<Props> = ({
 
   useEffect(() => {
     loadInitialData();
+    equipmentsService.getAllEquipments().then(setAllEquipments);
   }, [measurementId, formId]);
 
   const loadInitialData = async () => {
@@ -105,6 +112,7 @@ const TestFormDetailView: React.FC<Props> = ({
         receptionId: receptionId,
         formId: formId,
         isReported: false,
+        useDefaultEquipment: true,
         isReadonly: false,
         userUpdateId: currentUser?.id || 0,
         userUpdateTag: currentUser?.name || '',
@@ -120,6 +128,7 @@ const TestFormDetailView: React.FC<Props> = ({
         if (p.isArray) initialData[p.code] = [];
       });
       setFormData(initialData);
+      setAssociatedEquipments([]);
     } else {
       try {
         const data = await measurementsService.getMeasurementParam(measurementId);
@@ -133,9 +142,25 @@ const TestFormDetailView: React.FC<Props> = ({
           }
         });
         setFormData(combinedData);
+
+        const equipments = await measurementsService.getMeasurementEquipments(measurementId);
+        setAssociatedEquipments(equipments);
       } catch (err) {
         console.error('Failed to fetch measurement param:', err);
       }
+    }
+  };
+
+  const handleEquipmentSelectionSave = async (selectedIds: number[]) => {
+    try {
+      if (measurement && measurement.id > 0) {
+        await measurementsService.updateMeasurementEquipments(measurement.id, { equipmentIds: selectedIds });
+        const equipments = await measurementsService.getMeasurementEquipments(measurement.id);
+        setAssociatedEquipments(equipments);
+      }
+      setShowEquipmentDialog(false);
+    } catch (err) {
+      console.error('Failed to update measurement equipments', err);
     }
   };
 
@@ -155,9 +180,9 @@ const TestFormDetailView: React.FC<Props> = ({
     setFormData(prev => ({ ...prev, [code]: val }));
   };
 
-  const handleSaveComment = (comment: string) => {
+  const handleSaveMeasurement = (comment: string, useDefaultEquipment: boolean) => {
     if (measurement) {
-      setMeasurement({ ...measurement, comments: comment });
+      setMeasurement({ ...measurement, comments: comment, useDefaultEquipment: useDefaultEquipment });
     }
     setShowCommentDialog(false);
   };
@@ -171,7 +196,7 @@ const TestFormDetailView: React.FC<Props> = ({
         const res = await measurementsService.createMeasurement({
           receptionId: measurement.receptionId,
           formId: measurement.formId,
-            comments: measurement.comments || null,
+          comments: measurement.comments || null,
           isReported: measurement.isReported,
           userUpdateId: currentUser.id
         });
@@ -189,7 +214,8 @@ const TestFormDetailView: React.FC<Props> = ({
       });
 
       await measurementsService.updateMeasurementParam(finalId, {
-          comments: measurement.comments || null,
+        comments: measurement.comments || null,
+        useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
         userUpdateId: currentUser.id,
         measurementData: dataToSave
@@ -338,9 +364,10 @@ const TestFormDetailView: React.FC<Props> = ({
             <DetailColumn>
               <DetailItem label="Measurement ID" value={measurement.id.toString()} />
               <DetailItem label="Comments" value={measurement.comments || "-"} />
+              <DetailItem label="Use Default Equipment" value={measurement.useDefaultEquipment ? "Yes" : "No"} />
               {!measurement.isReadonly && (
                 <div className="comment-actions">
-                  <button onClick={() => setShowCommentDialog(true)} className="action-button secondary small-button">Edit Comments</button>
+                  <button onClick={() => setShowCommentDialog(true)} className="action-button primary">Edit</button>
                 </div>
               )}
             </DetailColumn>
@@ -435,6 +462,23 @@ const TestFormDetailView: React.FC<Props> = ({
               <button onClick={() => setShowDeleteConfirmation(true)} className="action-button delete-button">Delete</button>
             )}
           </div>
+
+          <h3 className="section-title">Associated Equipments</h3>
+          {associatedEquipments.length > 0 ? (
+            <ul className="item-list">
+              {associatedEquipments.map(eq => (
+                <li key={eq.id}>{eq.equipmentCode} - {eq.name} {eq.serialNumber ? `(${eq.serialNumber})` : ''}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated equipments</p>
+          )}
+
+          {!measurement.isReadonly && measurement.id > 0 && (
+            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+              <button type="button" onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
+            </div>
+          )}
         </div>
 
         {showArrayItemDialog && (
@@ -450,11 +494,25 @@ const TestFormDetailView: React.FC<Props> = ({
         )}
 
         {showCommentDialog && (
-          <CommentDialog 
+          <MeasurementEditDialog 
             open={true}
-            initialValue={measurement.comments || ""}
+            title="Edit Measurement Details"
+            initialComment={measurement.comments || ""}
+            initialUseDefaultEquipment={measurement.useDefaultEquipment}
             onClose={() => setShowCommentDialog(false)}
-            onSubmit={handleSaveComment}
+            onSubmit={handleSaveMeasurement}
+          />
+        )}
+
+        {showEquipmentDialog && (
+          <SelectDialog 
+            open={true}
+            title="Select Equipments"
+            items={allEquipments.map(eq => ({ id: eq.id, name: `${eq.equipmentCode} - ${eq.name}` }))}
+            selectedIds={associatedEquipments.map(eq => eq.id)}
+            onSave={handleEquipmentSelectionSave}
+            onClose={() => setShowEquipmentDialog(false)}
+            idPrefix="equipment"
           />
         )}
 

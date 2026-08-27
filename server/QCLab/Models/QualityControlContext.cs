@@ -644,6 +644,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.IsReadonly).HasColumnName("is_readonly");
             entity.Property(e => e.IsReported).HasColumnName("is_reported");
             entity.Property(e => e.ReceptionId).HasColumnName("reception_id");
+            entity.Property(e => e.UseDefaultEquipment)
+                .HasDefaultValue(true)
+                .HasColumnName("use_default_equipment");
             entity.Property(e => e.UserReportedId).HasColumnName("user_reported_id");
             entity.Property(e => e.UserUpdateId).HasColumnName("user_update_id");
 
@@ -674,7 +677,7 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("measurement_equipments_equipment_id_fkey"),
                     l => l.HasOne<Measurement>().WithMany()
                         .HasForeignKey("MeasurementId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("measurement_equipments_measurement_id_fkey"),
                     j =>
                     {

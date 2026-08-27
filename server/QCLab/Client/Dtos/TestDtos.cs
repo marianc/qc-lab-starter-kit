@@ -123,3 +123,18 @@ public class UpdateTestEnumDto
     public required string Name { get; set; }
     public long NrOrd { get; set; }
 }
+
+public class TestEquipmentDto
+{
+    public long Id { get; set; }
+    public required string EquipmentCode { get; set; }
+    public required string Name { get; set; }
+    public string? SerialNumber { get; set; }
+    public string? Status { get; set; }
+}
+
+public class UpdateTestEquipmentsDto
+{
+    public List<long> EquipmentIds { get; set; } = new();
+}
+

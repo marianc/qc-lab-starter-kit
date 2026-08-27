@@ -17,5 +17,7 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateTest(long id, UpdateTestDto testData);
         Task ToggleObsolete(long id, ToggleObsoleteDto dto);
         Task<List<long>> GetCertifiedTestIds();
+        Task<List<TestEquipmentDto>> GetTestEquipments(long id);
+        Task UpdateTestEquipments(long id, UpdateTestEquipmentsDto dto);
     }
 }

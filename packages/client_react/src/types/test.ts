@@ -69,3 +69,16 @@ export interface UpdateTestEnumDto {
   name: string;
   nrOrd: number;
 }
+
+export interface TestEquipmentDto {
+  id: number;
+  equipmentCode: string;
+  name: string;
+  serialNumber?: string | null;
+  status?: string | null;
+}
+
+export interface UpdateTestEquipmentsDto {
+  equipmentIds: number[];
+}
+
