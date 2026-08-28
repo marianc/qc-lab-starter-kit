@@ -17,11 +17,17 @@ public partial class CertificateTest
 
     public decimal Value { get; set; }
 
-    public int TestCount { get; set; }
+    public decimal? UncertaintyValue { get; set; }
+
+    public decimal? CoverageFactorK { get; set; }
+
+    public bool IsConformingSpec { get; set; }
+
+    public bool IsConformingUncertainty { get; set; }
 
     public string NoteSpec { get; set; } = null!;
 
-    public bool IsConformingSpec { get; set; }
+    public int TestCount { get; set; }
 
     public virtual Certificate Certificate { get; set; } = null!;
 

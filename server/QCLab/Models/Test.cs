@@ -27,6 +27,10 @@ public partial class Test
 
     public bool ForCertification { get; set; }
 
+    public decimal? RelativeUncertaintyPct { get; set; }
+
+    public decimal? DefaultCoverageFactorK { get; set; }
+
     public long NrOrd { get; set; }
 
     public bool IsFormValidated { get; set; }

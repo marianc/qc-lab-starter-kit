@@ -13,6 +13,8 @@ public partial class Certificate
 
     public bool IsConformingSpec { get; set; }
 
+    public bool IsConformingUncertainty { get; set; }
+
     public bool IsSubmitted { get; set; }
 
     public long? UserSubmittedId { get; set; }

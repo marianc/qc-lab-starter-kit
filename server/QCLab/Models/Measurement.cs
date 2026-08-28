@@ -25,6 +25,10 @@ public partial class Measurement
 
     public DateTime DateUpdate { get; set; }
 
+    public long UserCreatedId { get; set; }
+
+    public DateTime DateCreated { get; set; }
+
     public virtual ICollection<CertificateTest> CertificateTests { get; set; } = new List<CertificateTest>();
 
     public virtual Form? Form { get; set; }
@@ -36,6 +40,8 @@ public partial class Measurement
     public virtual Reception Reception { get; set; } = null!;
 
     public virtual ICollection<ReportTest> ReportTests { get; set; } = new List<ReportTest>();
+
+    public virtual User UserCreated { get; set; } = null!;
 
     public virtual User? UserReported { get; set; }
 

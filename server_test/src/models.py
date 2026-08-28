@@ -134,6 +134,8 @@ class Users(Base):
     is_lab_pers: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_qc_pers: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     must_change_password: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text('0'))
+    is_locked: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     first_name: Mapped[Optional[str]] = mapped_column(String(50))
@@ -141,6 +143,7 @@ class Users(Base):
     password_hash: Mapped[Optional[str]] = mapped_column(Text)
     password_salt: Mapped[Optional[str]] = mapped_column(Text)
     date_password_changed: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    lock_expiration: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     session_id: Mapped[Optional[str]] = mapped_column(String(255))
     date_session_created: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     date_session_expire: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
@@ -160,6 +163,7 @@ class Users(Base):
     receptions_user_received: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_received_id]', back_populates='user_received')
     receptions_user_rejected: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_rejected_id]', back_populates='user_rejected')
     receptions_user_submitted: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_submitted_id]', back_populates='user_submitted')
+    measurements_user_created: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_created_id]', back_populates='user_created')
     measurements_user_reported: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_reported_id]', back_populates='user_reported')
     measurements_user_update: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_update_id]', back_populates='user_update')
     reports_user_cancelled: Mapped[list['Reports']] = relationship('Reports', foreign_keys='[Reports.user_cancelled_id]', back_populates='user_cancelled')
@@ -208,6 +212,7 @@ class ElectronicSignatures(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('1'))
     entity_name: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     signer_user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
@@ -334,6 +339,8 @@ class Tests(Base):
     unit_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     norm_ref: Mapped[Optional[str]] = mapped_column(String(50))
+    relative_uncertainty_pct: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(5, 2))
+    default_coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(3, 1))
     date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
@@ -511,6 +518,7 @@ class Certificates(Base):
     control_code_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     spec_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     is_conforming_spec: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_conforming_uncertainty: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
     is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_submitted_id: Mapped[Optional[int]] = mapped_column(BigInteger)
@@ -628,9 +636,10 @@ class SpecTests(Base):
 
     spec_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    test_frequency: Mapped[int] = mapped_column(Integer, nullable=False)
     condition: Mapped[str] = mapped_column(String(255), nullable=False)
     note: Mapped[str] = mapped_column(String(150), nullable=False)
+    use_uncertainty: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    test_frequency: Mapped[int] = mapped_column(Integer, nullable=False)
 
     spec: Mapped['Specs'] = relationship('Specs', back_populates='spec_tests')
     test: Mapped['Tests'] = relationship('Tests', back_populates='spec_tests')
@@ -642,6 +651,7 @@ class Measurements(Base):
     __table_args__ = (
         ForeignKeyConstraint(['form_id'], ['forms.id'], name='measurements_form_id_fkey'),
         ForeignKeyConstraint(['reception_id'], ['receptions.id'], name='measurements_reception_id_fkey'),
+        ForeignKeyConstraint(['user_created_id'], ['users.id'], name='measurements_user_created_id_fkey'),
         ForeignKeyConstraint(['user_reported_id'], ['users.id'], name='measurements_user_reported_id_fkey'),
         ForeignKeyConstraint(['user_update_id'], ['users.id'], name='measurements_user_update_id_fkey'),
         PrimaryKeyConstraint('id', name='measurements_pkey')
@@ -654,6 +664,8 @@ class Measurements(Base):
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_update_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date_update: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
+    user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('1'))
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     form_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     comments: Mapped[Optional[str]] = mapped_column(Text)
     user_reported_id: Mapped[Optional[int]] = mapped_column(BigInteger)
@@ -661,6 +673,7 @@ class Measurements(Base):
     equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='measurement_equipments', back_populates='measurement')
     form: Mapped[Optional['Forms']] = relationship('Forms', back_populates='measurements')
     reception: Mapped['Receptions'] = relationship('Receptions', back_populates='measurements')
+    user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurements_user_created')
     user_reported: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_reported_id], back_populates='measurements_user_reported')
     user_update: Mapped['Users'] = relationship('Users', foreign_keys=[user_update_id], back_populates='measurements_user_update')
     measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='measurement')
@@ -798,6 +811,8 @@ class ReportTests(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     idx: Mapped[int] = mapped_column(Integer, primary_key=True, server_default=text('0'))
     value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    uncertainty_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
 
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='report_tests')
     report: Mapped['Reports'] = relationship('Reports', back_populates='report_tests')
@@ -822,9 +837,12 @@ class CertificateTests(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     idx: Mapped[int] = mapped_column(Integer, primary_key=True, server_default=text('0'))
     value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
-    test_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text('0'))
-    note_spec: Mapped[str] = mapped_column(String(25), nullable=False)
     is_conforming_spec: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_conforming_uncertainty: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
+    note_spec: Mapped[str] = mapped_column(String(25), nullable=False)
+    test_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text('0'))
+    uncertainty_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
 
     certificate: Mapped['Certificates'] = relationship('Certificates', back_populates='certificate_tests')
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='certificate_tests')

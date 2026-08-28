@@ -187,6 +187,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.DateSubmitted).HasColumnName("date_submitted");
             entity.Property(e => e.IsCancelled).HasColumnName("is_cancelled");
             entity.Property(e => e.IsConformingSpec).HasColumnName("is_conforming_spec");
+            entity.Property(e => e.IsConformingUncertainty)
+                .HasDefaultValue(true)
+                .HasColumnName("is_conforming_uncertainty");
             entity.Property(e => e.IsSubmitted).HasColumnName("is_submitted");
             entity.Property(e => e.SpecId).HasColumnName("spec_id");
             entity.Property(e => e.UserCancelledId).HasColumnName("user_cancelled_id");
@@ -226,11 +229,16 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.TestId).HasColumnName("test_id");
             entity.Property(e => e.Idx).HasColumnName("idx");
             entity.Property(e => e.MeasurementId).HasColumnName("measurement_id");
+            entity.Property(e => e.CoverageFactorK).HasColumnName("coverage_factor_k");
             entity.Property(e => e.IsConformingSpec).HasColumnName("is_conforming_spec");
+            entity.Property(e => e.IsConformingUncertainty)
+                .HasDefaultValue(true)
+                .HasColumnName("is_conforming_uncertainty");
             entity.Property(e => e.NoteSpec)
                 .HasMaxLength(25)
                 .HasColumnName("note_spec");
             entity.Property(e => e.TestCount).HasColumnName("test_count");
+            entity.Property(e => e.UncertaintyValue).HasColumnName("uncertainty_value");
             entity.Property(e => e.Value).HasColumnName("value");
 
             entity.HasOne(d => d.Certificate).WithMany(p => p.CertificateTests)
@@ -307,6 +315,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.SigningTimestamp)
                 .HasDefaultValueSql("clock_timestamp()")
                 .HasColumnName("signing_timestamp");
+            entity.Property(e => e.Version)
+                .HasDefaultValue(1L)
+                .HasColumnName("version");
 
             entity.HasOne(d => d.SignerUser).WithMany(p => p.ElectronicSignatures)
                 .HasForeignKey(d => d.SignerUserId)
@@ -639,6 +650,9 @@ public partial class QualityControlContext : DbContext
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
             entity.Property(e => e.Comments).HasColumnName("comments");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
             entity.Property(e => e.DateUpdate).HasColumnName("date_update");
             entity.Property(e => e.FormId).HasColumnName("form_id");
             entity.Property(e => e.IsReadonly).HasColumnName("is_readonly");
@@ -647,6 +661,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.UseDefaultEquipment)
                 .HasDefaultValue(true)
                 .HasColumnName("use_default_equipment");
+            entity.Property(e => e.UserCreatedId)
+                .HasDefaultValue(1L)
+                .HasColumnName("user_created_id");
             entity.Property(e => e.UserReportedId).HasColumnName("user_reported_id");
             entity.Property(e => e.UserUpdateId).HasColumnName("user_update_id");
 
@@ -658,6 +675,11 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.ReceptionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurements_reception_id_fkey");
+
+            entity.HasOne(d => d.UserCreated).WithMany(p => p.MeasurementUserCreateds)
+                .HasForeignKey(d => d.UserCreatedId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("measurements_user_created_id_fkey");
 
             entity.HasOne(d => d.UserReported).WithMany(p => p.MeasurementUserReporteds)
                 .HasForeignKey(d => d.UserReportedId)
@@ -903,6 +925,8 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.MeasurementId).HasColumnName("measurement_id");
             entity.Property(e => e.TestId).HasColumnName("test_id");
             entity.Property(e => e.Idx).HasColumnName("idx");
+            entity.Property(e => e.CoverageFactorK).HasColumnName("coverage_factor_k");
+            entity.Property(e => e.UncertaintyValue).HasColumnName("uncertainty_value");
             entity.Property(e => e.Value).HasColumnName("value");
 
             entity.HasOne(d => d.Measurement).WithMany(p => p.ReportTests)
@@ -974,6 +998,7 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(150)
                 .HasColumnName("note");
             entity.Property(e => e.TestFrequency).HasColumnName("test_frequency");
+            entity.Property(e => e.UseUncertainty).HasColumnName("use_uncertainty");
 
             entity.HasOne(d => d.Spec).WithMany(p => p.SpecTests)
                 .HasForeignKey(d => d.SpecId)
@@ -1040,6 +1065,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.CommentsObsolete).HasColumnName("comments_obsolete");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateObsolete).HasColumnName("date_obsolete");
+            entity.Property(e => e.DefaultCoverageFactorK)
+                .HasPrecision(3, 1)
+                .HasColumnName("default_coverage_factor_k");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ForCertification).HasColumnName("for_certification");
             entity.Property(e => e.IsArray).HasColumnName("is_array");
@@ -1054,6 +1082,9 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("norm_ref");
             entity.Property(e => e.NrOrd).HasColumnName("nr_ord");
+            entity.Property(e => e.RelativeUncertaintyPct)
+                .HasPrecision(5, 2)
+                .HasColumnName("relative_uncertainty_pct");
             entity.Property(e => e.TypeId).HasColumnName("type_id");
             entity.Property(e => e.UnitId).HasColumnName("unit_id");
 
@@ -1159,16 +1190,19 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(50)
                 .HasColumnName("email");
+            entity.Property(e => e.FailedLoginAttempts).HasColumnName("failed_login_attempts");
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .HasColumnName("first_name");
             entity.Property(e => e.IsAdmin).HasColumnName("is_admin");
             entity.Property(e => e.IsLabPers).HasColumnName("is_lab_pers");
+            entity.Property(e => e.IsLocked).HasColumnName("is_locked");
             entity.Property(e => e.IsObsolete).HasColumnName("is_obsolete");
             entity.Property(e => e.IsQcPers).HasColumnName("is_qc_pers");
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .HasColumnName("last_name");
+            entity.Property(e => e.LockExpiration).HasColumnName("lock_expiration");
             entity.Property(e => e.MustChangePassword).HasColumnName("must_change_password");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");

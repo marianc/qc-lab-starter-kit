@@ -31,6 +31,12 @@ public partial class User
 
     public DateTime? DatePasswordChanged { get; set; }
 
+    public int FailedLoginAttempts { get; set; }
+
+    public bool IsLocked { get; set; }
+
+    public DateTime? LockExpiration { get; set; }
+
     public string? SessionId { get; set; }
 
     public DateTime? DateSessionCreated { get; set; }
@@ -60,6 +66,8 @@ public partial class User
     public virtual ICollection<Form> FormUserSubmitteds { get; set; } = new List<Form>();
 
     public virtual ICollection<Form> FormUserValidateds { get; set; } = new List<Form>();
+
+    public virtual ICollection<Measurement> MeasurementUserCreateds { get; set; } = new List<Measurement>();
 
     public virtual ICollection<Measurement> MeasurementUserReporteds { get; set; } = new List<Measurement>();
 

@@ -7,6 +7,8 @@ public partial class ElectronicSignature
 {
     public long Id { get; set; }
 
+    public long Version { get; set; }
+
     public string EntityName { get; set; } = null!;
 
     public long EntityId { get; set; }

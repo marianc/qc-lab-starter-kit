@@ -9,11 +9,13 @@ public partial class SpecTest
 
     public long TestId { get; set; }
 
-    public int TestFrequency { get; set; }
-
     public string Condition { get; set; } = null!;
 
     public string Note { get; set; } = null!;
+
+    public bool UseUncertainty { get; set; }
+
+    public int TestFrequency { get; set; }
 
     public virtual Spec Spec { get; set; } = null!;
 

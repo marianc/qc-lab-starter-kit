@@ -227,9 +227,12 @@ CREATE TABLE public.certificate_tests (
     test_id bigint NOT NULL,
     idx integer DEFAULT 0 NOT NULL,
     value numeric NOT NULL,
-    test_count integer DEFAULT 0 NOT NULL,
+    uncertainty_value numeric,
+    coverage_factor_k numeric,
+    is_conforming_spec boolean DEFAULT false NOT NULL,
+    is_conforming_uncertainty boolean DEFAULT true NOT NULL,
     note_spec character varying(25) NOT NULL,
-    is_conforming_spec boolean DEFAULT false NOT NULL
+    test_count integer DEFAULT 0 NOT NULL
 );
 
 
@@ -244,6 +247,7 @@ CREATE TABLE public.certificates (
     control_code_id bigint NOT NULL,
     spec_id bigint NOT NULL,
     is_conforming_spec boolean DEFAULT false NOT NULL,
+    is_conforming_uncertainty boolean DEFAULT true NOT NULL,
     is_submitted boolean DEFAULT false NOT NULL,
     user_submitted_id bigint,
     date_submitted timestamp with time zone,
@@ -292,6 +296,7 @@ ALTER TABLE public.control_codes OWNER TO postgres;
 
 CREATE TABLE public.electronic_signatures (
     id bigint NOT NULL,
+    version bigint DEFAULT 1 NOT NULL,
     entity_name character varying(50) NOT NULL,
     entity_id bigint NOT NULL,
     signer_user_id bigint NOT NULL,
@@ -618,7 +623,9 @@ CREATE TABLE public.measurements (
     user_reported_id bigint,
     is_readonly boolean DEFAULT false NOT NULL,
     user_update_id bigint NOT NULL,
-    date_update timestamp with time zone NOT NULL
+    date_update timestamp with time zone NOT NULL,
+    user_created_id bigint DEFAULT 1 NOT NULL,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -800,7 +807,9 @@ CREATE TABLE public.report_tests (
     measurement_id bigint NOT NULL,
     test_id bigint NOT NULL,
     idx integer DEFAULT 0 NOT NULL,
-    value numeric NOT NULL
+    value numeric NOT NULL,
+    uncertainty_value numeric,
+    coverage_factor_k numeric
 );
 
 
@@ -915,9 +924,10 @@ ALTER TABLE public.spec_test_evals ALTER COLUMN id ADD GENERATED ALWAYS AS IDENT
 CREATE TABLE public.spec_tests (
     spec_id bigint NOT NULL,
     test_id bigint NOT NULL,
-    test_frequency integer NOT NULL,
     condition character varying(255) NOT NULL,
-    note character varying(150) NOT NULL
+    note character varying(150) NOT NULL,
+    use_uncertainty boolean DEFAULT false NOT NULL,
+    test_frequency integer NOT NULL
 );
 
 
@@ -966,6 +976,8 @@ CREATE TABLE public.tests (
     norm_id bigint,
     norm_ref character varying(50),
     for_certification boolean DEFAULT false NOT NULL,
+    relative_uncertainty_pct numeric(5,2),
+    default_coverage_factor_k numeric(3,1),
     nr_ord bigint DEFAULT 0 NOT NULL,
     is_form_validated boolean DEFAULT false NOT NULL,
     date_created timestamp with time zone NOT NULL,
@@ -1037,6 +1049,9 @@ CREATE TABLE public.users (
     password_salt text,
     must_change_password boolean DEFAULT false NOT NULL,
     date_password_changed timestamp with time zone,
+    failed_login_attempts integer DEFAULT 0 NOT NULL,
+    is_locked boolean DEFAULT false NOT NULL,
+    lock_expiration timestamp with time zone,
     session_id character varying(255),
     date_session_created timestamp with time zone,
     date_session_expire timestamp with time zone,
@@ -1788,7 +1803,7 @@ ALTER TABLE ONLY public.measurement_equipments
 --
 
 ALTER TABLE ONLY public.measurement_equipments
-    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
+    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
 
 
 --
@@ -1853,6 +1868,14 @@ ALTER TABLE ONLY public.measurements
 
 ALTER TABLE ONLY public.measurements
     ADD CONSTRAINT measurements_reception_id_fkey FOREIGN KEY (reception_id) REFERENCES public.receptions(id);
+
+
+--
+-- Name: measurements measurements_user_created_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurements
+    ADD CONSTRAINT measurements_user_created_id_fkey FOREIGN KEY (user_created_id) REFERENCES public.users(id);
 
 
 --

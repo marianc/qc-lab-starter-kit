@@ -31,6 +31,10 @@ To stop the demo stack when finished:
 ```bash
 docker compose -f docker-compose.demo.yml down
 ```
+or stop containers and remove volumes (-v removes named volumes). This has to be done also before instaling a newer version of demo application.
+```bash
+docker compose -f docker-compose.demo.yml down -v
+```
 
 ---
 

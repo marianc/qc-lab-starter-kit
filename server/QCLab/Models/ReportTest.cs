@@ -15,6 +15,10 @@ public partial class ReportTest
 
     public decimal Value { get; set; }
 
+    public decimal? UncertaintyValue { get; set; }
+
+    public decimal? CoverageFactorK { get; set; }
+
     public virtual ICollection<CertificateTest> CertificateTests { get; set; } = new List<CertificateTest>();
 
     public virtual Measurement Measurement { get; set; } = null!;
