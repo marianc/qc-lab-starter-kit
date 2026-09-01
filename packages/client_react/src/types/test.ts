@@ -20,6 +20,8 @@ export interface TestDto {
   isParam: boolean;
   isArray: boolean;
   forCertification: boolean;
+  relativeUncertaintyPct?: number | null;
+  defaultCoverageFactorK?: number | null;
   isFormValidated: boolean;
   nrOrd: number;
   isObsolete: boolean;
@@ -49,6 +51,8 @@ export interface CreateTestDto {
   isObsolete: boolean;
   isArray: boolean;
   forCertification: boolean;
+  relativeUncertaintyPct?: number | null;
+  defaultCoverageFactorK?: number | null;
   enums?: CreateTestEnumDto[] | null;
 }
 

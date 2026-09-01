@@ -52,6 +52,8 @@ public class TestDto
     public bool IsParam { get; set; }
     public bool IsArray { get; set; }
     public bool ForCertification { get; set; }
+    public decimal? RelativeUncertaintyPct { get; set; }
+    public decimal? DefaultCoverageFactorK { get; set; }
     public bool IsFormValidated { get; set; }
     public long NrOrd { get; set; }
     public bool IsObsolete { get; set; }
@@ -100,6 +102,8 @@ public class CreateTestDto
     public bool IsObsolete { get; set; }
     public bool IsArray { get; set; }
     public bool ForCertification { get; set; }
+    public decimal? RelativeUncertaintyPct { get; set; }
+    public decimal? DefaultCoverageFactorK { get; set; }
     public List<CreateTestEnumDto>? Enums { get; set; }
 }
 

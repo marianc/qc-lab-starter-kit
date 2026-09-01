@@ -71,6 +71,7 @@ public class ServerCertificatesService : ICertificatesService
                         var value = reportTest.Value;
                         var condition = specTest.Condition;
                         bool isConformingSpec = false;
+                        bool isConformingUncertainty = true;
 
                         if (!string.IsNullOrEmpty(condition))
                         {
@@ -84,6 +85,36 @@ public class ServerCertificatesService : ICertificatesService
                             catch (Exception e)
                             {
                                 Console.Error.WriteLine($"Error evaluating formula '{condition}' with value {value}: {e}");
+                            }
+
+                            if (reportTest.UncertaintyValue.HasValue && reportTest.CoverageFactorK.HasValue)
+                            {
+                                var u = reportTest.UncertaintyValue.Value * reportTest.CoverageFactorK.Value;
+                                var valMinusU = value - u;
+                                var valPlusU = value + u;
+                                bool confMinus = false;
+                                bool confPlus = false;
+                                try
+                                {
+                                    var resMinus = QCFormula.Formula.EvaluateFormula(condition, new Dictionary<string, decimal> { { "value", valMinusU } });
+                                    if (resMinus is bool bm) confMinus = bm;
+                                    else if (resMinus is decimal dm) confMinus = dm != 0;
+
+                                    var resPlus = QCFormula.Formula.EvaluateFormula(condition, new Dictionary<string, decimal> { { "value", valPlusU } });
+                                    if (resPlus is bool bp) confPlus = bp;
+                                    else if (resPlus is decimal dp) confPlus = dp != 0;
+
+                                    isConformingUncertainty = confMinus && confPlus;
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.Error.WriteLine($"Error evaluating uncertainty formula '{condition}' with value {value}: {e}");
+                                    isConformingUncertainty = false;
+                                }
+                            }
+                            else
+                            {
+                                isConformingUncertainty = true;
                             }
                         }
 
@@ -103,9 +134,12 @@ public class ServerCertificatesService : ICertificatesService
                             TestId = reportTest.TestId,
                             Idx = reportTest.Idx,
                             Value = value,
+                            UncertaintyValue = reportTest.UncertaintyValue,
+                            CoverageFactorK = reportTest.CoverageFactorK,
                             TestCount = 1,
                             NoteSpec = noteSpec ?? string.Empty,
-                            IsConformingSpec = isConformingSpec
+                            IsConformingSpec = isConformingSpec,
+                            IsConformingUncertainty = isConformingUncertainty
                         });
                     }
                 }
@@ -121,7 +155,8 @@ public class ServerCertificatesService : ICertificatesService
                                 c.ControlCodeId < controlCodeId &&
                                 c.IsSubmitted &&
                                 !c.IsCancelled &&
-                                c.IsConformingSpec)
+                                c.IsConformingSpec &&
+                                c.IsConformingUncertainty)
                     .OrderByDescending(c => c.ControlCodeId)
                     .FirstOrDefaultAsync();
 
@@ -147,9 +182,12 @@ public class ServerCertificatesService : ICertificatesService
                                     TestId = prevTest.TestId,
                                     Idx = prevTest.Idx,
                                     Value = prevTest.Value,
+                                    UncertaintyValue = prevTest.UncertaintyValue,
+                                    CoverageFactorK = prevTest.CoverageFactorK,
                                     TestCount = prevTest.TestCount + 1,
                                     NoteSpec = prevTest.NoteSpec,
-                                    IsConformingSpec = prevTest.IsConformingSpec
+                                    IsConformingSpec = prevTest.IsConformingSpec,
+                                    IsConformingUncertainty = prevTest.IsConformingUncertainty
                                 });
                             }
                         }
@@ -244,6 +282,7 @@ public class ServerCertificatesService : ICertificatesService
                 MaterialName = c.ControlCode.Material.Name,
                 ControlCode = c.ControlCode.Code,
                 IsConformingSpec = c.IsConformingSpec,
+                IsConformingUncertainty = c.IsConformingUncertainty,
                 DateSubmitted = c.DateSubmitted,
                 CertificateReplacedId = c.CertificateReplacedId,
                 DateCancelled = c.DateCancelled,
@@ -326,7 +365,8 @@ public class ServerCertificatesService : ICertificatesService
                     TestCount = first.TestCount,
                     TestFrequency = specTests.TryGetValue(first.TestId, out var freq) ? freq : 0,
                     NoteSpec = first.NoteSpec,
-                    IsConformingSpec = tGroup.All(x => x.IsConformingSpec), // If any element fails, whole array fails? Or per element?
+                    IsConformingSpec = tGroup.All(x => x.IsConformingSpec),
+                    IsConformingUncertainty = tGroup.All(x => x.IsConformingUncertainty),
                     TestName = test.Name,
                     UnitName = test.Unit?.Name,
                     ReportIsCancelled = first.Report.IsCancelled
@@ -351,7 +391,16 @@ public class ServerCertificatesService : ICertificatesService
                         displayVal = ct.Value.ToString("F1");
                     }
                     dto.FormattedValues.Add(displayVal);
+
+                    string uncertaintyDisplay = "";
+                    if (ct.UncertaintyValue.HasValue && ct.CoverageFactorK.HasValue)
+                    {
+                        uncertaintyDisplay = $"±{ct.UncertaintyValue.Value.ToString("G29")} (k = {ct.CoverageFactorK.Value.ToString("G29")})";
+                    }
+                    dto.UncertaintyValues.Add(uncertaintyDisplay);
+
                     dto.ConformingResults.Add(ct.IsConformingSpec);
+                    dto.ConformingUncertaintyResults.Add(ct.IsConformingUncertainty);
                 }
                 dto.DisplayValue = string.Join(", ", dto.FormattedValues);
                 processedTests.Add(dto);
@@ -370,6 +419,7 @@ public class ServerCertificatesService : ICertificatesService
             MaterialName = certificate.ControlCode.Material.Name,
             ControlCode = certificate.ControlCode.Code,
             IsConformingSpec = certificate.IsConformingSpec,
+            IsConformingUncertainty = certificate.IsConformingUncertainty,
             DateSubmitted = certificate.DateSubmitted,
             DateCancelled = certificate.DateCancelled,
             IsCancelled = certificate.IsCancelled,
@@ -407,6 +457,7 @@ public class ServerCertificatesService : ICertificatesService
             SpecId = spec.Id,
             ControlCodeId = dto.ControlCodeId,
             IsConformingSpec = false, 
+            IsConformingUncertainty = true,
             IsSubmitted = false,
             IsCancelled = false,
             UserSubmittedId = dto.UserId,
@@ -431,8 +482,12 @@ public class ServerCertificatesService : ICertificatesService
         if (dto.IsConformingSpec.HasValue)
         {
             certificate.IsConformingSpec = dto.IsConformingSpec.Value;
-            await _context.SaveChangesAsync();
         }
+        if (dto.IsConformingUncertainty.HasValue)
+        {
+            certificate.IsConformingUncertainty = dto.IsConformingUncertainty.Value;
+        }
+        await _context.SaveChangesAsync();
     }
 
     // PUT /certificates/{id}/refresh_tests
@@ -453,6 +508,7 @@ public class ServerCertificatesService : ICertificatesService
 
         certificate.SpecId = latestSpec.Id;
         certificate.IsConformingSpec = false;
+        certificate.IsConformingUncertainty = true;
         await _context.SaveChangesAsync();
 
         await CalculateAndSaveCertificateTests(id, latestSpec.Id, certificate.ControlCodeId);
@@ -464,7 +520,8 @@ public class ServerCertificatesService : ICertificatesService
         var certificate = await _context.Certificates.FindAsync(id);
         if (certificate == null) throw new ArgumentException("Certificate not found");
 
-        var nonConformingCount = await _context.CertificateTests.CountAsync(ct => ct.CertificateId == id && !ct.IsConformingSpec);
+        var nonConformingSpecCount = await _context.CertificateTests.CountAsync(ct => ct.CertificateId == id && !ct.IsConformingSpec);
+        var nonConformingUncertaintyCount = await _context.CertificateTests.CountAsync(ct => ct.CertificateId == id && !ct.IsConformingUncertainty);
 
         var specTests = await _context.SpecTests.Where(st => st.SpecId == certificate.SpecId).ToListAsync();
         var mandatoryTestIds = specTests.Where(st => st.TestFrequency > 0).Select(st => st.TestId).ToHashSet();
@@ -478,16 +535,20 @@ public class ServerCertificatesService : ICertificatesService
         var missingTestIds = mandatoryTestIds.Where(tid => !certTestIdsSet.Contains(tid)).ToList();
 
         string analysisResult;
-        bool isConformingSpec;
+        bool isConformingSpec = nonConformingSpecCount == 0 && missingTestIds.Count == 0;
+        bool isConformingUncertainty = nonConformingUncertaintyCount == 0;
 
-        if (nonConformingCount == 0 && missingTestIds.Count == 0)
+        if (isConformingSpec && isConformingUncertainty)
         {
             analysisResult = "All testing results are according to specification";
-            isConformingSpec = true;
+        }
+        else if (isConformingSpec && !isConformingUncertainty)
+        {
+            analysisResult = "Testing results are conforming, but measurement uncertainty boundaries are inconclusive";
         }
         else
         {
-            analysisResult = $"{nonConformingCount} of testing results are out of specification";
+            analysisResult = $"{nonConformingSpecCount} of testing results are out of specification";
             if (missingTestIds.Count > 0)
             {
                 var missingTests = await _context.Tests
@@ -497,16 +558,20 @@ public class ServerCertificatesService : ICertificatesService
                 
                 analysisResult += "\nMissing tests:\n" + string.Join("\n", missingTests);
             }
-            isConformingSpec = false;
         }
 
-        return new CertificateAnalysisDto { AnalysisResult = analysisResult, IsConformingSpec = isConformingSpec };
+        return new CertificateAnalysisDto 
+        { 
+            AnalysisResult = analysisResult, 
+            IsConformingSpec = isConformingSpec,
+            IsConformingUncertainty = isConformingUncertainty
+        };
     }
 
     public async Task<CertificateAnalysisDto> AnalyzeInFlightResults(
         long specId, 
         long controlCodeId, 
-        List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx)> currentReportTestRows)
+        List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx, decimal? UncertaintyValue, decimal? CoverageFactorK)> currentReportTestRows)
     {
         var certifiedTestIds = await _context.Tests
             .Where(t => t.ForCertification && !t.IsObsolete)
@@ -518,13 +583,14 @@ public class ServerCertificatesService : ICertificatesService
             .ToListAsync();
         var specTestsMap = specTests.ToDictionary(st => st.TestId, st => st);
 
-        var gatheredTests = new List<(long TestId, bool IsConformingSpec)>();
+        var gatheredTests = new List<(long TestId, bool IsConformingSpec, bool IsConformingUncertainty)>();
 
         foreach (var row in currentReportTestRows)
         {
             if (specTestsMap.TryGetValue(row.TestId, out var specTest))
             {
                 bool isConformingSpec = false;
+                bool isConformingUncertainty = true;
                 var condition = specTest.Condition;
                 if (!string.IsNullOrEmpty(condition))
                 {
@@ -539,9 +605,39 @@ public class ServerCertificatesService : ICertificatesService
                     {
                         Console.Error.WriteLine($"Error evaluating formula '{condition}' with value {row.Value}: {e}");
                     }
+
+                    if (row.UncertaintyValue.HasValue && row.CoverageFactorK.HasValue)
+                    {
+                        var u = row.UncertaintyValue.Value * row.CoverageFactorK.Value;
+                        var valMinusU = row.Value - u;
+                        var valPlusU = row.Value + u;
+                        bool confMinus = false;
+                        bool confPlus = false;
+                        try
+                        {
+                            var resMinus = QCFormula.Formula.EvaluateFormula(condition, new Dictionary<string, decimal> { { "value", valMinusU } });
+                            if (resMinus is bool bm) confMinus = bm;
+                            else if (resMinus is decimal dm) confMinus = dm != 0;
+
+                            var resPlus = QCFormula.Formula.EvaluateFormula(condition, new Dictionary<string, decimal> { { "value", valPlusU } });
+                            if (resPlus is bool bp) confPlus = bp;
+                            else if (resPlus is decimal dp) confPlus = dp != 0;
+
+                            isConformingUncertainty = confMinus && confPlus;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.Error.WriteLine($"Error evaluating uncertainty formula '{condition}' with value {row.Value}: {e}");
+                            isConformingUncertainty = false;
+                        }
+                    }
+                    else
+                    {
+                        isConformingUncertainty = true;
+                    }
                 }
 
-                gatheredTests.Add((row.TestId, isConformingSpec));
+                gatheredTests.Add((row.TestId, isConformingSpec, isConformingUncertainty));
             }
         }
 
@@ -555,7 +651,8 @@ public class ServerCertificatesService : ICertificatesService
                             c.ControlCodeId < controlCodeId &&
                             c.IsSubmitted &&
                             !c.IsCancelled &&
-                            c.IsConformingSpec)
+                            c.IsConformingSpec &&
+                            c.IsConformingUncertainty)
                 .OrderByDescending(c => c.ControlCodeId)
                 .FirstOrDefaultAsync();
 
@@ -573,30 +670,35 @@ public class ServerCertificatesService : ICertificatesService
                     {
                         if (!currentTestIds.Contains(prevTest.TestId) && (prevTest.TestCount + 1) <= specTestInfo.TestFrequency)
                         {
-                            gatheredTests.Add((prevTest.TestId, prevTest.IsConformingSpec));
+                            gatheredTests.Add((prevTest.TestId, prevTest.IsConformingSpec, prevTest.IsConformingUncertainty));
                         }
                     }
                 }
             }
         }
 
-        int nonConformingCount = gatheredTests.Count(t => !t.IsConformingSpec);
+        int nonConformingSpecCount = gatheredTests.Count(t => !t.IsConformingSpec);
+        int nonConformingUncertaintyCount = gatheredTests.Count(t => !t.IsConformingUncertainty);
 
         var mandatoryTestIds = specTests.Where(st => st.TestFrequency > 0).Select(st => st.TestId).ToHashSet();
         var certTestIdsSet = new HashSet<long>(gatheredTests.Select(t => t.TestId));
         var missingTestIds = mandatoryTestIds.Where(tid => !certTestIdsSet.Contains(tid)).ToList();
 
         string analysisResult;
-        bool overallConforming;
+        bool isConformingSpecOverall = nonConformingSpecCount == 0 && missingTestIds.Count == 0;
+        bool isConformingUncertaintyOverall = nonConformingUncertaintyCount == 0;
 
-        if (nonConformingCount == 0 && missingTestIds.Count == 0)
+        if (isConformingSpecOverall && isConformingUncertaintyOverall)
         {
             analysisResult = "All testing results are according to specification";
-            overallConforming = true;
+        }
+        else if (isConformingSpecOverall && !isConformingUncertaintyOverall)
+        {
+            analysisResult = "Testing results are conforming, but measurement uncertainty boundaries are inconclusive";
         }
         else
         {
-            analysisResult = $"{nonConformingCount} of testing results are out of specification";
+            analysisResult = $"{nonConformingSpecCount} of testing results are out of specification";
             if (missingTestIds.Count > 0)
             {
                 var missingTests = await _context.Tests
@@ -606,10 +708,14 @@ public class ServerCertificatesService : ICertificatesService
                 
                 analysisResult += "\nMissing tests:\n" + string.Join("\n", missingTests);
             }
-            overallConforming = false;
         }
 
-        return new CertificateAnalysisDto { AnalysisResult = analysisResult, IsConformingSpec = overallConforming };
+        return new CertificateAnalysisDto 
+        { 
+            AnalysisResult = analysisResult, 
+            IsConformingSpec = isConformingSpecOverall,
+            IsConformingUncertainty = isConformingUncertaintyOverall
+        };
     }
 
     // GET /certificates/{id}/has_existing
@@ -651,6 +757,7 @@ public class ServerCertificatesService : ICertificatesService
             // Re-calculate conformance before final submission
             var analysis = await AnalyzeResults(id);
             certificate.IsConformingSpec = analysis.IsConformingSpec;
+            certificate.IsConformingUncertainty = analysis.IsConformingUncertainty;
 
             await _context.SaveChangesAsync();
 
@@ -810,10 +917,14 @@ public class ServerCertificatesService : ICertificatesService
             unitName = t.UnitName,
             value = t.DisplayValue,
             formattedValues = t.FormattedValues,
+            uncertaintyValues = t.UncertaintyValues,
             testCount = t.TestCount,
             testFrequency = t.TestFrequency,
             noteSpec = t.NoteSpec,
             isConformingSpec = t.IsConformingSpec,
+            isConformingUncertainty = t.IsConformingUncertainty,
+            conformingResults = t.ConformingResults,
+            conformingUncertaintyResults = t.ConformingUncertaintyResults,
             reportId = t.ReportId,
             reportIsCancelled = t.ReportIsCancelled
         }).ToList();
@@ -827,6 +938,7 @@ public class ServerCertificatesService : ICertificatesService
                 controlCode = certDto.ControlCode,
                 specId = certDto.SpecId,
                 isConformingSpec = certDto.IsConformingSpec,
+                isConformingUncertainty = certDto.IsConformingUncertainty,
                 status = certDto.Status,
                 userSubmittedTag = certDto.UserSubmittedTag,
                 dateSubmitted = certDto.DateSubmitted?.ToString("yyyy-MM-dd HH:mm:ss"),

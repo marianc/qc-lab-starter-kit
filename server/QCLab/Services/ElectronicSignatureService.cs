@@ -251,7 +251,7 @@ public class ElectronicSignatureService
                 if (spec == null) throw new ArgumentException($"Specification {entityId} not found.");
 
                 var specTests = spec.SpecTests?
-                    .Select(st => new { st.TestId, st.TestFrequency, st.Condition, st.Note })
+                    .Select(st => new { st.TestId, st.Condition, st.Note, st.UseUncertainty, st.TestFrequency })
                     .OrderBy(st => st.TestId)
                     .ToList() ?? new();
 

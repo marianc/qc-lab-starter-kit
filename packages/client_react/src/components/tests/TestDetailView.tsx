@@ -97,6 +97,8 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
         isArray: updatedTest.isArray,
         isParam: updatedTest.isParam,
         forCertification: updatedTest.forCertification,
+        relativeUncertaintyPct: updatedTest.relativeUncertaintyPct,
+        defaultCoverageFactorK: updatedTest.defaultCoverageFactorK,
         unitId: updatedTest.unitId,
         normId: updatedTest.normId,
         normRef: updatedTest.normRef,
@@ -226,6 +228,12 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               <DetailItem label="Is Array" value={test.isArray ? "Yes" : "No"} />
               <DetailItem label="Is Parameter" value={test.isParam ? "Yes" : "No"} />
               <DetailItem label="For Certification" value={test.forCertification ? "Yes" : "No"} />
+              {test.forCertification && (
+                <>
+                  <DetailItem label="Relative Uncertainty (%)" value={test.relativeUncertaintyPct ?? "-"} />
+                  <DetailItem label="Coverage Factor (k)" value={test.defaultCoverageFactorK ?? "-"} />
+                </>
+              )}
             </DetailColumn>
             <DetailColumn>
               <DetailItem label="Unit" value={test.unitName || "-"} />
@@ -245,7 +253,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
           </DetailContainer>
 
           <div className={styles.actionButtons}>
-            {!test.isFormValidated && (
+            {!test.isObsolete && (
               <button onClick={() => setShowEditDialog(true)} className="action-button edit-button">Edit</button>
             )}
             <button 

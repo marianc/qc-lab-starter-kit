@@ -108,6 +108,9 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
             <th>Test Name</th>
             <th>Measurement Unit</th>
             <th>Value</th>
+            {report.isCertification && (
+              <th>Uncertainty</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -135,6 +138,17 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
                     <div key={idx}>{val}</div>
                   ))}
                 </td>
+                {report.isCertification && (
+                  <td>
+                    {test.uncertaintyValues && test.uncertaintyValues.length > 0 ? (
+                      test.uncertaintyValues.map((unc, idx) => (
+                        <div key={idx}>{unc || '-'}</div>
+                      ))
+                    ) : (
+                      <div>-</div>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}

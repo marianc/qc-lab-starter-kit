@@ -29,6 +29,8 @@ type TestFormValues = {
   isArray: boolean;
   isParam: boolean;
   forCertification: boolean;
+  relativeUncertaintyPct: number | null;
+  defaultCoverageFactorK: number | null;
   unitId: number | null;
   normId: number | null;
   normRef: string | null;
@@ -63,6 +65,8 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       isArray: false,
       isParam: false,
       forCertification: false,
+      relativeUncertaintyPct: null,
+      defaultCoverageFactorK: null,
       unitId: null,
       normId: null,
       normRef: null,
@@ -74,6 +78,8 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   const watchNormId = watch('normId');
   const watchTypeId = watch('typeId');
   const watchId = watch('id');
+  const watchForCertification = watch('forCertification');
+  const watchIsParam = watch('isParam');
 
   useEffect(() => {
     if (open) {
@@ -96,6 +102,8 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             isArray: testData.isArray,
             isParam: testData.isParam,
             forCertification: testData.forCertification,
+            relativeUncertaintyPct: testData.relativeUncertaintyPct ?? null,
+            defaultCoverageFactorK: testData.defaultCoverageFactorK ?? null,
             unitId: testData.unitId || null,
             normId: testData.normId || null,
             normRef: testData.normRef || '',
@@ -113,6 +121,9 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             typeId: undefined as any,
             isArray: false,
             isParam: false,
+            forCertification: false,
+            relativeUncertaintyPct: null,
+            defaultCoverageFactorK: null,
             unitId: null,
             normId: null,
             normRef: '',
@@ -129,6 +140,31 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       setValue('normRef', null);
     }
   }, [watchNormId, setValue]);
+
+  useEffect(() => {
+    if (watchForCertification) {
+      if (watchIsParam) {
+        setValue('isParam', false);
+      }
+      const currentRelative = getValues('relativeUncertaintyPct');
+      const currentCoverage = getValues('defaultCoverageFactorK');
+      if (currentRelative === null || currentRelative === undefined || currentRelative === 0) {
+        setValue('relativeUncertaintyPct', 3.0);
+      }
+      if (currentCoverage === null || currentCoverage === undefined || currentCoverage === 0) {
+        setValue('defaultCoverageFactorK', 2.0);
+      }
+    } else {
+      setValue('relativeUncertaintyPct', null);
+      setValue('defaultCoverageFactorK', null);
+    }
+  }, [watchForCertification, setValue, getValues]);
+
+  useEffect(() => {
+    if (watchIsParam && watchForCertification) {
+      setValue('forCertification', false);
+    }
+  }, [watchIsParam, watchForCertification, setValue]);
 
   const validateUniqueness = async (property: "Name" | "Code"): Promise<boolean> => {
     const value = getValues(property.toLowerCase() as any);
@@ -187,6 +223,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             <input 
               {...register('name')} 
               className="form-control" 
+              disabled={Boolean(testData?.isFormValidated)}
               onBlur={() => validateUniqueness('Name')}
             />
             {errors.name && <span className="text-danger">{errors.name.message}</span>}
@@ -197,6 +234,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             <input 
               {...register('code')} 
               className="form-control" 
+              disabled={Boolean(testData?.isFormValidated)}
               onBlur={() => validateUniqueness('Code')}
             />
             {errors.code && <span className="text-danger">{errors.code.message}</span>}
@@ -214,7 +252,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
 
           <div className="form-group">
             <label>Value Type</label>
-            <select {...register('typeId', { valueAsNumber: true })} className="form-control">
+            <select {...register('typeId', { valueAsNumber: true })} className="form-control" disabled={Boolean(testData?.isFormValidated)}>
               <option value="">-- Select Value Type --</option>
               {valueTypes.map(vt => (
                 <option key={vt.id} value={vt.id}>{vt.name}</option>
@@ -238,19 +276,49 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
           )}
 
           <div className={`form-group ${styles.checkboxGroup}`}>
-            <input type="checkbox" id="is_array" {...register('isArray')} />
+            <input type="checkbox" id="is_array" {...register('isArray')} disabled={Boolean(testData?.isFormValidated)} />
             <label htmlFor="is_array">Is Array</label>
           </div>
 
-          <div className={`form-group ${styles.checkboxGroup}`}>
-            <input type="checkbox" id="is_param" {...register('isParam')} />
-            <label htmlFor="is_param">Is Parameter</label>
-          </div>
+          {!watchForCertification && (
+            <div className={`form-group ${styles.checkboxGroup}`}>
+              <input type="checkbox" id="is_param" {...register('isParam')} disabled={Boolean(testData?.isFormValidated)} />
+              <label htmlFor="is_param">Is Parameter</label>
+            </div>
+          )}
 
-          <div className={`form-group ${styles.checkboxGroup}`}>
-            <input type="checkbox" id="for_certification" {...register('forCertification')} />
-            <label htmlFor="for_certification">For Certification</label>
-          </div>
+          {!watchIsParam && (
+            <div className={`form-group ${styles.checkboxGroup}`}>
+              <input type="checkbox" id="for_certification" {...register('forCertification')} />
+              <label htmlFor="for_certification">For Certification</label>
+            </div>
+          )}
+
+          {watchForCertification && (
+            <>
+              <div className="form-group">
+                <label>Relative Uncertainty (%)</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  {...register('relativeUncertaintyPct', { valueAsNumber: true })} 
+                  className="form-control" 
+                />
+                {errors.relativeUncertaintyPct && <span className="text-danger">{errors.relativeUncertaintyPct.message as string}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Default Coverage Factor (k)</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  {...register('defaultCoverageFactorK', { valueAsNumber: true })} 
+                  className="form-control" 
+                />
+                {errors.defaultCoverageFactorK && <span className="text-danger">{errors.defaultCoverageFactorK.message as string}</span>}
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label>Unit</label>

@@ -38,6 +38,8 @@ public class ServerTestsService : ITestsService
             IsParam = test.IsParam,
             IsArray = test.IsArray,
             ForCertification = test.ForCertification,
+            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
+            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             IsFormValidated = test.IsFormValidated,
             NrOrd = test.NrOrd,
             IsObsolete = test.IsObsolete,
@@ -105,6 +107,8 @@ public class ServerTestsService : ITestsService
             IsParam = test.IsParam,
             IsArray = test.IsArray,
             ForCertification = test.ForCertification,
+            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
+            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             IsFormValidated = test.IsFormValidated,
             NrOrd = test.NrOrd,
             IsObsolete = test.IsObsolete,
@@ -236,6 +240,8 @@ public class ServerTestsService : ITestsService
             IsObsolete = newTest.IsObsolete,
             IsArray = newTest.IsArray,
             ForCertification = newTest.ForCertification,
+            RelativeUncertaintyPct = newTest.ForCertification ? newTest.RelativeUncertaintyPct : null,
+            DefaultCoverageFactorK = newTest.ForCertification ? newTest.DefaultCoverageFactorK : null,
             DateCreated = DateTime.UtcNow
         };
 
@@ -303,6 +309,8 @@ public class ServerTestsService : ITestsService
             test.IsObsolete = testData.IsObsolete;
             test.IsArray = testData.IsArray;
             test.ForCertification = testData.ForCertification;
+            test.RelativeUncertaintyPct = testData.ForCertification ? testData.RelativeUncertaintyPct : null;
+            test.DefaultCoverageFactorK = testData.ForCertification ? testData.DefaultCoverageFactorK : null;
 
             if (test.TypeId != 4)
             {

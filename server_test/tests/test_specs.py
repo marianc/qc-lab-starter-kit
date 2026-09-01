@@ -100,9 +100,9 @@ def test_create_spec_test_16(migrated_db, auth_session, base_url, db_session):
     url = f"{base_url}/api/specs/16/tests"
     payload = {
         "testId": 4,
-        "testFrequency": 1,
         "condition": "[value] > 0",
         "note": "> 0",
+        "testFrequency": 1,
         "evals": [
             {
                 "id": 0,
@@ -135,9 +135,9 @@ def test_update_spec_test_16(migrated_db, auth_session, base_url, db_session):
     """
     url = f"{base_url}/api/specs/16/tests/1"
     payload = {
-        "testFrequency": 1,
         "condition": "[value] < 1100",
         "note": "< 1100",
+        "testFrequency": 1,
         "evals": [
             {"id": 147, "value": 458, "result": 1, "expectedResult": 1, "isMatch": True, "note": None},
             {"id": 146, "value": 999, "result": 1, "expectedResult": 1, "isMatch": True, "note": None},

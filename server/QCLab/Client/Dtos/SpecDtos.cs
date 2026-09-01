@@ -34,15 +34,17 @@ public class SpecTestDto
     public long NrOrd { get; set; }
 
     [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
-    public int TestFrequency { get; set; }
-
-    [Required]
     [ConditionFormula]
     public string Condition { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Note is required")]
     public string Note { get; set; } = string.Empty;
+
+    public bool UseUncertainty { get; set; }
+
+    [Required]
+    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
+    public int TestFrequency { get; set; }
 
     [NotEmptyCollection(ErrorMessage = "At least one evaluation test is required")]
     public List<SpecTestEvalDto> Evals { get; set; } = new();
@@ -85,15 +87,17 @@ public class CreateSpecTestDto
     public long TestId { get; set; }
 
     [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
-    public int TestFrequency { get; set; }
-
-    [Required]
     [ConditionFormula]
     public string Condition { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Note is required")]
     public string Note { get; set; } = string.Empty;
+
+    public bool UseUncertainty { get; set; }
+
+    [Required]
+    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
+    public int TestFrequency { get; set; }
 
     [NotEmptyCollection(ErrorMessage = "At least one evaluation test is required")]
     public List<SpecTestEvalDto> Evals { get; set; } = new();
@@ -102,15 +106,17 @@ public class CreateSpecTestDto
 public class UpdateSpecTestDto
 {
     [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
-    public int TestFrequency { get; set; }
-
-    [Required]
     [ConditionFormula]
     public string Condition { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Note is required")]
     public string Note { get; set; } = string.Empty;
+
+    public bool UseUncertainty { get; set; }
+
+    [Required]
+    [Range(0, int.MaxValue, ErrorMessage = "Frequency must be at least 0")]
+    public int TestFrequency { get; set; }
 
     [NotEmptyCollection(ErrorMessage = "At least one evaluation test is required")]
     public List<SpecTestEvalDto> Evals { get; set; } = new();

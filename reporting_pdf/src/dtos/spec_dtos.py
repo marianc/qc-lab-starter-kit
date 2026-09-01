@@ -5,9 +5,10 @@ class SpecTestItemDto(BaseModel):
     model_config = ConfigDict(extra='allow')
     testName: Optional[str] = ""
     unitName: Optional[str] = None
-    testFrequency: Optional[int] = 0
     condition: Optional[str] = ""
     note: Optional[str] = None
+    useUncertainty: Optional[bool] = False
+    testFrequency: Optional[int] = 0
 
 class SpecDataDto(BaseModel):
     model_config = ConfigDict(extra='allow')

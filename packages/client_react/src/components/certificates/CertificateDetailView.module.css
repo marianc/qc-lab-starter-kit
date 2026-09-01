@@ -44,6 +44,11 @@
     color: #007bff;
 }
 
+.analysisResultMessage.inconclusive {
+    border-left-color: #fd7e14;
+    color: #fd7e14;
+}
+
 .analysisResultMessage.nonConforming {
     border-left-color: #dc3545;
     color: #dc3545;
@@ -51,6 +56,11 @@
 
 .textSuccess {
     color: #28a745;
+    font-weight: bold;
+}
+
+.textWarning {
+    color: #fd7e14;
     font-weight: bold;
 }
 

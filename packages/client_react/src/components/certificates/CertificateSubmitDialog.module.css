@@ -12,6 +12,11 @@
     color: #007bff;
 }
 
+.analysisSummary.inconclusive {
+    border-left-color: #fd7e14;
+    color: #fd7e14;
+}
+
 .analysisSummary.nonConforming {
     border-left-color: #dc3545;
     color: #dc3545;

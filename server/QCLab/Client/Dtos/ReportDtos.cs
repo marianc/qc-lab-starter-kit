@@ -37,6 +37,7 @@ public class ReportDetailDto
     public string? MaterialName { get; set; }
     public string? ControlCode { get; set; }
     public string? ReceptionTypeName { get; set; }
+    public bool IsCertification { get; set; }
     
     public List<ReportTestDto> Tests { get; set; } = new List<ReportTestDto>();
 }
@@ -49,8 +50,11 @@ public class ReportTestDto
     public string TestName { get; set; } = string.Empty;
     public string TypeName { get; set; } = string.Empty;
     public string? UnitName { get; set; }
+    public decimal? UncertaintyValue { get; set; }
+    public decimal? CoverageFactorK { get; set; }
     public string Value { get; set; } = string.Empty; // Legacy display value
     public List<string> FormattedValues { get; set; } = new();
+    public List<string> UncertaintyValues { get; set; } = new();
 }
 
 public class PreviewReportDto
@@ -77,8 +81,10 @@ public class PreviewTestRowDto
     public string TypeName { get; set; } = string.Empty;
     public string? UnitName { get; set; }
     public List<string> FormattedValues { get; set; } = new();
+    public List<string> UncertaintyValues { get; set; } = new();
     public string? SpecNote { get; set; }
     public List<bool?> ConformingResults { get; set; } = new();
+    public List<bool?> ConformingUncertaintyResults { get; set; } = new();
 }
 
 public class CancelReportDto

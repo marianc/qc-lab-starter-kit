@@ -28,3 +28,18 @@
     margin-top: 0.5rem;
     font-style: italic;
 }
+
+.textSuccess {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.textWarning {
+    color: #fd7e14;
+    font-weight: bold;
+}
+
+.textDanger {
+    color: #dc3545;
+    font-weight: bold;
+}

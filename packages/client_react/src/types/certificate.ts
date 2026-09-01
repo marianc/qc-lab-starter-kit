@@ -3,6 +3,7 @@ export interface CertificateDto {
   materialName: string;
   controlCode: string;
   isConformingSpec: boolean;
+  isConformingUncertainty: boolean;
   dateSubmitted: string | null;
   certificateReplacedId?: number | null;
   dateCancelled: string | null;
@@ -41,13 +42,18 @@ export interface CertificateTestDto {
   typeName: string;
   idx: number;
   value: number;
+  uncertaintyValue?: number | null;
+  coverageFactorK?: number | null;
   displayValue: string;
   formattedValues: string[];
+  uncertaintyValues: string[];
   testCount: number;
   testFrequency: number;
   noteSpec: string;
   isConformingSpec: boolean;
+  isConformingUncertainty: boolean;
   conformingResults: boolean[];
+  conformingUncertaintyResults: boolean[];
   testName: string;
   unitName: string | null;
   reportIsCancelled: boolean;
@@ -61,6 +67,7 @@ export interface GenerateCertificateDto {
 
 export interface UpdateCertificateDto {
   isConformingSpec: boolean | null;
+  isConformingUncertainty?: boolean | null;
 }
 
 export interface CertificateActionDto {
@@ -72,4 +79,5 @@ export interface CertificateActionDto {
 export interface CertificateAnalysisDto {
   analysisResult: string;
   isConformingSpec: boolean;
+  isConformingUncertainty: boolean;
 }

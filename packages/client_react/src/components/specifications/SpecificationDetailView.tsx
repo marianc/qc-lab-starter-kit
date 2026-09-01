@@ -133,17 +133,19 @@ const SpecificationDetailView: React.FC<Props> = ({
     try {
       if (editableTestOriginalId !== null) {
         await specificationsService.updateSpecTest(spec.id, editableTestOriginalId, {
-          testFrequency: testData.testFrequency,
           condition: testData.condition,
           note: testData.note,
+          useUncertainty: testData.useUncertainty,
+          testFrequency: testData.testFrequency,
           evals: testData.evals
         });
       } else {
         await specificationsService.addSpecTest(spec.id, {
           testId: testData.testId,
-          testFrequency: testData.testFrequency,
           condition: testData.condition,
           note: testData.note,
+          useUncertainty: testData.useUncertainty,
+          testFrequency: testData.testFrequency,
           evals: testData.evals
         });
       }
@@ -279,9 +281,10 @@ const SpecificationDetailView: React.FC<Props> = ({
               <tr>
                 <th>Test</th>
                 <th>Measurement Unit</th>
-                <th>Frequency</th>
                 <th>Condition</th>
                 <th>Note</th>
+                <th>Use Uncertainty</th>
+                <th>Frequency</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -290,9 +293,10 @@ const SpecificationDetailView: React.FC<Props> = ({
                 <tr key={test.testId}>
                   <td>{test.testName}{certifiedTestIds.includes(test.testId) ? "" : " (?)"}</td>
                   <td>{test.unitName || "-"}</td>
-                  <td>{test.testFrequency}</td>
                   <td>{test.condition}</td>
                   <td>{test.note}</td>
+                  <td>{test.useUncertainty ? "Yes" : "No"}</td>
+                  <td>{test.testFrequency}</td>
                   <td>
                     {isQCPersonnel && !spec.isSubmitted && !spec.dateCancelled && (
                       <>

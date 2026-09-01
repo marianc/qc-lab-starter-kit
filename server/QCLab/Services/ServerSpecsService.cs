@@ -102,9 +102,10 @@ public class ServerSpecsService : ISpecsService
         {
             SpecId = id,
             TestId = dto.TestId,
-            TestFrequency = dto.TestFrequency,
             Condition = dto.Condition,
             Note = dto.Note,
+            UseUncertainty = dto.UseUncertainty,
+            TestFrequency = dto.TestFrequency,
             SpecTestEvals = dto.Evals.Select(e => new SpecTestEval
             {
                 SpecId = id,
@@ -128,9 +129,10 @@ public class ServerSpecsService : ISpecsService
             TestName = test?.Name ?? "",
             UnitName = test?.Unit?.Name,
             NrOrd = test?.NrOrd ?? 0,
-            TestFrequency = specTest.TestFrequency,
             Condition = specTest.Condition,
             Note = specTest.Note,
+            UseUncertainty = specTest.UseUncertainty,
+            TestFrequency = specTest.TestFrequency,
             Evals = specTest.SpecTestEvals.Select(e => new SpecTestEvalDto
             {
                 Id = e.Id,
@@ -154,9 +156,10 @@ public class ServerSpecsService : ISpecsService
             
         if (specTest == null) throw new ArgumentException("Spec test not found");
 
-        specTest.TestFrequency = dto.TestFrequency;
         specTest.Condition = dto.Condition;
         specTest.Note = dto.Note;
+        specTest.UseUncertainty = dto.UseUncertainty;
+        specTest.TestFrequency = dto.TestFrequency;
 
         // Update evaluations
         _context.SpecTestEvals.RemoveRange(specTest.SpecTestEvals);
@@ -436,9 +439,10 @@ public class ServerSpecsService : ISpecsService
                 {
                     SpecId = newSpec.Id,
                     TestId = test.TestId,
-                    TestFrequency = test.TestFrequency,
                     Condition = test.Condition,
-                    Note = test.Note
+                    Note = test.Note,
+                    UseUncertainty = test.UseUncertainty,
+                    TestFrequency = test.TestFrequency
                 };
                 _context.SpecTests.Add(newTest);
 
@@ -526,9 +530,10 @@ public class ServerSpecsService : ISpecsService
                 TestName = st.Test.Name,
                 UnitName = st.Test.Unit?.Name,
                 NrOrd = st.Test.NrOrd,
-                TestFrequency = st.TestFrequency,
                 Condition = st.Condition,
                 Note = st.Note,
+                UseUncertainty = st.UseUncertainty,
+                TestFrequency = st.TestFrequency,
                 Evals = st.SpecTestEvals.Select(e => new SpecTestEvalDto
                 {
                     Id = e.Id,
@@ -587,9 +592,10 @@ public class ServerSpecsService : ISpecsService
                 {
                     testName = t.TestName,
                     unitName = t.UnitName,
-                    testFrequency = t.TestFrequency,
                     condition = t.Condition,
-                    note = t.Note
+                    note = t.Note,
+                    useUncertainty = t.UseUncertainty,
+                    testFrequency = t.TestFrequency
                 }).ToList()
             }
         };

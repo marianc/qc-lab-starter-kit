@@ -148,6 +148,10 @@
             color: #28a745;
             font-weight: bold;
         }
+        .textWarning {
+            color: #fd7e14;
+            font-weight: bold;
+        }
         .textDanger {
             color: #dc3545;
             font-weight: bold;
@@ -175,9 +179,10 @@
                     <span class="field-value">{{ report.specId or '-' }}</span>
                 </div>
                 <div class="field">
-                    <span class="field-label">Is Conforming Spec:</span>
-                    <span class="field-value {% if report.isConformingSpec %}textSuccess{% else %}textDanger{% endif %}">
-                        {{ 'Yes' if report.isConformingSpec else 'No' }}
+                    <span class="field-label">Conformity Status:</span>
+                    {% set cert_status = 'Fail' if not report.isConformingSpec else ('Pass' if report.isConformingUncertainty else 'Inconclusive') %}
+                    <span class="field-value {% if cert_status == 'Pass' %}textSuccess{% elif cert_status == 'Inconclusive' %}textWarning{% else %}textDanger{% endif %}">
+                        {{ cert_status }}
                     </span>
                 </div>
             </div>
@@ -237,8 +242,9 @@
                 <th>Test Name</th>
                 <th>Unit</th>
                 <th>Value</th>
-                <th>Test Count</th>
+                <th>Uncertainty</th>
                 <th>Spec Note</th>
+                <th>Test Count</th>
                 <th>Conforming</th>
                 <th>Source Report</th>
             </tr>
@@ -274,12 +280,32 @@
                         {{ test.value }}
                     {% endif %}
                 </td>
-                <td>{{ test.testCount }} / {{ test.testFrequency }}</td>
-                <td>{{ test.noteSpec or '-' }}</td>
                 <td>
-                    <span class="{% if test.isConformingSpec %}textSuccess{% else %}textDanger{% endif %}">
-                        {{ 'Yes' if test.isConformingSpec else 'No' }}
-                    </span>
+                    {% if test.uncertaintyValues %}
+                        {% for uVal in test.uncertaintyValues %}
+                            <div>{{ uVal or '-' }}</div>
+                        {% endfor %}
+                    {% else %}
+                        <div>-</div>
+                    {% endif %}
+                </td>
+                <td>{{ test.noteSpec or '-' }}</td>
+                <td>{{ test.testCount }} / {{ test.testFrequency }}</td>
+                <td>
+                    {% if test.conformingResults %}
+                        {% for res in test.conformingResults %}
+                            {% set unc_res = test.conformingUncertaintyResults[loop.index0] if test.conformingUncertaintyResults and loop.index0 < (test.conformingUncertaintyResults | length) else true %}
+                            {% set status = 'Fail' if not res else ('Pass' if unc_res else 'Inconclusive') %}
+                            <div class="{% if status == 'Pass' %}textSuccess{% elif status == 'Inconclusive' %}textWarning{% else %}textDanger{% endif %}">
+                                {{ status }}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        {% set status = 'Fail' if not test.isConformingSpec else 'Pass' %}
+                        <span class="{% if status == 'Pass' %}textSuccess{% elif status == 'Inconclusive' %}textWarning{% else %}textDanger{% endif %}">
+                            {{ status }}
+                        </span>
+                    {% endif %}
                 </td>
                 <td>Report #{{ test.reportId }}{% if test.reportIsCancelled %} !{% endif %}</td>
             </tr>
@@ -292,7 +318,8 @@
     {% endif %}
 
     {% if report.analysisResultMessage %}
-    <div class="analysisResultMessage {% if report.isConformingSpec %}conforming{% else %}nonConforming{% endif %}">
+    {% set analysis_status = 'Fail' if not report.isConformingSpec else ('Pass' if report.isConformingUncertainty else 'Inconclusive') %}
+    <div class="analysisResultMessage {% if analysis_status == 'Pass' %}conforming{% else %}nonConforming{% endif %}">
         {{ report.analysisResultMessage }}
     </div>
     {% endif %}

@@ -11,6 +11,7 @@ class ReportTestDto(BaseModel):
     unitName: Optional[str] = None
     value: Optional[str] = ""
     formattedValues: List[str] = []
+    uncertaintyValues: List[str] = []
 
 class ReportDataDto(BaseModel):
     model_config = ConfigDict(extra='allow')
@@ -28,6 +29,7 @@ class ReportDataDto(BaseModel):
     dateCancelled: Optional[str] = None
     userCancelledTag: Optional[str] = None
     commentsCancelled: Optional[str] = None
+    isCertification: Optional[bool] = False
     tests: List[ReportTestDto] = []
 
 class TestingReportRequestDto(BaseModel):

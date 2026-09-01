@@ -9,9 +9,10 @@ export const specTestEvalSchema = z.object({
 
 export const specTestSchema = z.object({
   testId: z.number().min(1, 'Test is required'),
-  testFrequency: z.number().min(0, 'Frequency must be at least 0'),
   condition: z.string().min(1, 'Condition is required'),
   note: z.string().min(1, 'Note is required'),
+  useUncertainty: z.boolean(),
+  testFrequency: z.number().min(0, 'Frequency must be at least 0'),
   evals: z.array(specTestEvalSchema).min(1, 'At least one evaluation test is required')
 });
 

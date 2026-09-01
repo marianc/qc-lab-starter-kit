@@ -21,8 +21,11 @@ export interface ReportTestDto {
   testName: string;
   typeName: string;
   unitName?: string | null;
+  uncertaintyValue?: number | null;
+  coverageFactorK?: number | null;
   value: string;
   formattedValues: string[];
+  uncertaintyValues: string[];
 }
 
 export interface ReportDetailDto {
@@ -42,6 +45,7 @@ export interface ReportDetailDto {
   materialName?: string | null;
   controlCode?: string | null;
   receptionTypeName?: string | null;
+  isCertification: boolean;
   tests: ReportTestDto[];
 }
 
@@ -54,8 +58,10 @@ export interface PreviewTestRowDto {
   typeName: string;
   unitName?: string | null;
   formattedValues: string[];
+  uncertaintyValues: string[];
   specNote?: string | null;
   conformingResults: (boolean | null)[];
+  conformingUncertaintyResults: (boolean | null)[];
 }
 
 export interface PreviewReportDto {

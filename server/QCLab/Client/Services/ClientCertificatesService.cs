@@ -59,7 +59,7 @@ public class ClientCertificatesService(HttpClient httpClient) : ICertificatesSer
     public Task<CertificateAnalysisDto> AnalyzeResults(long id) =>
         httpClient.GetFromJsonAsync<CertificateAnalysisDto>($"/api/certificates/{id}/analyze_results")!;
 
-    public Task<CertificateAnalysisDto> AnalyzeInFlightResults(long specId, long controlCodeId, List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx)> currentReportTestRows) =>
+    public Task<CertificateAnalysisDto> AnalyzeInFlightResults(long specId, long controlCodeId, List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx, decimal? UncertaintyValue, decimal? CoverageFactorK)> currentReportTestRows) =>
         throw new NotImplementedException();
 
     public async Task SubmitCertificate(long id, CertificateActionDto dto)

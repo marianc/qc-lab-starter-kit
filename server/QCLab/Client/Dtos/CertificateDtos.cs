@@ -6,6 +6,7 @@ public class CertificateDto
     public string MaterialName { get; set; } = string.Empty;
     public string ControlCode { get; set; } = string.Empty;
     public bool IsConformingSpec { get; set; }
+    public bool IsConformingUncertainty { get; set; } = true;
     public DateTime? DateSubmitted { get; set; }
     public long? CertificateReplacedId { get; set; }
     public DateTime? DateCancelled { get; set; }
@@ -47,13 +48,18 @@ public class CertificateTestDto
     public string TypeName { get; set; } = string.Empty;
     public long Idx { get; set; }
     public decimal Value { get; set; }
+    public decimal? UncertaintyValue { get; set; }
+    public decimal? CoverageFactorK { get; set; }
     public string DisplayValue { get; set; } = string.Empty;
     public List<string> FormattedValues { get; set; } = new();
+    public List<string> UncertaintyValues { get; set; } = new();
     public long TestCount { get; set; }
     public long TestFrequency { get; set; }
     public string NoteSpec { get; set; } = string.Empty;
     public bool IsConformingSpec { get; set; }
+    public bool IsConformingUncertainty { get; set; } = true;
     public List<bool> ConformingResults { get; set; } = new();
+    public List<bool> ConformingUncertaintyResults { get; set; } = new();
     public string TestName { get; set; } = string.Empty;
     public string? UnitName { get; set; }
     public bool ReportIsCancelled { get; set; }
@@ -69,6 +75,7 @@ public class GenerateCertificateDto
 public class UpdateCertificateDto
 {
     public bool? IsConformingSpec { get; set; }
+    public bool? IsConformingUncertainty { get; set; }
 }
 
 public class CertificateActionDto
@@ -82,6 +89,7 @@ public class CertificateAnalysisDto
 {
     public string AnalysisResult { get; set; } = string.Empty;
     public bool IsConformingSpec { get; set; }
+    public bool IsConformingUncertainty { get; set; } = true;
 }
 
 public class CertTestColumnDto

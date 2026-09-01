@@ -11,10 +11,13 @@ class CertificateTestDto(BaseModel):
     unitName: Optional[str] = None
     value: Optional[str] = ""
     formattedValues: List[str] = []
+    uncertaintyValues: List[str] = []
     testCount: Optional[int] = 0
     testFrequency: Optional[int] = 0
     noteSpec: Optional[str] = None
     isConformingSpec: Optional[bool] = True
+    conformingResults: List[bool] = []
+    conformingUncertaintyResults: List[bool] = []
     reportId: Optional[int] = None
     reportIsCancelled: Optional[bool] = False
 
@@ -25,6 +28,7 @@ class CertificateDataDto(BaseModel):
     controlCode: Optional[str] = None
     specId: Optional[int] = None
     isConformingSpec: Optional[bool] = True
+    isConformingUncertainty: Optional[bool] = True
     status: Optional[str] = None
     userSubmittedTag: Optional[str] = None
     dateSubmitted: Optional[str] = None

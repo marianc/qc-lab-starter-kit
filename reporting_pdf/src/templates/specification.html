@@ -208,9 +208,9 @@
             <tr>
                 <th>Test</th>
                 <th>Measurement Unit</th>
-                <th>Frequency</th>
                 <th>Condition</th>
                 <th>Note</th>
+                <th>Frequency</th>
             </tr>
         </thead>
         <tbody>
@@ -218,9 +218,9 @@
             <tr>
                 <td>{{ test.testName }}</td>
                 <td>{{ test.unitName or '-' }}</td>
-                <td>{{ test.testFrequency }}</td>
                 <td>{{ test.condition }}</td>
                 <td>{{ test.note or '-' }}</td>
+                <td>{{ test.testFrequency }}</td>
             </tr>
             {% endfor %}
         </tbody>

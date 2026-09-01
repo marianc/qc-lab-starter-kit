@@ -169,6 +169,9 @@ const PreviewReportDetailView: React.FC<Props> = ({
                         <th>Measurement Unit</th>
                         <th>Value</th>
                         {report.isCertification && (
+                          <th>Uncertainty</th>
+                        )}
+                        {report.isCertification && (
                           <>
                             <th>Spec Note</th>
                             <th>Conforming</th>
@@ -194,17 +197,31 @@ const PreviewReportDetailView: React.FC<Props> = ({
                                 ))}
                               </td>
                               {report.isCertification && (
+                                <td>
+                                  {row.uncertaintyValues.map((unc: string, uidx: number) => (
+                                    <div key={uidx}>{unc || '-'}</div>
+                                  ))}
+                                </td>
+                              )}
+                              {report.isCertification && (
                                 <>
                                   <td>{row.specNote}</td>
                                   <td>
-                                    {row.conformingResults.map((res: boolean | null, ridx: number) => (
-                                      <div 
-                                        key={ridx} 
-                                        className={res === null ? '' : (res ? 'text-success' : 'text-danger')}
-                                      >
-                                        {res === null ? '-' : (res ? 'Yes' : 'No')}
-                                      </div>
-                                    ))}
+                                    {row.conformingResults.map((res: boolean | null, ridx: number) => {
+                                      if (res === null) return <div key={ridx}>-</div>;
+                                      const uncRes = row.conformingUncertaintyResults && row.conformingUncertaintyResults[ridx] !== undefined
+                                        ? row.conformingUncertaintyResults[ridx]
+                                        : true;
+                                      const status = !res ? 'Fail' : (uncRes ? 'Pass' : 'Inconclusive');
+                                      const statusClass = status === 'Pass' 
+                                        ? styles.textSuccess 
+                                        : (status === 'Inconclusive' ? styles.textWarning : styles.textDanger);
+                                      return (
+                                        <div key={ridx} className={statusClass}>
+                                          {status}
+                                        </div>
+                                      );
+                                    })}
                                   </td>
                                 </>
                               )}

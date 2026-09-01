@@ -12,9 +12,10 @@ export interface SpecTestDto {
   testName: string;
   unitName: string | null;
   nrOrd: number;
-  testFrequency: number;
   condition: string;
   note: string;
+  useUncertainty: boolean;
+  testFrequency: number;
   evals: SpecTestEvalDto[];
 }
 
@@ -52,16 +53,18 @@ export interface UpdateSpecDto {
 
 export interface CreateSpecTestDto {
   testId: number;
-  testFrequency: number;
   condition: string;
   note: string;
+  useUncertainty: boolean;
+  testFrequency: number;
   evals: SpecTestEvalDto[];
 }
 
 export interface UpdateSpecTestDto {
-  testFrequency: number;
   condition: string;
   note: string;
+  useUncertainty: boolean;
+  testFrequency: number;
   evals: SpecTestEvalDto[];
 }
 

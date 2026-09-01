@@ -44,9 +44,10 @@ const SpecTestDialog: React.FC<Props> = ({
     resolver: zodResolver(specTestSchema),
     defaultValues: {
       testId: 0,
-      testFrequency: 1,
       condition: '[value] > 0',
       note: '',
+      useUncertainty: false,
+      testFrequency: 1,
       evals: [{ value: 0, expectedResult: 1, note: '' }]
     }
   });
@@ -63,9 +64,10 @@ const SpecTestDialog: React.FC<Props> = ({
       if (test) {
         reset({
           testId: test.testId,
-          testFrequency: test.testFrequency,
           condition: test.condition,
           note: test.note,
+          useUncertainty: test.useUncertainty,
+          testFrequency: test.testFrequency,
           evals: test.evals.map((e: SpecTestEvalDto) => ({
             id: e.id,
             value: e.value,
@@ -77,9 +79,10 @@ const SpecTestDialog: React.FC<Props> = ({
       } else {
         reset({
           testId: 0,
-          testFrequency: 1,
           condition: '[value] > 0',
           note: '',
+          useUncertainty: false,
+          testFrequency: 1,
           evals: [{ value: 0, expectedResult: 1, note: '' }]
         });
         setFullTestInfo(null);
@@ -121,9 +124,10 @@ const SpecTestDialog: React.FC<Props> = ({
       testName: isEditMode ? (test?.testName || '') : (availableTests.find(t => t.id === data.testId)?.name || ''),
       unitName: isEditMode ? (test?.unitName || null) : (fullTestInfo?.unitName || null),
       nrOrd: test?.nrOrd || 0,
-      testFrequency: data.testFrequency,
       condition: data.condition,
       note: data.note,
+      useUncertainty: data.useUncertainty,
+      testFrequency: data.testFrequency,
       evals: data.evals.map(e => ({
         id: e.id || 0,
         value: e.value,
@@ -187,16 +191,6 @@ const SpecTestDialog: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label>Frequency:</label>
-            <input 
-              type="number" 
-              className={`form-control ${errors.testFrequency ? 'invalid' : ''}`}
-              {...register('testFrequency', { valueAsNumber: true })} 
-            />
-            {errors.testFrequency && <div className="validation-message">{errors.testFrequency.message}</div>}
-          </div>
-
-          <div className="form-group">
             <label>Condition:</label>
             <input 
               type="text" 
@@ -216,7 +210,28 @@ const SpecTestDialog: React.FC<Props> = ({
             {errors.note && <div className="validation-message">{errors.note.message}</div>}
           </div>
 
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input 
+                type="checkbox" 
+                {...register('useUncertainty')} 
+              />
+              Use Uncertainty (ISO/IEC 17025)
+            </label>
+          </div>
+
+          <div className="form-group">
+            <label>Frequency:</label>
+            <input 
+              type="number" 
+              className={`form-control ${errors.testFrequency ? 'invalid' : ''}`}
+              {...register('testFrequency', { valueAsNumber: true })} 
+            />
+            {errors.testFrequency && <div className="validation-message">{errors.testFrequency.message}</div>}
+          </div>
+
           <h4 className={styles.evaluationsTitle}>Validation Tests (Evaluations)</h4>
+
           <div className={styles.tableContainer}>
             <table className="data-table small-table">
               <colgroup>

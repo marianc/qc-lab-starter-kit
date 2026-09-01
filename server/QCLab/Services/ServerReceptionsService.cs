@@ -733,6 +733,21 @@ public class ServerReceptionsService : IReceptionsService
                     _context);
             }
 
+            var reception = await _context.Receptions
+                .Include(r => r.ControlCode)
+                .FirstOrDefaultAsync(r => r.Id == reception_id);
+
+            if (reception == null) throw new ArgumentException("Reception not found");
+
+            bool isCertification = reception.TypeId == 1;
+            Spec? activeSpec = null;
+            if (isCertification && reception.ControlCode?.MaterialId != null)
+            {
+                activeSpec = await _context.Specs
+                    .Include(s => s.SpecTests)
+                    .FirstOrDefaultAsync(s => s.MaterialId == reception.ControlCode.MaterialId && s.IsSubmitted && !s.IsCancelled);
+            }
+
             var reportTestData = await GetReportTestDataInternal(reception_id);
 
             if (reportTestData.Count == 0)
@@ -742,18 +757,39 @@ public class ServerReceptionsService : IReceptionsService
 
             foreach (var data in reportTestData)
             {
+                var test = data.TestInfo;
+                SpecTest? specTest = null;
+                if (isCertification && activeSpec != null && test != null)
+                {
+                    specTest = activeSpec.SpecTests.FirstOrDefault(st => st.TestId == test.Id);
+                }
+
                 for (var i = 0; i < data.RawValues.Count; i++)
                 {
                     var value = data.RawValues[i];
                     if (value != null)
                     {
+                        decimal? uncertaintyValue = null;
+                        decimal? coverageFactorK = null;
+
+                        if (isCertification && activeSpec != null && specTest != null && specTest.UseUncertainty && test != null)
+                        {
+                            if (test.RelativeUncertaintyPct.HasValue)
+                            {
+                                uncertaintyValue = (test.RelativeUncertaintyPct.Value * (decimal)value) / 100m;
+                            }
+                            coverageFactorK = test.DefaultCoverageFactorK;
+                        }
+
                         _context.ReportTests.Add(new ReportTest
                         {
                             ReportId = newReport.Id,
                             MeasurementId = data.MeasurementId,
                             TestId = data.TestId,
                             Idx = i,
-                            Value = (decimal)value
+                            Value = (decimal)value,
+                            UncertaintyValue = uncertaintyValue,
+                            CoverageFactorK = coverageFactorK
                         });
                     }
                 }
@@ -902,11 +938,32 @@ public class ServerReceptionsService : IReceptionsService
                 if (specTest != null)
                 {
                     row.SpecNote = specTest.Note;
-                    if (!string.IsNullOrEmpty(specTest.Condition))
+
+                    for (var i = 0; i < data.RawValues.Count; i++)
                     {
-                        foreach (var val in data.RawValues)
+                        var val = data.RawValues[i];
+                        if (val.HasValue)
                         {
-                            if (val.HasValue)
+                            decimal? uncertaintyValue = null;
+                            decimal? coverageFactorK = null;
+
+                            if (specTest.UseUncertainty && test != null)
+                            {
+                                if (test.RelativeUncertaintyPct.HasValue)
+                                {
+                                    uncertaintyValue = (test.RelativeUncertaintyPct.Value * val.Value) / 100m;
+                                }
+                                coverageFactorK = test.DefaultCoverageFactorK;
+                            }
+
+                            string uncDisplay = "";
+                            if (uncertaintyValue.HasValue && coverageFactorK.HasValue)
+                            {
+                                uncDisplay = $"±{uncertaintyValue.Value.ToString("G29")} (k = {coverageFactorK.Value.ToString("G29")})";
+                            }
+                            row.UncertaintyValues.Add(uncDisplay);
+
+                            if (!string.IsNullOrEmpty(specTest.Condition))
                             {
                                 var evalParams = new Dictionary<string, decimal> { { "value", val.Value } };
                                 try
@@ -917,11 +974,47 @@ public class ServerReceptionsService : IReceptionsService
                                     else row.ConformingResults.Add(null);
                                 }
                                 catch { row.ConformingResults.Add(false); }
+
+                                if (uncertaintyValue.HasValue && coverageFactorK.HasValue)
+                                {
+                                    var u = uncertaintyValue.Value * coverageFactorK.Value;
+                                    var valMinusU = val.Value - u;
+                                    var valPlusU = val.Value + u;
+                                    bool confMinus = false;
+                                    bool confPlus = false;
+                                    try
+                                    {
+                                        var resMinus = QCFormula.Formula.EvaluateFormula(specTest.Condition, new Dictionary<string, decimal> { { "value", valMinusU } });
+                                        if (resMinus is bool bm) confMinus = bm;
+                                        else if (resMinus is decimal dm) confMinus = dm != 0;
+
+                                        var resPlus = QCFormula.Formula.EvaluateFormula(specTest.Condition, new Dictionary<string, decimal> { { "value", valPlusU } });
+                                        if (resPlus is bool bp) confPlus = bp;
+                                        else if (resPlus is decimal dp) confPlus = dp != 0;
+
+                                        row.ConformingUncertaintyResults.Add(confMinus && confPlus);
+                                    }
+                                    catch
+                                    {
+                                        row.ConformingUncertaintyResults.Add(false);
+                                    }
+                                }
+                                else
+                                {
+                                    row.ConformingUncertaintyResults.Add(true);
+                                }
                             }
                             else
                             {
                                 row.ConformingResults.Add(null);
+                                row.ConformingUncertaintyResults.Add(true);
                             }
+                        }
+                        else
+                        {
+                            row.UncertaintyValues.Add("");
+                            row.ConformingResults.Add(null);
+                            row.ConformingUncertaintyResults.Add(null);
                         }
                     }
                 }
@@ -1165,15 +1258,31 @@ public class ServerReceptionsService : IReceptionsService
             };
         }
 
-        var inFlightTestRows = new List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx)>();
+        var inFlightTestRows = new List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx, decimal? UncertaintyValue, decimal? CoverageFactorK)>();
         foreach (var data in inFlightReportData)
         {
+            var test = data.TestInfo;
+            var specTest = activeSpec.SpecTests.FirstOrDefault(st => st.TestId == data.TestId);
+            bool useUncertainty = specTest != null && specTest.UseUncertainty;
+
             for (var i = 0; i < data.RawValues.Count; i++)
             {
                 var val = data.RawValues[i];
                 if (val.HasValue)
                 {
-                    inFlightTestRows.Add((data.MeasurementId, data.HasForm, data.TestId, val.Value, i));
+                    decimal? uncertaintyValue = null;
+                    decimal? coverageFactorK = null;
+
+                    if (useUncertainty && test != null)
+                    {
+                        if (test.RelativeUncertaintyPct.HasValue)
+                        {
+                            uncertaintyValue = (test.RelativeUncertaintyPct.Value * val.Value) / 100m;
+                        }
+                        coverageFactorK = test.DefaultCoverageFactorK;
+                    }
+
+                    inFlightTestRows.Add((data.MeasurementId, data.HasForm, data.TestId, val.Value, i, uncertaintyValue, coverageFactorK));
                 }
             }
         }

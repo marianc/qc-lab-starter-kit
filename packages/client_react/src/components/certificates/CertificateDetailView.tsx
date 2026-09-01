@@ -199,17 +199,35 @@ const CertificateDetailView: React.FC<Props> = ({
               <div key={idx}>{val}</div>
             ))}
           </td>
-          <td>{test.testCount}/{test.testFrequency}</td>
-          <td>{test.noteSpec}</td>
           <td>
-            {test.conformingResults.map((res: boolean, idx: number) => (
-              <div 
-                key={idx} 
-                className={res ? styles.textSuccess : styles.textDanger}
-              >
-                {res ? 'Yes' : 'No'}
-              </div>
-            ))}
+            {test.uncertaintyValues && test.uncertaintyValues.length > 0 ? (
+              test.uncertaintyValues.map((uVal: string, idx: number) => (
+                <div key={idx}>{uVal || '-'}</div>
+              ))
+            ) : (
+              <div>-</div>
+            )}
+          </td>
+          <td>{test.noteSpec}</td>
+          <td>{test.testCount}/{test.testFrequency}</td>
+          <td>
+            {test.conformingResults.map((res: boolean, idx: number) => {
+              const uncRes = test.conformingUncertaintyResults && test.conformingUncertaintyResults[idx] !== undefined 
+                ? test.conformingUncertaintyResults[idx] 
+                : true;
+              const status = !res ? 'Fail' : (uncRes ? 'Pass' : 'Inconclusive');
+              const statusClass = status === 'Pass' 
+                ? styles.textSuccess 
+                : (status === 'Inconclusive' ? styles.textWarning : styles.textDanger);
+              return (
+                <div 
+                  key={idx} 
+                  className={statusClass}
+                >
+                  {status}
+                </div>
+              );
+            })}
           </td>
           <td>
             <button 
@@ -224,6 +242,21 @@ const CertificateDetailView: React.FC<Props> = ({
     }
     return rows;
   };
+
+  const certConformityStatus = certificate 
+    ? (!certificate.isConformingSpec 
+        ? 'Fail' 
+        : (certificate.isConformingUncertainty ? 'Pass' : 'Inconclusive'))
+    : '';
+  const certConformityClass = certConformityStatus === 'Pass' 
+    ? styles.textSuccess 
+    : (certConformityStatus === 'Inconclusive' ? styles.textWarning : styles.textDanger);
+
+  const analysisBoxClass = certificate
+    ? (!certificate.isConformingSpec 
+        ? styles.nonConforming 
+        : (certificate.isConformingUncertainty ? styles.conforming : styles.inconclusive))
+    : '';
 
   return (
     <DetailView>
@@ -242,7 +275,9 @@ const CertificateDetailView: React.FC<Props> = ({
                 <DetailColumn title="Info">
                   <DetailItem label="Material" value={materialName} />
                   <DetailItem label="Control Code" value={certificate.controlCode} />
-                  <DetailItem label="Is Conforming Spec" value={certificate.isConformingSpec ? 'Yes' : 'No'} />
+                  <DetailItem label="Is Conforming Spec">
+                    <span className={certConformityClass}>{certConformityStatus}</span>
+                  </DetailItem>
                   <DetailItem 
                     label="Specification" 
                     value={
@@ -294,8 +329,9 @@ const CertificateDetailView: React.FC<Props> = ({
                     <th>Test Name</th>
                     <th>Unit</th>
                     <th>Value</th>
-                    <th>Test Count</th>
+                    <th>Uncertainty</th>
                     <th>Spec Note</th>
+                    <th>Test Count</th>
                     <th>Conforming</th>
                     <th>Source Report</th>
                   </tr>
@@ -309,7 +345,7 @@ const CertificateDetailView: React.FC<Props> = ({
               <SignatureManifestBlock key={signatureRefreshKey} entityName="certificates" entityId={certificate.id} />
 
               {analysisResultMessage && (
-                <div className={`${styles.analysisResultMessage} ${certificate.isConformingSpec ? styles.conforming : styles.nonConforming}`}>
+                <div className={`${styles.analysisResultMessage} ${analysisBoxClass}`}>
                   {analysisResultMessage}
                 </div>
               )}
@@ -367,6 +403,7 @@ const CertificateDetailView: React.FC<Props> = ({
             open={true}
             analysisMessage={analysisResultMessage || ''}
             isConformingSpec={certificate.isConformingSpec}
+            isConformingUncertainty={certificate.isConformingUncertainty}
             onClose={() => setShowSubmitDialog(false)}
             onConfirm={handleSubmitConfirmation}
           />

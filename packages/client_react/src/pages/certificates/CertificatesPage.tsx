@@ -272,36 +272,45 @@ const CertificatesPage: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {certificates.map(certificate => (
-            <tr key={certificate.id} className={certificate.id === lastViewedCertificateId ? 'highlighted-row' : ''}>
-              <td>{certificate.id}</td>
-              <td>{certificate.materialName}</td>
-              <td>{certificate.controlCode}</td>
-              <td>{certificate.isConformingSpec ? 'Yes' : 'No'}</td>
-              <td>{formatDate(certificate.dateSubmitted)}</td>
-              <td>{certificate.certificateReplacedId || '-'}</td>
-              <td>{formatDate(certificate.dateCancelled)}</td>
-              <td>
-                <span style={{ 
-                  color: certificate.status === 'Draft' ? 'red' : certificate.status === 'Cancelled' ? 'orange' : certificate.status === 'Submitted' ? 'green' : 'inherit',
-                  fontWeight: 'bold'
-                }}>
-                  {certificate.status}
-                </span>
-                {certificate.hasTestFromCancelledReport && certificate.isSubmitted && (
-                  <span className={styles.warningMark} title="Has test from cancelled report"> !</span>
-                )}
-              </td>
-              <td>
-                <button 
-                  onClick={() => { setSelectedCertificateId(certificate.id); setIsDetailsOpen(true); }} 
-                  className={`action-button ${certificate.status === 'Draft' ? 'primary' : 'secondary'} small-button`}
-                >
-                  Details
-                </button>
-              </td>
-            </tr>
-          ))}
+          {certificates.map(certificate => {
+            const conformityStatus = !certificate.isConformingSpec 
+              ? 'Fail' 
+              : (certificate.isConformingUncertainty ? 'Pass' : 'Inconclusive');
+            const conformityClass = conformityStatus === 'Pass' 
+              ? styles.textSuccess 
+              : (conformityStatus === 'Inconclusive' ? styles.textWarning : styles.textDanger);
+
+            return (
+              <tr key={certificate.id} className={certificate.id === lastViewedCertificateId ? 'highlighted-row' : ''}>
+                <td>{certificate.id}</td>
+                <td>{certificate.materialName}</td>
+                <td>{certificate.controlCode}</td>
+                <td className={conformityClass}>{conformityStatus}</td>
+                <td>{formatDate(certificate.dateSubmitted)}</td>
+                <td>{certificate.certificateReplacedId || '-'}</td>
+                <td>{formatDate(certificate.dateCancelled)}</td>
+                <td>
+                  <span style={{ 
+                    color: certificate.status === 'Draft' ? 'red' : certificate.status === 'Cancelled' ? 'orange' : certificate.status === 'Submitted' ? 'green' : 'inherit',
+                    fontWeight: 'bold'
+                  }}>
+                    {certificate.status}
+                  </span>
+                  {certificate.hasTestFromCancelledReport && certificate.isSubmitted && (
+                    <span className={styles.warningMark} title="Has test from cancelled report"> !</span>
+                  )}
+                </td>
+                <td>
+                  <button 
+                    onClick={() => { setSelectedCertificateId(certificate.id); setIsDetailsOpen(true); }} 
+                    className={`action-button ${certificate.status === 'Draft' ? 'primary' : 'secondary'} small-button`}
+                  >
+                    Details
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

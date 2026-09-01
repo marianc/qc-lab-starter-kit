@@ -170,6 +170,13 @@ public class ServerReportsService : IReportsService
                         displayVal = rt.Value.ToString("F1");
                     }
                     dto.FormattedValues.Add(displayVal);
+
+                    string uncertaintyDisplay = "";
+                    if (rt.UncertaintyValue.HasValue && rt.CoverageFactorK.HasValue)
+                    {
+                        uncertaintyDisplay = $"±{rt.UncertaintyValue.Value.ToString("G29")} (k = {rt.CoverageFactorK.Value.ToString("G29")})";
+                    }
+                    dto.UncertaintyValues.Add(uncertaintyDisplay);
                 }
                 dto.Value = string.Join(", ", dto.FormattedValues);
                 processedTests.Add(dto);
@@ -205,6 +212,7 @@ public class ServerReportsService : IReportsService
             MaterialName = matName,
             ControlCode = report.Reception.ControlCode?.Code,
             ReceptionTypeName = report.Reception.Type.Name,
+            IsCertification = report.Reception.TypeId == 1,
             Tests = processedTests
         };
     }

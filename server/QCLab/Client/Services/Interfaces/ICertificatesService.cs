@@ -16,7 +16,7 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateCertificate(long id, UpdateCertificateDto dto);
         Task RefreshTests(long id);
         Task<CertificateAnalysisDto> AnalyzeResults(long id);
-        Task<CertificateAnalysisDto> AnalyzeInFlightResults(long specId, long controlCodeId, List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx)> currentReportTestRows);
+        Task<CertificateAnalysisDto> AnalyzeInFlightResults(long specId, long controlCodeId, List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx, decimal? UncertaintyValue, decimal? CoverageFactorK)> currentReportTestRows);
         Task<bool> HasExistingValidCertificates(long id);
         Task SubmitCertificate(long id, CertificateActionDto dto);
         Task CancelCertificate(long id, CertificateActionDto dto);
