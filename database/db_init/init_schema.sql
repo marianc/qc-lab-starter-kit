@@ -619,11 +619,13 @@ CREATE TABLE public.measurements (
     form_id bigint,
     comments text,
     use_default_equipment boolean DEFAULT true NOT NULL,
-    is_reported boolean DEFAULT false NOT NULL,
-    user_reported_id bigint,
-    is_readonly boolean DEFAULT false NOT NULL,
     user_update_id bigint NOT NULL,
     date_update timestamp with time zone NOT NULL,
+    is_reported boolean DEFAULT false NOT NULL,
+    user_reported_id bigint,
+    date_reported timestamp with time zone,
+    is_readonly boolean DEFAULT false NOT NULL,
+    date_readonly timestamp with time zone,
     user_created_id bigint DEFAULT 1 NOT NULL,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
@@ -672,6 +674,18 @@ CREATE TABLE public.measurement_params (
 
 
 ALTER TABLE public.measurement_params OWNER TO postgres;
+
+--
+-- Name: measurement_sop_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.measurement_sop_versions (
+    measurement_id bigint NOT NULL,
+    sop_version_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.measurement_sop_versions OWNER TO postgres;
 
 --
 -- Name: measurement_tests; Type: TABLE; Schema: public; Owner: postgres
@@ -851,6 +865,66 @@ ALTER TABLE public.reports ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
+-- Name: sop_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sop_versions (
+    id bigint NOT NULL,
+    sop_id bigint NOT NULL,
+    version_number character varying(20) NOT NULL,
+    external_edms_id character varying(100),
+    is_active boolean DEFAULT true NOT NULL,
+    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    comments text
+);
+
+
+ALTER TABLE public.sop_versions OWNER TO postgres;
+
+--
+-- Name: sop_versions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.sop_versions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.sop_versions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: sops; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sops (
+    id bigint NOT NULL,
+    doc_code character varying(50) NOT NULL,
+    title character varying(150) NOT NULL,
+    norm_id bigint,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+ALTER TABLE public.sops OWNER TO postgres;
+
+--
+-- Name: sops_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.sops ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.sops_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: specs; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -972,14 +1046,17 @@ CREATE TABLE public.tests (
     type_id bigint NOT NULL,
     is_array boolean DEFAULT false NOT NULL,
     is_param boolean DEFAULT false NOT NULL,
+    for_environmental_control boolean DEFAULT false NOT NULL,
     unit_id bigint,
     norm_id bigint,
     norm_ref character varying(50),
+    sop_id bigint,
     for_certification boolean DEFAULT false NOT NULL,
     relative_uncertainty_pct numeric(5,2),
     default_coverage_factor_k numeric(3,1),
     nr_ord bigint DEFAULT 0 NOT NULL,
     is_form_validated boolean DEFAULT false NOT NULL,
+    date_form_validated timestamp with time zone,
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
     date_obsolete timestamp with time zone,
@@ -1298,6 +1375,14 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_sop_versions measurement_sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_pkey PRIMARY KEY (measurement_id, sop_version_id);
+
+
+--
 -- Name: measurement_tests measurement_tests_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1367,6 +1452,30 @@ ALTER TABLE ONLY public.report_tests
 
 ALTER TABLE ONLY public.reports
     ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sop_versions sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT sop_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sops sops_doc_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_doc_code_key UNIQUE (doc_code);
+
+
+--
+-- Name: sops sops_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_pkey PRIMARY KEY (id);
 
 
 --
@@ -1458,6 +1567,14 @@ ALTER TABLE ONLY public.units
 
 
 --
+-- Name: sop_versions unq_sop_version_number; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT unq_sop_version_number UNIQUE (sop_id, version_number);
+
+
+--
 -- Name: users users_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1503,6 +1620,13 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.value_types
     ADD CONSTRAINT value_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: unq_single_active_sop_version; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX unq_single_active_sop_version ON public.sop_versions USING btree (sop_id) WHERE (is_active = true);
 
 
 --
@@ -1839,6 +1963,22 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_sop_versions measurement_sop_versions_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
+
+
+--
+-- Name: measurement_sop_versions measurement_sop_versions_sop_version_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_sop_version_id_fkey FOREIGN KEY (sop_version_id) REFERENCES public.sop_versions(id);
+
+
+--
 -- Name: measurement_tests measurement_tests_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2015,6 +2155,22 @@ ALTER TABLE ONLY public.reports
 
 
 --
+-- Name: sop_versions sop_versions_sop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT sop_versions_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id);
+
+
+--
+-- Name: sops sops_norm_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
 -- Name: spec_test_evals spec_test_evals_spec_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2116,6 +2272,14 @@ ALTER TABLE ONLY public.test_equipments
 
 ALTER TABLE ONLY public.tests
     ADD CONSTRAINT tests_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
+-- Name: tests tests_sop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tests
+    ADD CONSTRAINT tests_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id) NOT VALID;
 
 
 --

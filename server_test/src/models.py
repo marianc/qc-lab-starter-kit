@@ -2,7 +2,7 @@ from typing import Optional
 import datetime
 import decimal
 
-from sqlalchemy import ARRAY, BigInteger, Boolean, Column, Date, DateTime, ForeignKeyConstraint, Identity, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
+from sqlalchemy import ARRAY, BigInteger, Boolean, Column, Date, DateTime, ForeignKeyConstraint, Identity, Index, Integer, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -86,6 +86,7 @@ class Norms(Base):
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
     materials: Mapped[list['Materials']] = relationship('Materials', back_populates='norm')
+    sops: Mapped[list['Sops']] = relationship('Sops', back_populates='norm')
     tests: Mapped[list['Tests']] = relationship('Tests', back_populates='norm')
 
 
@@ -313,64 +314,23 @@ class Materials(Base):
     specs: Mapped[list['Specs']] = relationship('Specs', back_populates='material')
 
 
-class Tests(Base):
-    __tablename__ = 'tests'
+class Sops(Base):
+    __tablename__ = 'sops'
     __table_args__ = (
-        ForeignKeyConstraint(['norm_id'], ['norms.id'], name='tests_norm_id_fkey'),
-        ForeignKeyConstraint(['type_id'], ['value_types.id'], name='tests_value_type_id_fkey'),
-        ForeignKeyConstraint(['unit_id'], ['units.id'], name='tests_unit_id_fkey'),
-        PrimaryKeyConstraint('id', name='tests_pkey'),
-        UniqueConstraint('code', name='tests_code_key'),
-        UniqueConstraint('name', name='tests_name_key')
+        ForeignKeyConstraint(['norm_id'], ['norms.id'], name='sops_norm_id_fkey'),
+        PrimaryKeyConstraint('id', name='sops_pkey'),
+        UniqueConstraint('doc_code', name='sops_doc_code_key')
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    code: Mapped[str] = mapped_column(String(50), nullable=False)
-    type_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    is_array: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    is_param: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    for_certification: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
-    is_form_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
-    is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    unit_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    doc_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(150), nullable=False)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    norm_ref: Mapped[Optional[str]] = mapped_column(String(50))
-    relative_uncertainty_pct: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(5, 2))
-    default_coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(3, 1))
-    date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
-    comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
-    category: Mapped[list['Categories']] = relationship('Categories', secondary='category_tests', back_populates='test')
-    equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='test_equipments', back_populates='test')
-    material: Mapped[list['Materials']] = relationship('Materials', secondary='material_tests', back_populates='test')
-    norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='tests')
-    type: Mapped['ValueTypes'] = relationship('ValueTypes', back_populates='tests')
-    unit: Mapped[Optional['Units']] = relationship('Units', back_populates='tests')
-    form_params: Mapped[list['FormParams']] = relationship('FormParams', back_populates='test')
-    test_enums: Mapped[list['TestEnums']] = relationship('TestEnums', back_populates='test')
-    form_condition_evals: Mapped[list['FormConditionEvals']] = relationship('FormConditionEvals', back_populates='test')
-    form_eval_params: Mapped[list['FormEvalParams']] = relationship('FormEvalParams', back_populates='test')
-    reception: Mapped[list['Receptions']] = relationship('Receptions', secondary='reception_tests', back_populates='test')
-    spec_tests: Mapped[list['SpecTests']] = relationship('SpecTests', back_populates='test')
-    spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='test')
-    measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='test')
-    measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='test')
-    report_tests: Mapped[list['ReportTests']] = relationship('ReportTests', back_populates='test')
-    certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='test')
-
-
-t_category_tests = Table(
-    'category_tests', Base.metadata,
-    Column('category_id', BigInteger, primary_key=True),
-    Column('test_id', BigInteger, primary_key=True),
-    ForeignKeyConstraint(['category_id'], ['categories.id'], name='category_tests_category_id_fkey'),
-    ForeignKeyConstraint(['test_id'], ['tests.id'], name='category_tests_test_id_fkey'),
-    PrimaryKeyConstraint('category_id', 'test_id', name='category_tests_pkey')
-)
+    norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='sops')
+    sop_versions: Mapped[list['SopVersions']] = relationship('SopVersions', back_populates='sop')
+    tests: Mapped[list['Tests']] = relationship('Tests', back_populates='sop')
 
 
 class ControlCodes(Base):
@@ -403,6 +363,159 @@ class FormEvals(Base):
 
     form: Mapped['Forms'] = relationship('Forms', back_populates='form_evals')
     form_eval_params: Mapped[list['FormEvalParams']] = relationship('FormEvalParams', back_populates='eval')
+
+
+class SopVersions(Base):
+    __tablename__ = 'sop_versions'
+    __table_args__ = (
+        ForeignKeyConstraint(['sop_id'], ['sops.id'], name='sop_versions_sop_id_fkey'),
+        PrimaryKeyConstraint('id', name='sop_versions_pkey'),
+        UniqueConstraint('sop_id', 'version_number', name='unq_sop_version_number'),
+        Index('unq_single_active_sop_version', 'sop_id', postgresql_where='(is_active = true)', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    sop_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    version_number: Mapped[str] = mapped_column(String(20), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
+    date_activated: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    external_edms_id: Mapped[Optional[str]] = mapped_column(String(100))
+    comments: Mapped[Optional[str]] = mapped_column(Text)
+
+    sop: Mapped['Sops'] = relationship('Sops', back_populates='sop_versions')
+    measurement: Mapped[list['Measurements']] = relationship('Measurements', secondary='measurement_sop_versions', back_populates='sop_version')
+
+
+class Specs(Base):
+    __tablename__ = 'specs'
+    __table_args__ = (
+        ForeignKeyConstraint(['material_id'], ['materials.id'], name='specs_material_id_fkey'),
+        ForeignKeyConstraint(['spec_replaced_id'], ['specs.id'], name='specs_spec_replaced_id_fkey'),
+        ForeignKeyConstraint(['user_cancelled_id'], ['users.id'], name='specs_user_cancelled_id_fkey'),
+        ForeignKeyConstraint(['user_submitted_id'], ['users.id'], name='specs_user_submitted_id_fkey'),
+        PrimaryKeyConstraint('id', name='specs_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    material_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    user_submitted_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_submitted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    comments_submitted: Mapped[Optional[str]] = mapped_column(Text)
+    spec_replaced_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    user_cancelled_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_cancelled: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    comments_cancelled: Mapped[Optional[str]] = mapped_column(Text)
+
+    material: Mapped['Materials'] = relationship('Materials', back_populates='specs')
+    spec_replaced: Mapped[Optional['Specs']] = relationship('Specs', remote_side=[id], back_populates='spec_replaced_reverse')
+    spec_replaced_reverse: Mapped[list['Specs']] = relationship('Specs', remote_side=[spec_replaced_id], back_populates='spec_replaced')
+    user_cancelled: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_cancelled_id], back_populates='specs_user_cancelled')
+    user_submitted: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_submitted_id], back_populates='specs_user_submitted')
+    certificates: Mapped[list['Certificates']] = relationship('Certificates', back_populates='spec')
+    spec_tests: Mapped[list['SpecTests']] = relationship('SpecTests', back_populates='spec')
+    spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='spec')
+
+
+class Tests(Base):
+    __tablename__ = 'tests'
+    __table_args__ = (
+        ForeignKeyConstraint(['norm_id'], ['norms.id'], name='tests_norm_id_fkey'),
+        ForeignKeyConstraint(['sop_id'], ['sops.id'], name='tests_sop_id_fkey'),
+        ForeignKeyConstraint(['type_id'], ['value_types.id'], name='tests_value_type_id_fkey'),
+        ForeignKeyConstraint(['unit_id'], ['units.id'], name='tests_unit_id_fkey'),
+        PrimaryKeyConstraint('id', name='tests_pkey'),
+        UniqueConstraint('code', name='tests_code_key'),
+        UniqueConstraint('name', name='tests_name_key')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    code: Mapped[str] = mapped_column(String(50), nullable=False)
+    type_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    is_array: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_param: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    for_environmental_control: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    for_certification: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
+    is_form_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
+    is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    unit_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    norm_ref: Mapped[Optional[str]] = mapped_column(String(50))
+    sop_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    relative_uncertainty_pct: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(5, 2))
+    default_coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(3, 1))
+    date_form_validated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
+
+    category: Mapped[list['Categories']] = relationship('Categories', secondary='category_tests', back_populates='test')
+    equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='test_equipments', back_populates='test')
+    material: Mapped[list['Materials']] = relationship('Materials', secondary='material_tests', back_populates='test')
+    norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='tests')
+    sop: Mapped[Optional['Sops']] = relationship('Sops', back_populates='tests')
+    type: Mapped['ValueTypes'] = relationship('ValueTypes', back_populates='tests')
+    unit: Mapped[Optional['Units']] = relationship('Units', back_populates='tests')
+    form_params: Mapped[list['FormParams']] = relationship('FormParams', back_populates='test')
+    reception: Mapped[list['Receptions']] = relationship('Receptions', secondary='reception_tests', back_populates='test')
+    spec_tests: Mapped[list['SpecTests']] = relationship('SpecTests', back_populates='test')
+    test_enums: Mapped[list['TestEnums']] = relationship('TestEnums', back_populates='test')
+    form_condition_evals: Mapped[list['FormConditionEvals']] = relationship('FormConditionEvals', back_populates='test')
+    form_eval_params: Mapped[list['FormEvalParams']] = relationship('FormEvalParams', back_populates='test')
+    spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='test')
+    measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='test')
+    measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='test')
+    report_tests: Mapped[list['ReportTests']] = relationship('ReportTests', back_populates='test')
+    certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='test')
+
+
+t_category_tests = Table(
+    'category_tests', Base.metadata,
+    Column('category_id', BigInteger, primary_key=True),
+    Column('test_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['category_id'], ['categories.id'], name='category_tests_category_id_fkey'),
+    ForeignKeyConstraint(['test_id'], ['tests.id'], name='category_tests_test_id_fkey'),
+    PrimaryKeyConstraint('category_id', 'test_id', name='category_tests_pkey')
+)
+
+
+class Certificates(Base):
+    __tablename__ = 'certificates'
+    __table_args__ = (
+        ForeignKeyConstraint(['certificate_replaced_id'], ['certificates.id'], name='certificates_certificate_replaced_id_fkey'),
+        ForeignKeyConstraint(['control_code_id'], ['control_codes.id'], name='certificates_control_code_id_fkey'),
+        ForeignKeyConstraint(['spec_id'], ['specs.id'], name='certificates_specs_id_fkey'),
+        ForeignKeyConstraint(['user_cancelled_id'], ['users.id'], name='certificates_user_cancelled_id_fkey'),
+        ForeignKeyConstraint(['user_submitted_id'], ['users.id'], name='certificates_user_submitted_id_fkey'),
+        PrimaryKeyConstraint('id', name='certificates_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    control_code_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    spec_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    is_conforming_spec: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_conforming_uncertainty: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
+    is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    user_submitted_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_submitted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    comments_submitted: Mapped[Optional[str]] = mapped_column(Text)
+    certificate_replaced_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    user_cancelled_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_cancelled: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    comments_cancelled: Mapped[Optional[str]] = mapped_column(Text)
+
+    certificate_replaced: Mapped[Optional['Certificates']] = relationship('Certificates', remote_side=[id], back_populates='certificate_replaced_reverse')
+    certificate_replaced_reverse: Mapped[list['Certificates']] = relationship('Certificates', remote_side=[certificate_replaced_id], back_populates='certificate_replaced')
+    control_code: Mapped['ControlCodes'] = relationship('ControlCodes', back_populates='certificates')
+    spec: Mapped['Specs'] = relationship('Specs', back_populates='certificates')
+    user_cancelled: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_cancelled_id], back_populates='certificates_user_cancelled')
+    user_submitted: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_submitted_id], back_populates='certificates_user_submitted')
+    certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='certificate')
 
 
 class FormParams(Base):
@@ -442,147 +555,6 @@ t_material_tests = Table(
     ForeignKeyConstraint(['test_id'], ['tests.id'], name='material_tests_test_id_fkey'),
     PrimaryKeyConstraint('material_id', 'test_id', name='material_tests_pkey')
 )
-
-
-class Specs(Base):
-    __tablename__ = 'specs'
-    __table_args__ = (
-        ForeignKeyConstraint(['material_id'], ['materials.id'], name='specs_material_id_fkey'),
-        ForeignKeyConstraint(['spec_replaced_id'], ['specs.id'], name='specs_spec_replaced_id_fkey'),
-        ForeignKeyConstraint(['user_cancelled_id'], ['users.id'], name='specs_user_cancelled_id_fkey'),
-        ForeignKeyConstraint(['user_submitted_id'], ['users.id'], name='specs_user_submitted_id_fkey'),
-        PrimaryKeyConstraint('id', name='specs_pkey')
-    )
-
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    material_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    user_submitted_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    date_submitted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
-    comments_submitted: Mapped[Optional[str]] = mapped_column(Text)
-    spec_replaced_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    user_cancelled_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    date_cancelled: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
-    comments_cancelled: Mapped[Optional[str]] = mapped_column(Text)
-
-    material: Mapped['Materials'] = relationship('Materials', back_populates='specs')
-    spec_replaced: Mapped[Optional['Specs']] = relationship('Specs', remote_side=[id], back_populates='spec_replaced_reverse')
-    spec_replaced_reverse: Mapped[list['Specs']] = relationship('Specs', remote_side=[spec_replaced_id], back_populates='spec_replaced')
-    user_cancelled: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_cancelled_id], back_populates='specs_user_cancelled')
-    user_submitted: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_submitted_id], back_populates='specs_user_submitted')
-    certificates: Mapped[list['Certificates']] = relationship('Certificates', back_populates='spec')
-    spec_tests: Mapped[list['SpecTests']] = relationship('SpecTests', back_populates='spec')
-    spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='spec')
-
-
-class TestEnums(Base):
-    __tablename__ = 'test_enums'
-    __table_args__ = (
-        ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_enums_test_id_fkey'),
-        PrimaryKeyConstraint('test_id', 'value', name='test_enums_pkey'),
-        UniqueConstraint('test_id', 'name', name='test_enums_test_id_name_key')
-    )
-
-    test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    value: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
-    is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-
-    test: Mapped['Tests'] = relationship('Tests', back_populates='test_enums')
-
-
-t_test_equipments = Table(
-    'test_equipments', Base.metadata,
-    Column('test_id', BigInteger, primary_key=True),
-    Column('equipment_id', BigInteger, primary_key=True),
-    ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='test_equipments_equipment_id_fkey'),
-    ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_equipments_test_id_fkey'),
-    PrimaryKeyConstraint('test_id', 'equipment_id', name='test_equipments_pkey')
-)
-
-
-class Certificates(Base):
-    __tablename__ = 'certificates'
-    __table_args__ = (
-        ForeignKeyConstraint(['certificate_replaced_id'], ['certificates.id'], name='certificates_certificate_replaced_id_fkey'),
-        ForeignKeyConstraint(['control_code_id'], ['control_codes.id'], name='certificates_control_code_id_fkey'),
-        ForeignKeyConstraint(['spec_id'], ['specs.id'], name='certificates_specs_id_fkey'),
-        ForeignKeyConstraint(['user_cancelled_id'], ['users.id'], name='certificates_user_cancelled_id_fkey'),
-        ForeignKeyConstraint(['user_submitted_id'], ['users.id'], name='certificates_user_submitted_id_fkey'),
-        PrimaryKeyConstraint('id', name='certificates_pkey')
-    )
-
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    control_code_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    spec_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    is_conforming_spec: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    is_conforming_uncertainty: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
-    is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    user_submitted_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    date_submitted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
-    comments_submitted: Mapped[Optional[str]] = mapped_column(Text)
-    certificate_replaced_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    user_cancelled_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    date_cancelled: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
-    comments_cancelled: Mapped[Optional[str]] = mapped_column(Text)
-
-    certificate_replaced: Mapped[Optional['Certificates']] = relationship('Certificates', remote_side=[id], back_populates='certificate_replaced_reverse')
-    certificate_replaced_reverse: Mapped[list['Certificates']] = relationship('Certificates', remote_side=[certificate_replaced_id], back_populates='certificate_replaced')
-    control_code: Mapped['ControlCodes'] = relationship('ControlCodes', back_populates='certificates')
-    spec: Mapped['Specs'] = relationship('Specs', back_populates='certificates')
-    user_cancelled: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_cancelled_id], back_populates='certificates_user_cancelled')
-    user_submitted: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_submitted_id], back_populates='certificates_user_submitted')
-    certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='certificate')
-
-
-class FormConditionEvals(Base):
-    __tablename__ = 'form_condition_evals'
-    __table_args__ = (
-        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_condition_evals_form_id_test_id_fkey'),
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_condition_evals_form_id_fkey'),
-        ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_condition_evals_test_id_fkey'),
-        PrimaryKeyConstraint('id', name='form_condition_evals_pkey')
-    )
-
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    form_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    test_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
-    expected_result: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
-    is_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    result: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
-    note: Mapped[Optional[str]] = mapped_column(String(20))
-
-    form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='form_condition_evals')
-    form: Mapped['Forms'] = relationship('Forms', back_populates='form_condition_evals')
-    test: Mapped['Tests'] = relationship('Tests', back_populates='form_condition_evals')
-
-
-class FormEvalParams(Base):
-    __tablename__ = 'form_eval_params'
-    __table_args__ = (
-        ForeignKeyConstraint(['eval_id'], ['form_evals.id'], name='form_eval_params_eval_id_fkey'),
-        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_eval_params_form_id_test_id_fkey'),
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_eval_params_form_id_fkey'),
-        ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_eval_params_test_id_fkey'),
-        PrimaryKeyConstraint('eval_id', 'form_id', 'test_id', 'idx', name='form_eval_params_pkey')
-    )
-
-    eval_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    form_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    idx: Mapped[int] = mapped_column(Integer, primary_key=True)
-    is_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
-    expected_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
-
-    eval: Mapped['FormEvals'] = relationship('FormEvals', back_populates='form_eval_params')
-    form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='form_eval_params')
-    form: Mapped['Forms'] = relationship('Forms', back_populates='form_eval_params')
-    test: Mapped['Tests'] = relationship('Tests', back_populates='form_eval_params')
 
 
 class Receptions(Base):
@@ -646,6 +618,80 @@ class SpecTests(Base):
     spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='spec_tests')
 
 
+class TestEnums(Base):
+    __tablename__ = 'test_enums'
+    __table_args__ = (
+        ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_enums_test_id_fkey'),
+        PrimaryKeyConstraint('test_id', 'value', name='test_enums_pkey'),
+        UniqueConstraint('test_id', 'name', name='test_enums_test_id_name_key')
+    )
+
+    test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    value: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
+    is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+
+    test: Mapped['Tests'] = relationship('Tests', back_populates='test_enums')
+
+
+t_test_equipments = Table(
+    'test_equipments', Base.metadata,
+    Column('test_id', BigInteger, primary_key=True),
+    Column('equipment_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='test_equipments_equipment_id_fkey'),
+    ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_equipments_test_id_fkey'),
+    PrimaryKeyConstraint('test_id', 'equipment_id', name='test_equipments_pkey')
+)
+
+
+class FormConditionEvals(Base):
+    __tablename__ = 'form_condition_evals'
+    __table_args__ = (
+        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_condition_evals_form_id_test_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_condition_evals_form_id_fkey'),
+        ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_condition_evals_test_id_fkey'),
+        PrimaryKeyConstraint('id', name='form_condition_evals_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    form_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    test_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    expected_result: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    is_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    result: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    note: Mapped[Optional[str]] = mapped_column(String(20))
+
+    form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='form_condition_evals')
+    form: Mapped['Forms'] = relationship('Forms', back_populates='form_condition_evals')
+    test: Mapped['Tests'] = relationship('Tests', back_populates='form_condition_evals')
+
+
+class FormEvalParams(Base):
+    __tablename__ = 'form_eval_params'
+    __table_args__ = (
+        ForeignKeyConstraint(['eval_id'], ['form_evals.id'], name='form_eval_params_eval_id_fkey'),
+        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_eval_params_form_id_test_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_eval_params_form_id_fkey'),
+        ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_eval_params_test_id_fkey'),
+        PrimaryKeyConstraint('eval_id', 'form_id', 'test_id', 'idx', name='form_eval_params_pkey')
+    )
+
+    eval_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    form_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True)
+    is_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    expected_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+
+    eval: Mapped['FormEvals'] = relationship('FormEvals', back_populates='form_eval_params')
+    form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='form_eval_params')
+    form: Mapped['Forms'] = relationship('Forms', back_populates='form_eval_params')
+    test: Mapped['Tests'] = relationship('Tests', back_populates='form_eval_params')
+
+
 class Measurements(Base):
     __tablename__ = 'measurements'
     __table_args__ = (
@@ -660,15 +706,17 @@ class Measurements(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     reception_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     use_default_equipment: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
-    is_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_update_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date_update: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
+    is_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('1'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     form_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     comments: Mapped[Optional[str]] = mapped_column(Text)
     user_reported_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_reported: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    date_readonly: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='measurement_equipments', back_populates='measurement')
     form: Mapped[Optional['Forms']] = relationship('Forms', back_populates='measurements')
@@ -676,6 +724,7 @@ class Measurements(Base):
     user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurements_user_created')
     user_reported: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_reported_id], back_populates='measurements_user_reported')
     user_update: Mapped['Users'] = relationship('Users', foreign_keys=[user_update_id], back_populates='measurements_user_update')
+    sop_version: Mapped[list['SopVersions']] = relationship('SopVersions', secondary='measurement_sop_versions', back_populates='measurement')
     measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='measurement')
     measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='measurement')
     report_tests: Mapped[list['ReportTests']] = relationship('ReportTests', back_populates='measurement')
@@ -777,6 +826,16 @@ class MeasurementParams(Base):
     form: Mapped['Forms'] = relationship('Forms', back_populates='measurement_params')
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='measurement_params')
     test: Mapped['Tests'] = relationship('Tests', back_populates='measurement_params')
+
+
+t_measurement_sop_versions = Table(
+    'measurement_sop_versions', Base.metadata,
+    Column('measurement_id', BigInteger, primary_key=True),
+    Column('sop_version_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_sop_versions_measurement_id_fkey'),
+    ForeignKeyConstraint(['sop_version_id'], ['sop_versions.id'], name='measurement_sop_versions_sop_version_id_fkey'),
+    PrimaryKeyConstraint('measurement_id', 'sop_version_id', name='measurement_sop_versions_pkey')
+)
 
 
 class MeasurementTests(Base):

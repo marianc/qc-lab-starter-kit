@@ -61,6 +61,10 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<ReportTest> ReportTests { get; set; }
 
+    public virtual DbSet<Sop> Sops { get; set; }
+
+    public virtual DbSet<SopVersion> SopVersions { get; set; }
+
     public virtual DbSet<Spec> Specs { get; set; }
 
     public virtual DbSet<SpecTest> SpecTests { get; set; }
@@ -653,6 +657,8 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.DateCreated)
                 .HasDefaultValueSql("clock_timestamp()")
                 .HasColumnName("date_created");
+            entity.Property(e => e.DateReadonly).HasColumnName("date_readonly");
+            entity.Property(e => e.DateReported).HasColumnName("date_reported");
             entity.Property(e => e.DateUpdate).HasColumnName("date_update");
             entity.Property(e => e.FormId).HasColumnName("form_id");
             entity.Property(e => e.IsReadonly).HasColumnName("is_readonly");
@@ -707,6 +713,24 @@ public partial class QualityControlContext : DbContext
                         j.ToTable("measurement_equipments");
                         j.IndexerProperty<long>("MeasurementId").HasColumnName("measurement_id");
                         j.IndexerProperty<long>("EquipmentId").HasColumnName("equipment_id");
+                    });
+
+            entity.HasMany(d => d.SopVersions).WithMany(p => p.Measurements)
+                .UsingEntity<Dictionary<string, object>>(
+                    "MeasurementSopVersion",
+                    r => r.HasOne<SopVersion>().WithMany()
+                        .HasForeignKey("SopVersionId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("measurement_sop_versions_sop_version_id_fkey"),
+                    l => l.HasOne<Measurement>().WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .HasConstraintName("measurement_sop_versions_measurement_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("MeasurementId", "SopVersionId").HasName("measurement_sop_versions_pkey");
+                        j.ToTable("measurement_sop_versions");
+                        j.IndexerProperty<long>("MeasurementId").HasColumnName("measurement_id");
+                        j.IndexerProperty<long>("SopVersionId").HasColumnName("sop_version_id");
                     });
         });
 
@@ -945,6 +969,69 @@ public partial class QualityControlContext : DbContext
                 .HasConstraintName("report_tests_test_id_fkey");
         });
 
+        modelBuilder.Entity<Sop>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("sops_pkey");
+
+            entity.ToTable("sops");
+
+            entity.HasIndex(e => e.DocCode, "sops_doc_code_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
+            entity.Property(e => e.DocCode)
+                .HasMaxLength(50)
+                .HasColumnName("doc_code");
+            entity.Property(e => e.NormId).HasColumnName("norm_id");
+            entity.Property(e => e.Title)
+                .HasMaxLength(150)
+                .HasColumnName("title");
+
+            entity.HasOne(d => d.Norm).WithMany(p => p.Sops)
+                .HasForeignKey(d => d.NormId)
+                .HasConstraintName("sops_norm_id_fkey");
+        });
+
+        modelBuilder.Entity<SopVersion>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("sop_versions_pkey");
+
+            entity.ToTable("sop_versions");
+
+            entity.HasIndex(e => e.SopId, "unq_single_active_sop_version")
+                .IsUnique()
+                .HasFilter("(is_active = true)");
+
+            entity.HasIndex(e => new { e.SopId, e.VersionNumber }, "unq_sop_version_number").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Comments).HasColumnName("comments");
+            entity.Property(e => e.DateActivated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_activated");
+            entity.Property(e => e.ExternalEdmsId)
+                .HasMaxLength(100)
+                .HasColumnName("external_edms_id");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.SopId).HasColumnName("sop_id");
+            entity.Property(e => e.VersionNumber)
+                .HasMaxLength(20)
+                .HasColumnName("version_number");
+
+            entity.HasOne(d => d.Sop).WithOne(p => p.SopVersion)
+                .HasForeignKey<SopVersion>(d => d.SopId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("sop_versions_sop_id_fkey");
+        });
+
         modelBuilder.Entity<Spec>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("specs_pkey");
@@ -1064,12 +1151,14 @@ public partial class QualityControlContext : DbContext
                 .HasColumnName("code");
             entity.Property(e => e.CommentsObsolete).HasColumnName("comments_obsolete");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
+            entity.Property(e => e.DateFormValidated).HasColumnName("date_form_validated");
             entity.Property(e => e.DateObsolete).HasColumnName("date_obsolete");
             entity.Property(e => e.DefaultCoverageFactorK)
                 .HasPrecision(3, 1)
                 .HasColumnName("default_coverage_factor_k");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ForCertification).HasColumnName("for_certification");
+            entity.Property(e => e.ForEnvironmentalControl).HasColumnName("for_environmental_control");
             entity.Property(e => e.IsArray).HasColumnName("is_array");
             entity.Property(e => e.IsFormValidated).HasColumnName("is_form_validated");
             entity.Property(e => e.IsObsolete).HasColumnName("is_obsolete");
@@ -1085,12 +1174,17 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.RelativeUncertaintyPct)
                 .HasPrecision(5, 2)
                 .HasColumnName("relative_uncertainty_pct");
+            entity.Property(e => e.SopId).HasColumnName("sop_id");
             entity.Property(e => e.TypeId).HasColumnName("type_id");
             entity.Property(e => e.UnitId).HasColumnName("unit_id");
 
             entity.HasOne(d => d.Norm).WithMany(p => p.Tests)
                 .HasForeignKey(d => d.NormId)
                 .HasConstraintName("tests_norm_id_fkey");
+
+            entity.HasOne(d => d.Sop).WithMany(p => p.Tests)
+                .HasForeignKey(d => d.SopId)
+                .HasConstraintName("tests_sop_id_fkey");
 
             entity.HasOne(d => d.Type).WithMany(p => p.Tests)
                 .HasForeignKey(d => d.TypeId)

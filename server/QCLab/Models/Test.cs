@@ -19,11 +19,15 @@ public partial class Test
 
     public bool IsParam { get; set; }
 
+    public bool ForEnvironmentalControl { get; set; }
+
     public long? UnitId { get; set; }
 
     public long? NormId { get; set; }
 
     public string? NormRef { get; set; }
+
+    public long? SopId { get; set; }
 
     public bool ForCertification { get; set; }
 
@@ -34,6 +38,8 @@ public partial class Test
     public long NrOrd { get; set; }
 
     public bool IsFormValidated { get; set; }
+
+    public DateTime? DateFormValidated { get; set; }
 
     public DateTime DateCreated { get; set; }
 
@@ -58,6 +64,8 @@ public partial class Test
     public virtual Norm? Norm { get; set; }
 
     public virtual ICollection<ReportTest> ReportTests { get; set; } = new List<ReportTest>();
+
+    public virtual Sop? Sop { get; set; }
 
     public virtual ICollection<SpecTestEval> SpecTestEvals { get; set; } = new List<SpecTestEval>();
 

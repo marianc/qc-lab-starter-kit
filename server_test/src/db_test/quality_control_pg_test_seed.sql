@@ -18,6 +18,7 @@ SET row_security = off;
 
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_value_type_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_unit_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_sop_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_norm_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_equipment_id_fkey;
@@ -31,6 +32,8 @@ ALTER TABLE IF EXISTS ONLY public.spec_tests DROP CONSTRAINT IF EXISTS spec_test
 ALTER TABLE IF EXISTS ONLY public.spec_test_evals DROP CONSTRAINT IF EXISTS spec_test_evals_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.spec_test_evals DROP CONSTRAINT IF EXISTS spec_test_evals_spec_id_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.spec_test_evals DROP CONSTRAINT IF EXISTS spec_test_evals_spec_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sops DROP CONSTRAINT IF EXISTS sops_norm_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sop_versions DROP CONSTRAINT IF EXISTS sop_versions_sop_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reports DROP CONSTRAINT IF EXISTS reports_user_submitted_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reports DROP CONSTRAINT IF EXISTS reports_user_cancelled_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reports DROP CONSTRAINT IF EXISTS reports_report_replaced_id_fkey;
@@ -53,6 +56,8 @@ ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measure
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_form_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_measurement_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_sop_version_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_measurement_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_measurement_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_form_id_test_id_fkey;
@@ -95,12 +100,14 @@ ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_log
 DROP TRIGGER IF EXISTS audit_measurements_trigger ON public.measurements;
 DROP TRIGGER IF EXISTS audit_measurement_tests_trigger ON public.measurement_tests;
 DROP TRIGGER IF EXISTS audit_measurement_params_trigger ON public.measurement_params;
+DROP INDEX IF EXISTS public.unq_single_active_sop_version;
 ALTER TABLE IF EXISTS ONLY public.value_types DROP CONSTRAINT IF EXISTS value_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tag_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_session_id_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_email_key;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_code_key;
+ALTER TABLE IF EXISTS ONLY public.sop_versions DROP CONSTRAINT IF EXISTS unq_sop_version_number;
 ALTER TABLE IF EXISTS ONLY public.units DROP CONSTRAINT IF EXISTS units_pkey;
 ALTER TABLE IF EXISTS ONLY public.units DROP CONSTRAINT IF EXISTS units_name_key;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_pkey;
@@ -112,6 +119,9 @@ ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enum
 ALTER TABLE IF EXISTS ONLY public.specs DROP CONSTRAINT IF EXISTS specs_pkey;
 ALTER TABLE IF EXISTS ONLY public.spec_tests DROP CONSTRAINT IF EXISTS spec_tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.spec_test_evals DROP CONSTRAINT IF EXISTS spec_test_evals_pkey;
+ALTER TABLE IF EXISTS ONLY public.sops DROP CONSTRAINT IF EXISTS sops_pkey;
+ALTER TABLE IF EXISTS ONLY public.sops DROP CONSTRAINT IF EXISTS sops_doc_code_key;
+ALTER TABLE IF EXISTS ONLY public.sop_versions DROP CONSTRAINT IF EXISTS sop_versions_pkey;
 ALTER TABLE IF EXISTS ONLY public.reports DROP CONSTRAINT IF EXISTS reports_pkey;
 ALTER TABLE IF EXISTS ONLY public.report_tests DROP CONSTRAINT IF EXISTS report_tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS receptions_pkey;
@@ -121,6 +131,7 @@ ALTER TABLE IF EXISTS ONLY public.norms DROP CONSTRAINT IF EXISTS norms_pkey;
 ALTER TABLE IF EXISTS ONLY public.norms DROP CONSTRAINT IF EXISTS norms_name_key;
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_pkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_equipments DROP CONSTRAINT IF EXISTS measurement_equipments_pkey;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_pkey;
@@ -154,6 +165,8 @@ DROP TABLE IF EXISTS public.test_enums;
 DROP TABLE IF EXISTS public.spec_tests;
 DROP TABLE IF EXISTS public.spec_test_evals;
 DROP TABLE IF EXISTS public.specs;
+DROP TABLE IF EXISTS public.sops;
+DROP TABLE IF EXISTS public.sop_versions;
 DROP TABLE IF EXISTS public.reports;
 DROP TABLE IF EXISTS public.report_tests;
 DROP TABLE IF EXISTS public.receptions;
@@ -161,6 +174,7 @@ DROP TABLE IF EXISTS public.reception_types;
 DROP TABLE IF EXISTS public.reception_tests;
 DROP TABLE IF EXISTS public.norms;
 DROP TABLE IF EXISTS public.measurement_tests;
+DROP TABLE IF EXISTS public.measurement_sop_versions;
 DROP TABLE IF EXISTS public.measurement_params;
 DROP TABLE IF EXISTS public.measurement_equipments;
 DROP TABLE IF EXISTS public.measurements;
@@ -749,11 +763,13 @@ CREATE TABLE public.measurements (
     form_id bigint,
     comments text,
     use_default_equipment boolean DEFAULT true NOT NULL,
-    is_reported boolean DEFAULT false NOT NULL,
-    user_reported_id bigint,
-    is_readonly boolean DEFAULT false NOT NULL,
     user_update_id bigint NOT NULL,
     date_update timestamp with time zone NOT NULL,
+    is_reported boolean DEFAULT false NOT NULL,
+    user_reported_id bigint,
+    date_reported timestamp with time zone,
+    is_readonly boolean DEFAULT false NOT NULL,
+    date_readonly timestamp with time zone,
     user_created_id bigint DEFAULT 1 NOT NULL,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
@@ -794,6 +810,16 @@ CREATE TABLE public.measurement_params (
     idx integer DEFAULT 0 NOT NULL,
     value numeric NOT NULL,
     condition_value numeric
+);
+
+
+--
+-- Name: measurement_sop_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.measurement_sop_versions (
+    measurement_id bigint NOT NULL,
+    sop_version_id bigint NOT NULL
 );
 
 
@@ -961,6 +987,62 @@ ALTER TABLE public.reports ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
+-- Name: sop_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sop_versions (
+    id bigint NOT NULL,
+    sop_id bigint NOT NULL,
+    version_number character varying(20) NOT NULL,
+    external_edms_id character varying(100),
+    is_active boolean DEFAULT true NOT NULL,
+    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    comments text
+);
+
+
+--
+-- Name: sop_versions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sop_versions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.sop_versions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: sops; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sops (
+    id bigint NOT NULL,
+    doc_code character varying(50) NOT NULL,
+    title character varying(150) NOT NULL,
+    norm_id bigint,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
+);
+
+
+--
+-- Name: sops_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sops ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.sops_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: specs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1072,14 +1154,17 @@ CREATE TABLE public.tests (
     type_id bigint NOT NULL,
     is_array boolean DEFAULT false NOT NULL,
     is_param boolean DEFAULT false NOT NULL,
+    for_environmental_control boolean DEFAULT false NOT NULL,
     unit_id bigint,
     norm_id bigint,
     norm_ref character varying(50),
+    sop_id bigint,
     for_certification boolean DEFAULT false NOT NULL,
     relative_uncertainty_pct numeric(5,2),
     default_coverage_factor_k numeric(3,1),
     nr_ord bigint DEFAULT 0 NOT NULL,
     is_form_validated boolean DEFAULT false NOT NULL,
+    date_form_validated timestamp with time zone,
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
     date_obsolete timestamp with time zone,
@@ -1871,6 +1956,12 @@ INSERT INTO public.measurement_params (measurement_id, form_id, test_id, idx, va
 
 
 --
+-- Data for Name: measurement_sop_versions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: measurement_tests; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1913,69 +2004,69 @@ INSERT INTO public.measurement_tests (measurement_id, test_id, idx, value, note)
 -- Data for Name: measurements; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (1, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628516+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (2, 2, NULL, 'sdfgsdfgsdf dsfg sdfg sdfg 
-sdf gsdfg sdgf ', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628833+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (3, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628838+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (4, 2, NULL, 'Gsdfgs dfg sdfg sdfg sdfg.
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (1, 2, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628516+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (2, 2, NULL, 'sdfgsdfgsdf dsfg sdfg sdfg 
+sdf gsdfg sdgf ', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628833+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (3, 2, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628838+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (4, 2, NULL, 'Gsdfgs dfg sdfg sdfg sdfg.
 Sdf gsdfg sdfg.
 Sdfg sdfg sdfg.
-', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628839+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (5, 2, 1, 'gsdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62884+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (6, 2, 1, 'fgsdfg sdfg sdfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628842+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (7, 2, 1, ' ghdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628843+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (8, 2, 2, 'fgsdfgs dfg sdfg sdfg sdfg ', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628844+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (9, 2, 3, '- Dfghd dfgh hgdf hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfg.
+', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628839+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (5, 2, 1, 'gsdfg sdfg sdfg sdfg', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.62884+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (6, 2, 1, 'fgsdfg sdfg sdfg', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628842+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (7, 2, 1, ' ghdfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628843+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (8, 2, 2, 'fgsdfgs dfg sdfg sdfg sdfg ', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628844+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (9, 2, 3, '- Dfghd dfgh hgdf hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfg.
 - Dfg hdfgh dfgh dfgh fdgh.
-- Dfg hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfghdfgh dfgh fg.', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628846+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (10, 2, NULL, 'Jfghj fghj fghj fhjf ghj.
-Tghfghfgh dfgdfgdf gdfgd fg.', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628848+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (11, 6, NULL, 'hdfgh dfgh dfg gfh dfgh dgfh dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628849+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (12, 6, 1, 'hfghdfg hdfgh fd', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62885+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (13, 6, 2, 'hjdfg hfdgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628851+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (14, 1, NULL, 'bxb xcvb xcvb xcvb xcvb xcvb', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628852+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (15, 1, 3, 'fgh sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628853+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (16, 3, NULL, ' hdfgh dfgh dfgh dfgh dfgh', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628855+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (17, 3, 1, ' dfgh dfgh dfgh dfgh dfghdfg ', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628856+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (18, 2, 3, ' zzz', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628857+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (19, 8, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg s', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628858+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (20, 8, 2, ' fghdfgh dfgh', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628859+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (21, 8, 3, ' fsdfg sdfg sdfg sdfg sdf', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62886+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (22, 8, 1, 'sdfg sdfg sdfgs dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628862+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (23, 3, NULL, 'fgh dfgh dfgh dfgh dfgh dfg', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628863+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (24, 8, NULL, 'gf hdfgh dfgh dfgh dfg
-cv bcvbn cvbn cvbncbn', true, false, NULL, false, 8, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628866+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (25, 8, 1, 'd dfgh dfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628868+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (26, 11, NULL, 'fdg dfgh dfgh dfgh dfgh', true, true, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628869+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (27, 11, 3, 'cvbxcvb xcvb xcvbxc vb xcvb', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62887+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (28, 11, 2, 'dfg sdfg sdfg sdfg sdfg df', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628871+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (29, 1, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628872+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (30, 1, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628873+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (31, 3, 2, 'dfg sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628874+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (35, 10, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628876+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (36, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628877+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (37, 2, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628878+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (38, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628879+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (39, 20, NULL, NULL, true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62888+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (40, 20, 7, 'Edfgdfg dfg dfg df.
+- Dfg hdfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfgh dfghdfgh dfgh fg.', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628846+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (10, 2, NULL, 'Jfghj fghj fghj fhjf ghj.
+Tghfghfgh dfgdfgdf gdfgd fg.', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628848+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (11, 6, NULL, 'hdfgh dfgh dfg gfh dfgh dgfh dfg', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628849+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (12, 6, 1, 'hfghdfg hdfgh fd', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.62885+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (13, 6, 2, 'hjdfg hfdgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628851+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (14, 1, NULL, 'bxb xcvb xcvb xcvb xcvb xcvb', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628852+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (15, 1, 3, 'fgh sdfg sdfg sdfg sdfg', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628853+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (16, 3, NULL, ' hdfgh dfgh dfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628855+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (17, 3, 1, ' dfgh dfgh dfgh dfgh dfghdfg ', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628856+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (18, 2, 3, ' zzz', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628857+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (19, 8, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg s', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628858+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (20, 8, 2, ' fghdfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628859+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (21, 8, 3, ' fsdfg sdfg sdfg sdfg sdf', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.62886+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (22, 8, 1, 'sdfg sdfg sdfgs dfg', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628862+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (23, 3, NULL, 'fgh dfgh dfgh dfgh dfgh dfg', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628863+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (24, 8, NULL, 'gf hdfgh dfgh dfgh dfg
+cv bcvbn cvbn cvbncbn', true, 8, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628866+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (25, 8, 1, 'd dfgh dfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628868+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (26, 11, NULL, 'fdg dfgh dfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628869+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (27, 11, 3, 'cvbxcvb xcvb xcvbxc vb xcvb', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.62887+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (28, 11, 2, 'dfg sdfg sdfg sdfg sdfg df', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628871+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (29, 1, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628872+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (30, 1, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628873+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (31, 3, 2, 'dfg sdfg sdfg sdfg sdfg', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628874+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (35, 10, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628876+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (36, 2, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628877+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (37, 2, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628878+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (38, 11, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628879+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (39, 20, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.62888+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (40, 20, 7, 'Edfgdfg dfg dfg df.
 Rfghfgh fghfgh fgh fgh fgh fghfg.
-Trwerwer wer wer wer werer.', true, false, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628881+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (41, 20, 7, 'dfgh dfgh dfghdf ghdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628883+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (42, 20, 7, '- Fghj fghj fghj fghj fghj gj
-- Fghj fghj fghj fghj fghj fghj fghj fghj.', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628884+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (43, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628885+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (44, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628886+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (45, 20, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628887+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (46, 20, NULL, '- Eterte ert ert ert ert ert ter.
+Trwerwer wer wer wer werer.', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628881+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (41, 20, 7, 'dfgh dfgh dfghdf ghdfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628883+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (42, 20, 7, '- Fghj fghj fghj fghj fghj gj
+- Fghj fghj fghj fghj fghj fghj fghj fghj.', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628884+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (43, 20, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628885+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (44, 20, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628886+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (45, 20, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628887+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (46, 20, NULL, '- Eterte ert ert ert ert ert ter.
 - Gfgdfgdfgdf dfg dfg dfg dfg dfg dgfdf.
-- Ydfgsdfg sdfg sdfgsdf gsdfg sdfg.', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628889+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (47, 21, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.62889+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (48, 22, NULL, 'zxcv zxcv zxcv zxcv', true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628891+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (49, 22, NULL, NULL, true, true, NULL, true, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628892+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (50, 22, 7, 'hdfgh dfgh dfgh', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628893+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (51, 22, 7, 'fghj fghj fghj fghj', true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628895+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (52, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628896+03');
-INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, is_reported, user_reported_id, is_readonly, user_update_id, date_update, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (53, 11, NULL, NULL, true, false, NULL, false, 1, '2025-12-13 18:17:42.218999+02', 1, '2026-08-27 19:39:32.628897+03');
+- Ydfgsdfg sdfg sdfgsdf gsdfg sdfg.', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628889+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (47, 21, NULL, 'sdfg sdfg sdfg sdfg sdfg sdfg', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.62889+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (48, 22, NULL, 'zxcv zxcv zxcv zxcv', true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628891+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (49, 22, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', true, NULL, NULL, true, NULL, 1, '2026-08-27 19:39:32.628892+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (50, 22, 7, 'hdfgh dfgh dfgh', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628893+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (51, 22, 7, 'fghj fghj fghj fghj', true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628895+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (52, 11, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628896+03');
+INSERT INTO public.measurements (id, reception_id, form_id, comments, use_default_equipment, user_update_id, date_update, is_reported, user_reported_id, date_reported, is_readonly, date_readonly, user_created_id, date_created) OVERRIDING SYSTEM VALUE VALUES (53, 11, NULL, NULL, true, 1, '2025-12-13 18:17:42.218999+02', false, NULL, NULL, false, NULL, 1, '2026-08-27 19:39:32.628897+03');
 
 
 --
@@ -2133,6 +2224,18 @@ INSERT INTO public.reports (id, reception_id, is_submitted, user_submitted_id, d
 INSERT INTO public.reports (id, reception_id, is_submitted, user_submitted_id, date_submitted, comments_submitted, report_replaced_id, is_cancelled, user_cancelled_id, date_cancelled, comments_cancelled) OVERRIDING SYSTEM VALUE VALUES (26, 21, true, 1, '2025-12-13 18:17:42.218999+02', 'ghdfgh dfgh dfgh dfgh', NULL, false, NULL, NULL, NULL);
 INSERT INTO public.reports (id, reception_id, is_submitted, user_submitted_id, date_submitted, comments_submitted, report_replaced_id, is_cancelled, user_cancelled_id, date_cancelled, comments_cancelled) OVERRIDING SYSTEM VALUE VALUES (27, 22, true, 1, '2025-12-13 18:17:42.218999+02', 'fafasdf asdf asdf asfd asdf', NULL, true, 1, '2025-12-13 18:17:42.218999+02', 'Replaced by new report #28');
 INSERT INTO public.reports (id, reception_id, is_submitted, user_submitted_id, date_submitted, comments_submitted, report_replaced_id, is_cancelled, user_cancelled_id, date_cancelled, comments_cancelled) OVERRIDING SYSTEM VALUE VALUES (28, 22, true, 1, '2025-12-13 18:17:42.218999+02', 'fasdf asdfasfd asdf asdf asdf', 27, false, NULL, NULL, NULL);
+
+
+--
+-- Data for Name: sop_versions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: sops; Type: TABLE DATA; Schema: public; Owner: -
+--
+
 
 
 --
@@ -2328,47 +2431,47 @@ INSERT INTO public.test_enums (test_id, value, name, nr_ord, is_obsolete) VALUES
 -- Data for Name: tests; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (1, 'Test A', 'test_a', 'Description Test A', 2, false, false, 2, 1, 'ref A', true, NULL, NULL, 1, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (2, 'Test B', 'test_b', 'Description Test B', 2, false, false, 2, 2, 'ref B', true, NULL, NULL, 2, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (3, 'Test C', 'test_c', 'Description Test C', 2, false, false, 2, 1, 'ref C', true, NULL, NULL, 3, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (4, 'Test D', 'test_d', 'Description Test D', 2, false, false, 2, 2, 'ref D', true, NULL, NULL, 4, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (5, 'Test E', 'test_e', 'Description Test E', 2, false, false, 2, 3, 'ref E', false, NULL, NULL, 5, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (6, 'Parameter AA', 'param_aa', 'Description Parameter AA', 2, false, true, 2, 1, NULL, false, NULL, NULL, 6, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (7, 'Parameter AB', 'param_ab', 'Description Parameter AB', 2, false, true, 2, 1, NULL, false, NULL, NULL, 7, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (8, 'Parameter AC', 'param_ac', 'Description Parameter AC', 4, false, true, 2, 1, NULL, false, NULL, NULL, 8, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (9, 'Parameter AD', 'param_ad', 'Description Parameter AD', 2, false, true, 2, 1, NULL, false, NULL, NULL, 9, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (10, 'Parameter AE', 'param_ae', 'Description Parameter AE', 3, false, true, 2, 1, NULL, false, NULL, NULL, 10, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (11, 'Parameter AF', 'param_af', 'Description Parameter AF', 2, false, true, 2, 1, NULL, false, NULL, NULL, 11, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (12, 'Parameter BA', 'param_ba', 'Description Parameter BA', 2, false, true, 2, 2, NULL, false, NULL, NULL, 12, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (13, 'Parameter BB', 'param_bb', 'Description Parameter BB', 4, false, true, 2, 2, NULL, false, NULL, NULL, 13, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (14, 'Parameter BC', 'param_bc', 'Description Parameter BC', 2, false, true, 2, 2, NULL, false, NULL, NULL, 14, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (15, 'Parameter BD', 'pbd', 'Description Parameter BD', 2, false, true, 2, 2, NULL, false, NULL, NULL, 15, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (16, 'Parameter CA', 'param_ca', 'Description Parameter CA', 2, false, true, 2, 1, NULL, false, NULL, NULL, 16, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (17, 'Parameter CB', 'param_cb', 'Description Parameter CB', 2, false, true, 2, 1, NULL, false, NULL, NULL, 17, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (18, 'Parameter CC', 'param_cc', 'Description Parameter CC', 2, false, true, 2, 1, NULL, false, NULL, NULL, 18, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (19, 'Parameter CD', 'param_cd', 'Description Parameter CD', 2, false, true, 2, 1, NULL, false, NULL, NULL, 19, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (20, 'Parameter DA', 'param_da', 'Description Parameter DA', 2, false, true, 2, 2, NULL, false, NULL, NULL, 20, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (21, 'Parameter DB', 'param_db', 'Description Parameter DB', 2, false, true, 2, 2, NULL, false, NULL, NULL, 21, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (22, 'Parameter DC', 'param_dc', 'Description Parameter DC', 2, false, true, 2, 2, NULL, false, NULL, NULL, 22, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (23, 'Parameter EA', 'param_ea', 'Description Parameter EA', 2, false, true, 2, 3, NULL, false, NULL, NULL, 23, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (24, 'Parameter EB', 'param_eb', 'Description Parameter EB', 2, false, true, 2, 3, NULL, false, NULL, NULL, 24, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (25, 'Parameter EC', 'param_ec', 'Description Parameter EC', 2, false, true, 2, 3, NULL, false, NULL, NULL, 25, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (26, 'Parameter FA', 'param_fa', 'Description Parameter FA', 2, false, true, 2, 2, NULL, false, NULL, NULL, 26, false, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (27, 'Parameter FB', 'param_fb', 'Description Parameter FB', 2, false, true, 2, 2, NULL, false, NULL, NULL, 27, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (28, 'Test G', 'test_g', 'Description Test G', 2, false, false, 2, 1, NULL, true, NULL, NULL, 28, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (29, 'Parameter GA', 'pga', NULL, 2, false, true, NULL, NULL, NULL, false, NULL, NULL, 36, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (30, 'Parameter GB', 'pgb', NULL, 2, true, true, NULL, NULL, NULL, false, NULL, NULL, 37, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (31, 'Parameter GC', 'pgc', NULL, 2, false, true, NULL, NULL, NULL, false, NULL, NULL, 38, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (36, 'Parameter GD', 'pgd', NULL, 2, true, true, NULL, NULL, NULL, false, NULL, NULL, 39, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (37, 'Test J', 'test_j', NULL, 2, true, false, NULL, NULL, NULL, true, NULL, NULL, 30, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (38, 'Test K', 'test_k', NULL, 4, false, false, NULL, NULL, NULL, true, NULL, NULL, 31, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (39, 'Parameter GE', 'pge', NULL, 4, true, true, NULL, NULL, NULL, false, NULL, NULL, 40, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (40, 'Parameter GF', 'pgf', NULL, 3, true, true, NULL, NULL, NULL, false, NULL, NULL, 41, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (41, 'Test H', 'test_h', 'Description Test H', 3, false, false, 10, NULL, NULL, true, NULL, NULL, 29, true, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (42, 'Test LB', 'tlb', 'Description Test LB', 3, false, false, 2, 1, NULL, true, NULL, NULL, 32, false, '2025-12-27 21:25:52.613339+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (43, 'Test LBA', 'tlba', 'Description Test LBA', 3, true, false, 2, 2, NULL, true, NULL, NULL, 33, false, '2025-12-27 21:26:41.616588+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (44, 'Test ME', 'tme', 'Description Test ME', 4, false, false, 2, 3, NULL, false, NULL, NULL, 34, false, '2025-12-27 21:27:51.890718+02', false, NULL, NULL);
-INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, unit_id, norm_id, norm_ref, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (45, 'Test MAE', 'tmae', 'Description Test MAE', 4, true, false, 2, 2, NULL, true, NULL, NULL, 35, false, '2025-12-27 21:29:25.300316+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (1, 'Test A', 'test_a', 'Description Test A', 2, false, false, false, 2, 1, 'ref A', NULL, true, NULL, NULL, 1, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (2, 'Test B', 'test_b', 'Description Test B', 2, false, false, false, 2, 2, 'ref B', NULL, true, NULL, NULL, 2, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (3, 'Test C', 'test_c', 'Description Test C', 2, false, false, false, 2, 1, 'ref C', NULL, true, NULL, NULL, 3, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (4, 'Test D', 'test_d', 'Description Test D', 2, false, false, false, 2, 2, 'ref D', NULL, true, NULL, NULL, 4, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (5, 'Test E', 'test_e', 'Description Test E', 2, false, false, false, 2, 3, 'ref E', NULL, false, NULL, NULL, 5, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (6, 'Parameter AA', 'param_aa', 'Description Parameter AA', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 6, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (7, 'Parameter AB', 'param_ab', 'Description Parameter AB', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 7, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (8, 'Parameter AC', 'param_ac', 'Description Parameter AC', 4, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 8, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (9, 'Parameter AD', 'param_ad', 'Description Parameter AD', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 9, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (10, 'Parameter AE', 'param_ae', 'Description Parameter AE', 3, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 10, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (11, 'Parameter AF', 'param_af', 'Description Parameter AF', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 11, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (12, 'Parameter BA', 'param_ba', 'Description Parameter BA', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 12, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (13, 'Parameter BB', 'param_bb', 'Description Parameter BB', 4, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 13, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (14, 'Parameter BC', 'param_bc', 'Description Parameter BC', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 14, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (15, 'Parameter BD', 'pbd', 'Description Parameter BD', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 15, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (16, 'Parameter CA', 'param_ca', 'Description Parameter CA', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 16, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (17, 'Parameter CB', 'param_cb', 'Description Parameter CB', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 17, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (18, 'Parameter CC', 'param_cc', 'Description Parameter CC', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 18, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (19, 'Parameter CD', 'param_cd', 'Description Parameter CD', 2, false, true, false, 2, 1, NULL, NULL, false, NULL, NULL, 19, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (20, 'Parameter DA', 'param_da', 'Description Parameter DA', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 20, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (21, 'Parameter DB', 'param_db', 'Description Parameter DB', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 21, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (22, 'Parameter DC', 'param_dc', 'Description Parameter DC', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 22, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (23, 'Parameter EA', 'param_ea', 'Description Parameter EA', 2, false, true, false, 2, 3, NULL, NULL, false, NULL, NULL, 23, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (24, 'Parameter EB', 'param_eb', 'Description Parameter EB', 2, false, true, false, 2, 3, NULL, NULL, false, NULL, NULL, 24, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (25, 'Parameter EC', 'param_ec', 'Description Parameter EC', 2, false, true, false, 2, 3, NULL, NULL, false, NULL, NULL, 25, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (26, 'Parameter FA', 'param_fa', 'Description Parameter FA', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 26, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2025-12-13 18:17:42.218999+02', NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (27, 'Parameter FB', 'param_fb', 'Description Parameter FB', 2, false, true, false, 2, 2, NULL, NULL, false, NULL, NULL, 27, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (28, 'Test G', 'test_g', 'Description Test G', 2, false, false, false, 2, 1, NULL, NULL, true, NULL, NULL, 28, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (29, 'Parameter GA', 'pga', NULL, 2, false, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 36, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (30, 'Parameter GB', 'pgb', NULL, 2, true, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 37, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (31, 'Parameter GC', 'pgc', NULL, 2, false, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 38, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (36, 'Parameter GD', 'pgd', NULL, 2, true, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 39, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (37, 'Test J', 'test_j', NULL, 2, true, false, false, NULL, NULL, NULL, NULL, true, NULL, NULL, 30, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (38, 'Test K', 'test_k', NULL, 4, false, false, false, NULL, NULL, NULL, NULL, true, NULL, NULL, 31, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (39, 'Parameter GE', 'pge', NULL, 4, true, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 40, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (40, 'Parameter GF', 'pgf', NULL, 3, true, true, false, NULL, NULL, NULL, NULL, false, NULL, NULL, 41, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (41, 'Test H', 'test_h', 'Description Test H', 3, false, false, false, 10, NULL, NULL, NULL, true, NULL, NULL, 29, true, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (42, 'Test LB', 'tlb', 'Description Test LB', 3, false, false, false, 2, 1, NULL, NULL, true, NULL, NULL, 32, false, NULL, '2025-12-27 21:25:52.613339+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (43, 'Test LBA', 'tlba', 'Description Test LBA', 3, true, false, false, 2, 2, NULL, NULL, true, NULL, NULL, 33, false, NULL, '2025-12-27 21:26:41.616588+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (44, 'Test ME', 'tme', 'Description Test ME', 4, false, false, false, 2, 3, NULL, NULL, false, NULL, NULL, 34, false, NULL, '2025-12-27 21:27:51.890718+02', false, NULL, NULL);
+INSERT INTO public.tests (id, name, code, description, type_id, is_array, is_param, for_environmental_control, unit_id, norm_id, norm_ref, sop_id, for_certification, relative_uncertainty_pct, default_coverage_factor_k, nr_ord, is_form_validated, date_form_validated, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (45, 'Test MAE', 'tmae', 'Description Test MAE', 4, true, false, false, 2, 2, NULL, NULL, true, NULL, NULL, 35, false, NULL, '2025-12-27 21:29:25.300316+02', false, NULL, NULL);
 
 
 --
@@ -2521,6 +2624,20 @@ SELECT pg_catalog.setval('public.receptions_id_seq1', 23, false);
 --
 
 SELECT pg_catalog.setval('public.reports_id_seq', 29, false);
+
+
+--
+-- Name: sop_versions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.sop_versions_id_seq', 1, false);
+
+
+--
+-- Name: sops_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.sops_id_seq', 1, false);
 
 
 --
@@ -2758,6 +2875,14 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_sop_versions measurement_sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_pkey PRIMARY KEY (measurement_id, sop_version_id);
+
+
+--
 -- Name: measurement_tests measurement_tests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2827,6 +2952,30 @@ ALTER TABLE ONLY public.report_tests
 
 ALTER TABLE ONLY public.reports
     ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sop_versions sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT sop_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sops sops_doc_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_doc_code_key UNIQUE (doc_code);
+
+
+--
+-- Name: sops sops_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_pkey PRIMARY KEY (id);
 
 
 --
@@ -2918,6 +3067,14 @@ ALTER TABLE ONLY public.units
 
 
 --
+-- Name: sop_versions unq_sop_version_number; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT unq_sop_version_number UNIQUE (sop_id, version_number);
+
+
+--
 -- Name: users users_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2963,6 +3120,13 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.value_types
     ADD CONSTRAINT value_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: unq_single_active_sop_version; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX unq_single_active_sop_version ON public.sop_versions USING btree (sop_id) WHERE (is_active = true);
 
 
 --
@@ -3299,6 +3463,22 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_sop_versions measurement_sop_versions_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
+
+
+--
+-- Name: measurement_sop_versions measurement_sop_versions_sop_version_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_sop_versions
+    ADD CONSTRAINT measurement_sop_versions_sop_version_id_fkey FOREIGN KEY (sop_version_id) REFERENCES public.sop_versions(id);
+
+
+--
 -- Name: measurement_tests measurement_tests_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3475,6 +3655,22 @@ ALTER TABLE ONLY public.reports
 
 
 --
+-- Name: sop_versions sop_versions_sop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sop_versions
+    ADD CONSTRAINT sop_versions_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id);
+
+
+--
+-- Name: sops sops_norm_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sops
+    ADD CONSTRAINT sops_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
 -- Name: spec_test_evals spec_test_evals_spec_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3576,6 +3772,14 @@ ALTER TABLE ONLY public.test_equipments
 
 ALTER TABLE ONLY public.tests
     ADD CONSTRAINT tests_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+
+
+--
+-- Name: tests tests_sop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tests
+    ADD CONSTRAINT tests_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id) NOT VALID;
 
 
 --

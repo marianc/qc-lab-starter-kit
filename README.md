@@ -40,7 +40,7 @@ docker compose -f docker-compose.demo.yml down -v
 
 ## About this project
 
-This software is only about processing testing data and managing equipment calibration or metrological verification. No inventory management or other aspects that need to be managed by the laboratories.
+The primary focus of this software is to bring ease of collection and processing testing data, automate certain tasks and provide an intuitive user experience, but it is also in consideration that many laboratories may need to operate in compliance with requirements of various standards like ISO/IEC 17025, FDA 21 CFR Part 11 or GLP, therefore this software tries to provide basic/limited support for aspects like: Equipment Calibration and Traceability, Measurement Uncertainty, Environmental Controls, Audit Trail, Electronic Signatures, etc. that may ease the process of laboratory certification.
 
 Also this application is working, it represent just a minimum viable product (MVP) or a proof of concept (PoC), a prototype, and it is not recommended to be used as is in high risk production environments, but rather in low risk environments, in the situation where *'anything is better than Excel spreadsheets'*.
 

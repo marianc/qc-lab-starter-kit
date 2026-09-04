@@ -15,15 +15,19 @@ public partial class Measurement
 
     public bool UseDefaultEquipment { get; set; }
 
+    public long UserUpdateId { get; set; }
+
+    public DateTime DateUpdate { get; set; }
+
     public bool IsReported { get; set; }
 
     public long? UserReportedId { get; set; }
 
+    public DateTime? DateReported { get; set; }
+
     public bool IsReadonly { get; set; }
 
-    public long UserUpdateId { get; set; }
-
-    public DateTime DateUpdate { get; set; }
+    public DateTime? DateReadonly { get; set; }
 
     public long UserCreatedId { get; set; }
 
@@ -48,4 +52,6 @@ public partial class Measurement
     public virtual User UserUpdate { get; set; } = null!;
 
     public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
+
+    public virtual ICollection<SopVersion> SopVersions { get; set; } = new List<SopVersion>();
 }

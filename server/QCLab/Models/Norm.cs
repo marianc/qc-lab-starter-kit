@@ -21,5 +21,7 @@ public partial class Norm
 
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
+    public virtual ICollection<Sop> Sops { get; set; } = new List<Sop>();
+
     public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
 }
