@@ -17,7 +17,7 @@ public partial class Sop
 
     public virtual Norm? Norm { get; set; }
 
-    public virtual SopVersion? SopVersion { get; set; }
+    public virtual ICollection<SopVersion> SopVersions { get; set; } = new List<SopVersion>();
 
     public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
 }

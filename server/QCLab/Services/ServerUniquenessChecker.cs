@@ -156,6 +156,23 @@ public class ServerUniquenessChecker : IUniquenessChecker
                 return !_context.Tests.Any(t => t.Code == strValue && t.Id != testId);
             }
         }
+        else if (entityName == "Sop")
+        {
+            long sopId = 0;
+            if (entityId != null)
+            {
+                if (entityId is long idInt) sopId = idInt;
+                else if (long.TryParse(entityId.ToString(), out long parsedId)) sopId = parsedId;
+            }
+
+            string? strValue = value as string;
+            if (string.IsNullOrEmpty(strValue)) return true;
+
+            if (propertyName == "DocCode")
+            {
+                return !_context.Sops.Any(s => s.DocCode == strValue && s.Id != sopId);
+            }
+        }
 
         return true;
     }
@@ -228,6 +245,29 @@ public class ServerUniquenessChecker : IUniquenessChecker
                 if (string.IsNullOrEmpty(strValue)) return true;
 
                 return !_context.ControlCodes.Any(c => c.MaterialId == materialId && c.Code == strValue && c.Id != entityIdInt);
+            }
+        }
+        else if (entityName == "SopVersion")
+        {
+            if (scopeId == null) return true;
+
+            long sopId = 0;
+            if (scopeId is long sInt) sopId = sInt;
+            else if (long.TryParse(scopeId.ToString(), out long p)) sopId = p;
+
+            long? versionId = null;
+            if (entityId != null)
+            {
+                if (entityId is long eId) versionId = eId;
+                else if (long.TryParse(entityId.ToString(), out long pe)) versionId = pe;
+            }
+
+            if (propertyName == "VersionNumber")
+            {
+                string? strValue = value as string;
+                if (string.IsNullOrEmpty(strValue)) return true;
+
+                return !_context.SopVersions.Any(v => v.SopId == sopId && v.VersionNumber == strValue && v.Id != versionId);
             }
         }
 

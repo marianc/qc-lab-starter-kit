@@ -1,0 +1,33 @@
+.container {
+  margin-top: 2rem;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.headerRow h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.actionRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--text-muted, #94a3b8);
+  padding: 2rem !important;
+}

@@ -73,6 +73,7 @@ namespace QCLab
             builder.Services.AddTransient<IEquipmentsService, ServerEquipmentsService>();
             builder.Services.AddTransient<IMeasurementsService, ServerMeasurementsService>();
             builder.Services.AddTransient<INormsService, ServerNormsService>();
+            builder.Services.AddTransient<ISopsService, ServerSopsService>();
             builder.Services.AddTransient<IReceptionsService, ServerReceptionsService>();
             builder.Services.AddTransient<IReceptionTypesService, ServerReceptionTypesService>();
             builder.Services.AddTransient<IReportsService, ServerReportsService>();
@@ -451,6 +452,30 @@ namespace QCLab
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
             });
             apiGroup.MapPut("/norms/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, INormsService s) => s.ToggleObsolete(id, dto));
+            apiGroup.MapGet("/norms/{normId}/sops", (long normId, ISopsService s) => s.GetSopsByNorm(normId));
+
+            // SOPs
+            apiGroup.MapGet("/sops/{id}", (long id, ISopsService s) => s.GetSop(id));
+            apiGroup.MapPost("/sops", async ([FromBody] CreateSopWithVersionDto dto, ISopsService s) =>
+            {
+                try { return Results.Ok(await s.CreateSop(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPost("/sops/{sopId}/versions", async (long sopId, [FromBody] UpdateSopVersionDto dto, ISopsService s) =>
+            {
+                try { return Results.Ok(await s.CreateSopVersion(sopId, dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/sop-versions/{versionId}", async (long versionId, [FromBody] UpdateSopVersionDto dto, ISopsService s) =>
+            {
+                try { await s.UpdateSopVersion(versionId, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/sop-versions/{versionId}/activate", async (long versionId, ISopsService s) =>
+            {
+                try { await s.ActivateSopVersion(versionId); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
 
             // Receptions
             apiGroup.MapGet("/receptions", (

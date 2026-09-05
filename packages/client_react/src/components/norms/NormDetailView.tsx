@@ -10,9 +10,14 @@ import {
 import CommentDialog from '../common/CommentDialog';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import NormDialog from './NormDialog';
+import SopsList from './sops/SopsList';
+import SopAddDialog from './sops/SopAddDialog';
+import SopVersionsDetailView from './sops/SopVersionsDetailView';
 import styles from './NormDetailView.module.css';
 import type { NormDto } from '@/types/norm';
+import type { SopDto, CreateSopWithVersionDto } from '@/types/sop';
 import normsService from '@/services/normsService';
+import sopsService from '@/services/sopsService';
 import { formatDate } from '@/lib/utils';
 
 interface Props {
@@ -23,22 +28,29 @@ interface Props {
 
 const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
   const [norm, setNorm] = useState<NormDto | null>(null);
+  const [sops, setSops] = useState<SopDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
+  const [showAddSopDialog, setShowAddSopDialog] = useState(false);
+  const [selectedSopForDetails, setSelectedSopForDetails] = useState<SopDto | null>(null);
 
-  const fetchNorm = useCallback(async () => {
+  const fetchNormAndSops = useCallback(async () => {
     try {
-      const data = await normsService.getNorm(normId);
-      setNorm(data);
+      const [normData, sopsData] = await Promise.all([
+        normsService.getNorm(normId),
+        sopsService.getSopsByNorm(normId)
+      ]);
+      setNorm(normData);
+      setSops(sopsData);
     } catch (err) {
-      console.error('Error fetching norm:', err);
+      console.error('Error fetching norm and SOPs:', err);
     }
   }, [normId]);
 
   useEffect(() => {
-    fetchNorm();
-  }, [fetchNorm]);
+    fetchNormAndSops();
+  }, [fetchNormAndSops]);
 
   const handleEditSave = async (updatedNorm: NormDto) => {
     try {
@@ -47,7 +59,7 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
         description: updatedNorm.description
       });
       setShowEditDialog(false);
-      await fetchNorm();
+      await fetchNormAndSops();
     } catch (err) {
       console.error('Error updating norm:', err);
       throw err;
@@ -68,7 +80,7 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
     try {
       await normsService.toggleObsolete(norm.id, { isObsolete: false });
       setShowConfirmationDialog(false);
-      await fetchNorm();
+      await fetchNormAndSops();
     } catch (err) {
       console.error('Error activating norm:', err);
     }
@@ -80,11 +92,35 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
     try {
       await normsService.toggleObsolete(norm.id, { isObsolete: true, comments: comment });
       setShowDeactivateCommentDialog(false);
-      await fetchNorm();
+      await fetchNormAndSops();
     } catch (err) {
       console.error('Error deactivating norm:', err);
     }
   };
+
+  const handleSaveNewSop = async (dto: CreateSopWithVersionDto) => {
+    try {
+      await sopsService.createSop(dto);
+      setShowAddSopDialog(false);
+      await fetchNormAndSops();
+    } catch (err) {
+      console.error('Error creating SOP:', err);
+      throw err;
+    }
+  };
+
+  if (selectedSopForDetails) {
+    return (
+      <SopVersionsDetailView 
+        sopId={selectedSopForDetails.id}
+        onClose={() => {
+          setSelectedSopForDetails(null);
+          fetchNormAndSops();
+        }}
+        breadcrumbs={[...breadcrumbs, `Norm ${norm?.name || normId}`, `SOP ${selectedSopForDetails.docCode}`]}
+      />
+    );
+  }
 
   return (
     <DetailView>
@@ -121,6 +157,12 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
                   {norm.isObsolete ? "Activate" : "Deactivate"}
                 </button>
               </div>
+
+              <SopsList 
+                sops={sops}
+                onAddSop={() => setShowAddSopDialog(true)}
+                onViewDetails={(sop) => setSelectedSopForDetails(sop)}
+              />
             </>
           )}
         </div>
@@ -150,6 +192,15 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
             title="Deactivation Reason"
             onClose={() => setShowDeactivateCommentDialog(false)}
             onSubmit={handleDeactivateSubmit}
+          />
+        )}
+
+        {showAddSopDialog && norm && (
+          <SopAddDialog 
+            open={true}
+            normId={norm.id}
+            onClose={() => setShowAddSopDialog(false)}
+            onSave={handleSaveNewSop}
           />
         )}
       </DetailViewContent>

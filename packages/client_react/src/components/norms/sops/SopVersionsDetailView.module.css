@@ -1,0 +1,49 @@
+.versionsSection {
+  margin-top: 2rem;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.versionsSection h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--text-muted, #94a3b8);
+  padding: 2rem !important;
+}
+
+.commentCell {
+  white-space: pre-line;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.activeBadge {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.inactiveBadge {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}

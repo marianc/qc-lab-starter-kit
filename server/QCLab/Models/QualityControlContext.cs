@@ -1026,8 +1026,8 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("version_number");
 
-            entity.HasOne(d => d.Sop).WithOne(p => p.SopVersion)
-                .HasForeignKey<SopVersion>(d => d.SopId)
+            entity.HasOne(d => d.Sop).WithMany(p => p.SopVersions)
+                .HasForeignKey(d => d.SopId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("sop_versions_sop_id_fkey");
         });
