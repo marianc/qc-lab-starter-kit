@@ -8,6 +8,11 @@ const sopsService = {
     return response.data;
   },
 
+  async getAllSops(): Promise<SopDto[]> {
+    const response = await apiClient.get<SopDto[]>('api/sops');
+    return response.data;
+  },
+
   async getSop(id: number): Promise<SopDto> {
     const response = await apiClient.get<SopDto>(`api/sops/${id}`);
     return response.data;

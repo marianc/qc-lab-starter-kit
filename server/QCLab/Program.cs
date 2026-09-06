@@ -418,7 +418,14 @@ namespace QCLab
             // Measurements
             apiGroup.MapGet("/measurement_tests/{id}", (long id, IMeasurementsService s) => s.GetMeasurementTest(id));
             apiGroup.MapGet("/measurements/{id}/equipments", (long id, IMeasurementsService s) => s.GetMeasurementEquipments(id));
+            apiGroup.MapGet("/measurements/{id}/sop_versions", (long id, IMeasurementsService s) => s.GetMeasurementSopVersions(id));
+            apiGroup.MapGet("/measurements/{id}/applicable_sop_versions", (long id, IMeasurementsService s) => s.GetMeasurementApplicableSopVersions(id));
             apiGroup.MapPut("/measurements/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, IMeasurementsService s) => s.UpdateMeasurementEquipments(id, dto));
+            apiGroup.MapPut("/measurements/{id}/sop_versions", async (long id, [FromBody] UpdateMeasurementSopVersionsDto dto, IMeasurementsService s) => 
+            {
+                await s.UpdateMeasurementSopVersions(id, dto);
+                return Results.Ok();
+            });
             apiGroup.MapPut("/measurement_tests/{id}", (long id, [FromBody] UpdateMeasurementTestBulkDto dto, IMeasurementsService s) => s.UpdateMeasurementTest(id, dto));
             apiGroup.MapGet("/measurement_params/{id}", (long id, IMeasurementsService s) => s.GetMeasurementParam(id));
             apiGroup.MapPut("/measurement_params/{id}", (long id, [FromBody] UpdateMeasurementParamDto dto, IMeasurementsService s) => s.UpdateMeasurementParam(id, dto));
@@ -455,6 +462,7 @@ namespace QCLab
             apiGroup.MapGet("/norms/{normId}/sops", (long normId, ISopsService s) => s.GetSopsByNorm(normId));
 
             // SOPs
+            apiGroup.MapGet("/sops", (ISopsService s) => s.GetAllSops());
             apiGroup.MapGet("/sops/{id}", (long id, ISopsService s) => s.GetSop(id));
             apiGroup.MapPost("/sops", async ([FromBody] CreateSopWithVersionDto dto, ISopsService s) =>
             {

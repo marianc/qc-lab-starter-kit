@@ -31,3 +31,19 @@ export interface UpdateSopVersionDto {
   externalEdmsId: string | null;
   comments: string | null;
 }
+
+export interface MeasurementSopVersionDto {
+  id: number;
+  sopId: number;
+  docCode: string;
+  title: string;
+  versionNumber: string;
+  externalEdmsId: string | null;
+  isActive: boolean;
+  dateActivated: string;
+  comments: string | null;
+}
+
+export interface UpdateMeasurementSopVersionsDto {
+  sopVersionIds: number[];
+}

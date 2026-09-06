@@ -255,6 +255,8 @@ public class ServerMeasurementsService : IMeasurementsService
                 await RecalculateMeasurementEquipments(id);
             }
 
+            await RecalculateMeasurementSopVersions(id);
+
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -285,6 +287,8 @@ public class ServerMeasurementsService : IMeasurementsService
             {
                 await RecalculateMeasurementEquipments(id);
             }
+
+            await RecalculateMeasurementSopVersions(id);
 
             await transaction.CommitAsync();
         }
@@ -459,6 +463,8 @@ public class ServerMeasurementsService : IMeasurementsService
                 await RecalculateMeasurementEquipments(id);
             }
 
+            await RecalculateMeasurementSopVersions(id);
+
             await transaction.CommitAsync();
 
             return new() { Id = dto.TestId };
@@ -595,6 +601,78 @@ public class ServerMeasurementsService : IMeasurementsService
         return equipments;
     }
 
+    public async Task<List<MeasurementSopVersionDto>> GetMeasurementSopVersions(long id)
+    {
+        var sops = await _context.Measurements
+            .Where(m => m.Id == id)
+            .SelectMany(m => m.SopVersions)
+            .Include(sv => sv.Sop)
+            .Select(sv => new MeasurementSopVersionDto
+            {
+                Id = sv.Id,
+                SopId = sv.SopId,
+                DocCode = sv.Sop.DocCode,
+                Title = sv.Sop.Title,
+                VersionNumber = sv.VersionNumber,
+                ExternalEdmsId = sv.ExternalEdmsId,
+                IsActive = sv.IsActive,
+                DateActivated = sv.DateActivated,
+                Comments = sv.Comments
+            })
+            .ToListAsync();
+
+        return sops;
+    }
+
+    public async Task<List<MeasurementSopVersionDto>> GetMeasurementApplicableSopVersions(long id)
+    {
+        var measurement = await _context.Measurements.FindAsync(id);
+        if (measurement == null) return new List<MeasurementSopVersionDto>();
+
+        var measurementTestIds = new List<long>();
+        if (measurement.FormId.HasValue)
+        {
+            measurementTestIds = await _context.MeasurementParams
+                .Where(mp => mp.MeasurementId == id)
+                .Select(mp => mp.TestId)
+                .Distinct()
+                .ToListAsync();
+        }
+        else
+        {
+            measurementTestIds = await _context.MeasurementTests
+                .Where(mt => mt.MeasurementId == id)
+                .Select(mt => mt.TestId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        var uniqueSopIds = await _context.Tests
+            .Where(t => measurementTestIds.Contains(t.Id) && t.SopId.HasValue)
+            .Select(t => t.SopId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        var activeSopVersions = await _context.SopVersions
+            .Where(sv => uniqueSopIds.Contains(sv.SopId))
+            .Include(sv => sv.Sop)
+            .Select(sv => new MeasurementSopVersionDto
+            {
+                Id = sv.Id,
+                SopId = sv.SopId,
+                DocCode = sv.Sop.DocCode,
+                Title = sv.Sop.Title,
+                VersionNumber = sv.VersionNumber,
+                ExternalEdmsId = sv.ExternalEdmsId,
+                IsActive = sv.IsActive,
+                DateActivated = sv.DateActivated,
+                Comments = sv.Comments
+            })
+            .ToListAsync();
+
+        return activeSopVersions;
+    }
+
     public async Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto)
     {
         var measurement = await _context.Measurements.Include(m => m.Equipment).FirstOrDefaultAsync(m => m.Id == id);
@@ -606,6 +684,22 @@ public class ServerMeasurementsService : IMeasurementsService
         {
             var equipments = await _context.Equipments.Where(e => dto.EquipmentIds.Contains(e.Id)).ToListAsync();
             foreach (var eq in equipments) measurement.Equipment.Add(eq);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateMeasurementSopVersions(long id, UpdateMeasurementSopVersionsDto dto)
+    {
+        var measurement = await _context.Measurements.Include(m => m.SopVersions).FirstOrDefaultAsync(m => m.Id == id);
+        if (measurement == null) throw new ArgumentException("Measurement not found");
+
+        measurement.SopVersions.Clear();
+
+        if (dto.SopVersionIds != null && dto.SopVersionIds.Count > 0)
+        {
+            var sopVersions = await _context.SopVersions.Where(sv => dto.SopVersionIds.Contains(sv.Id)).ToListAsync();
+            foreach (var sv in sopVersions) measurement.SopVersions.Add(sv);
         }
 
         await _context.SaveChangesAsync();
@@ -707,6 +801,88 @@ public class ServerMeasurementsService : IMeasurementsService
             }
 
             _context.MeasurementParams.Add(param);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task RecalculateMeasurementSopVersions(long measurementId)
+    {
+        var measurement = await _context.Measurements
+            .Include(m => m.SopVersions)
+            .FirstOrDefaultAsync(m => m.Id == measurementId);
+
+        if (measurement == null) return;
+
+        // Step 1: get the updated list of test id's, and with this, get a list of unique SOP id's from database table 'tests', but with the corresponding active SOP version id. If there is no active SOP version, that SOP id will be ignored. Result [(sop_id, sop_version_id)]
+        var measurementTestIds = new List<long>();
+        if (measurement.FormId.HasValue)
+        {
+            measurementTestIds = await _context.MeasurementParams
+                .Where(mp => mp.MeasurementId == measurementId)
+                .Select(mp => mp.TestId)
+                .Distinct()
+                .ToListAsync();
+        }
+        else
+        {
+            measurementTestIds = await _context.MeasurementTests
+                .Where(mt => mt.MeasurementId == measurementId)
+                .Select(mt => mt.TestId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        var testsWithSops = await _context.Tests
+            .Where(t => measurementTestIds.Contains(t.Id) && t.SopId.HasValue)
+            .Select(t => new { TestId = t.Id, SopId = t.SopId!.Value })
+            .ToListAsync();
+
+        var uniqueSopIds = testsWithSops.Select(ts => ts.SopId).Distinct().ToList();
+
+        var activeSopVersions = await _context.SopVersions
+            .Where(sv => uniqueSopIds.Contains(sv.SopId) && sv.IsActive)
+            .Select(sv => new { sv.SopId, SopVersionId = sv.Id })
+            .ToListAsync();
+
+        var step1Pairs = activeSopVersions
+            .Select(sv => new { sv.SopId, sv.SopVersionId })
+            .ToList();
+
+        // Step 2: get the corresponding list of sop version id’s from database table 'measurement_sop_versions' for the current measurement but with the corresponding SOP id’s. Result [(sop_id, sop_version_id)]
+        var measurementSopVersionsList = await _context.Measurements
+            .Where(m => m.Id == measurementId)
+            .SelectMany(m => m.SopVersions)
+            .Select(sv => new { sv.SopId, SopVersionId = sv.Id })
+            .ToListAsync();
+
+        var step2Pairs = measurementSopVersionsList;
+
+        // Step 3: from the SOPs list resulted from (step 2) remove all items where sop_id is not present in list resulted on (step 1)
+        var step1SopIds = step1Pairs.Select(p => p.SopId).ToHashSet();
+        var step3Pairs = step2Pairs.Where(p => step1SopIds.Contains(p.SopId)).ToList();
+
+        // Step 4: from the SOP list resulted on (step 1) remove all the items where sop_id is not present in list resulted on (step 3)
+        var step3SopIds = step3Pairs.Select(p => p.SopId).ToHashSet();
+        var step4Pairs = step1Pairs.Where(p => !step3SopIds.Contains(p.SopId)).ToList();
+
+        // Step 5: to the SOP list resulted on (step 3) add the SOP list resulted on (step 4) and the resulted list has to be saved in database table 'measurement_sop_versions' (just the sop_version_id with the corresponding measurement_id) by completely replacing the previous values present for the current 'measurement_id'.
+        var finalSopVersionIds = step3Pairs.Select(p => p.SopVersionId)
+            .Union(step4Pairs.Select(p => p.SopVersionId))
+            .Distinct()
+            .ToList();
+
+        measurement.SopVersions.Clear();
+        if (finalSopVersionIds.Count > 0)
+        {
+            var sopVersionsToAdd = await _context.SopVersions
+                .Where(sv => finalSopVersionIds.Contains(sv.Id))
+                .ToListAsync();
+
+            foreach (var sv in sopVersionsToAdd)
+            {
+                measurement.SopVersions.Add(sv);
+            }
         }
 
         await _context.SaveChangesAsync();

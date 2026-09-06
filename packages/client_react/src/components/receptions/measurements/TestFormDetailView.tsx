@@ -12,7 +12,9 @@ import MeasurementEditDialog from './MeasurementEditDialog';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import ArrayItemDialog from '@/components/common/ArrayItemDialog';
 import SelectDialog from '@/components/common/SelectDialog';
+import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
 import type { TestDto, TestEnumDto, TestEquipmentDto } from '@/types/test';
+import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto, FormParamDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
@@ -49,12 +51,15 @@ const TestFormDetailView: React.FC<Props> = ({
   const [formName, setFormName] = useState('');
   const [allFormParamEnums, setAllFormParamEnums] = useState<TestEnumDto[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
+  const [associatedSopVersions, setAssociatedSopVersions] = useState<MeasurementSopVersionDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showArrayItemDialog, setShowArrayItemDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
+  const [showSopVersionsDialog, setShowSopVersionsDialog] = useState(false);
+  const [applicableSopVersions, setApplicableSopVersions] = useState<SopVersionSelectItem[]>([]);
   
   const [groupedParamsForDialog, setGroupedParamsForDialog] = useState<FormParamDto[]>([]);
   const [editingArrayIndex, setEditingArrayIndex] = useState<number>(-1);
@@ -145,6 +150,17 @@ const TestFormDetailView: React.FC<Props> = ({
 
         const equipments = await measurementsService.getMeasurementEquipments(measurementId);
         setAssociatedEquipments(equipments);
+
+        const sops = await measurementsService.getMeasurementSopVersions(measurementId);
+        setAssociatedSopVersions(sops);
+
+        const applicableSops = await measurementsService.getMeasurementApplicableSopVersions(measurementId);
+        const selectableItems: SopVersionSelectItem[] = applicableSops.map((sop: MeasurementSopVersionDto) => ({
+          id: sop.id,
+          sopId: sop.sopId,
+          name: `${sop.docCode} (v${sop.versionNumber}) - ${sop.title}`
+        }));
+        setApplicableSopVersions(selectableItems);
       } catch (err) {
         console.error('Failed to fetch measurement param:', err);
       }
@@ -161,6 +177,19 @@ const TestFormDetailView: React.FC<Props> = ({
       setShowEquipmentDialog(false);
     } catch (err) {
       console.error('Failed to update measurement equipments', err);
+    }
+  };
+
+  const handleSopVersionsSelectionSave = async (selectedIds: number[]) => {
+    try {
+      if (measurement && measurement.id > 0) {
+        await measurementsService.updateMeasurementSopVersions(measurement.id, { sopVersionIds: selectedIds });
+        const sops = await measurementsService.getMeasurementSopVersions(measurement.id);
+        setAssociatedSopVersions(sops);
+      }
+      setShowSopVersionsDialog(false);
+    } catch (err) {
+      console.error('Failed to update measurement SOP versions', err);
     }
   };
 
@@ -479,6 +508,25 @@ const TestFormDetailView: React.FC<Props> = ({
               <button type="button" onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
             </div>
           )}
+
+          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated SOP Versions</h3>
+          {associatedSopVersions.length > 0 ? (
+            <ul className="item-list">
+              {associatedSopVersions.map(sop => (
+                <li key={sop.id}>
+                  {sop.docCode} (v{sop.versionNumber}) - {sop.title} {sop.externalEdmsId ? `[EDMS: ${sop.externalEdmsId}]` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated SOP versions</p>
+          )}
+
+          {!measurement.isReadonly && measurement.id > 0 && (
+            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+              <button type="button" onClick={() => setShowSopVersionsDialog(true)} className="action-button secondary">Manage SOP Versions</button>
+            </div>
+          )}
         </div>
 
         {showArrayItemDialog && (
@@ -513,6 +561,18 @@ const TestFormDetailView: React.FC<Props> = ({
             onSave={handleEquipmentSelectionSave}
             onClose={() => setShowEquipmentDialog(false)}
             idPrefix="equipment"
+          />
+        )}
+
+        {showSopVersionsDialog && (
+          <SelectSopVersionsDialog
+            open={true}
+            title="Select SOP Versions"
+            items={applicableSopVersions}
+            selectedIds={associatedSopVersions.map(sop => sop.id)}
+            onSave={handleSopVersionsSelectionSave}
+            onClose={() => setShowSopVersionsDialog(false)}
+            idPrefix="sop-version"
           />
         )}
 

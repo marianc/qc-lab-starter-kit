@@ -46,6 +46,37 @@ public class ServerSopsService : ISopsService
         return sops;
     }
 
+    public async Task<List<SopDto>> GetAllSops()
+    {
+        var sops = await _context.Sops
+            .Include(s => s.SopVersions)
+            .OrderBy(s => s.Id)
+            .Select(s => new SopDto
+            {
+                Id = s.Id,
+                DocCode = s.DocCode,
+                Title = s.Title,
+                NormId = s.NormId,
+                DateCreated = s.DateCreated,
+                Versions = s.SopVersions
+                    .OrderByDescending(v => v.Id)
+                    .Select(v => new SopVersionDto
+                    {
+                        Id = v.Id,
+                        SopId = v.SopId,
+                        VersionNumber = v.VersionNumber,
+                        ExternalEdmsId = v.ExternalEdmsId,
+                        IsActive = v.IsActive,
+                        DateActivated = v.DateActivated,
+                        Comments = v.Comments
+                    })
+                    .ToList()
+            })
+            .ToListAsync();
+
+        return sops;
+    }
+
     public async Task<SopDto?> GetSop(long id)
     {
         var s = await _context.Sops

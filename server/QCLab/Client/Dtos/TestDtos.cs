@@ -49,6 +49,8 @@ public class TestDto
     [StringLength(50, ErrorMessage = "Norm Ref must be maximum 50 characters.")]
     public string? NormRef { get; set; }
 
+    public long? SopId { get; set; }
+
     public bool IsParam { get; set; }
     public bool IsArray { get; set; }
     public bool ForCertification { get; set; }

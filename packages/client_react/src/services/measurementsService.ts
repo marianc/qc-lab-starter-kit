@@ -8,6 +8,7 @@ import type {
   AddMeasurementTestDto
 } from '../types/measurement';
 import type { TestEquipmentDto, UpdateTestEquipmentsDto } from '../types/test';
+import type { MeasurementSopVersionDto, UpdateMeasurementSopVersionsDto } from '../types/sop';
 import type { IdDto } from '../types/models';
 
 const measurementsService = {
@@ -52,9 +53,23 @@ const measurementsService = {
     return response.data;
   },
 
+  async getMeasurementSopVersions(id: number): Promise<MeasurementSopVersionDto[]> {
+    const response = await apiClient.get<MeasurementSopVersionDto[]>(`api/measurements/${id}/sop_versions`);
+    return response.data;
+  },
+
+  async getMeasurementApplicableSopVersions(id: number): Promise<MeasurementSopVersionDto[]> {
+    const response = await apiClient.get<MeasurementSopVersionDto[]>(`api/measurements/${id}/applicable_sop_versions`);
+    return response.data;
+  },
+
   async updateMeasurementEquipments(id: number, dto: UpdateTestEquipmentsDto): Promise<void> {
-    await apiClient.put(`api/measurements/${id}/equipments`, dto);
-  }
+    await apiClient.put(`api/measurement_tests/${id}/equipments`, dto);
+  },
+
+  async updateMeasurementSopVersions(id: number, dto: UpdateMeasurementSopVersionsDto): Promise<void> {
+    await apiClient.put(`api/measurements/${id}/sop_versions`, dto);
+  },
 };
 
 export default measurementsService;

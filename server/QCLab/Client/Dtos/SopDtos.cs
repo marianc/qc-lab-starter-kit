@@ -53,3 +53,21 @@ public class UpdateSopVersionDto
     public string? ExternalEdmsId { get; set; }
     public string? Comments { get; set; }
 }
+
+public class MeasurementSopVersionDto
+{
+    public long Id { get; set; }
+    public long SopId { get; set; }
+    public required string DocCode { get; set; }
+    public required string Title { get; set; }
+    public required string VersionNumber { get; set; }
+    public string? ExternalEdmsId { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime DateActivated { get; set; }
+    public string? Comments { get; set; }
+}
+
+public class UpdateMeasurementSopVersionsDto
+{
+    public List<long> SopVersionIds { get; set; } = new();
+}

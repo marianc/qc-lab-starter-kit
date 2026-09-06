@@ -11,8 +11,10 @@ import {
 import MeasurementEditDialog from './MeasurementEditDialog';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import SelectDialog from '@/components/common/SelectDialog';
+import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
 import MeasurementTestDialog from './MeasurementTestDialog';
 import type { TestDto, TestEquipmentDto } from '@/types/test';
+import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
@@ -42,10 +44,13 @@ const TestResultsDetailView: React.FC<Props> = ({
   const [measurement, setMeasurement] = useState<MeasurementTestDetailDto | null>(null);
   const [applicableTests, setApplicableTests] = useState<{id: number, name: string}[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
+  const [associatedSopVersions, setAssociatedSopVersions] = useState<MeasurementSopVersionDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
+  const [showSopVersionsDialog, setShowSopVersionsDialog] = useState(false);
+  const [applicableSopVersions, setApplicableSopVersions] = useState<SopVersionSelectItem[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [editableTest, setEditableTest] = useState<MeasurementTestDto | undefined>();
 
@@ -69,6 +74,18 @@ const TestResultsDetailView: React.FC<Props> = ({
 
       const equipments = await measurementsService.getMeasurementEquipments(measurementId);
       setAssociatedEquipments(equipments);
+
+      const sops = await measurementsService.getMeasurementSopVersions(measurementId);
+      setAssociatedSopVersions(sops);
+
+      const applicableSops = await measurementsService.getMeasurementApplicableSopVersions(measurementId);
+      const selectableItems: SopVersionSelectItem[] = applicableSops.map((sop: MeasurementSopVersionDto) => ({
+        id: sop.id,
+        sopId: sop.sopId,
+        name: `${sop.docCode} (v${sop.versionNumber}) - ${sop.title}`
+      }));
+      setApplicableSopVersions(selectableItems);
+
     } catch (err) {
       console.error('Failed to fetch measurement:', err);
     }
@@ -82,6 +99,17 @@ const TestResultsDetailView: React.FC<Props> = ({
       setAssociatedEquipments(equipments);
     } catch (err) {
       console.error('Failed to update measurement equipments', err);
+    }
+  };
+
+  const handleSopVersionsSelectionSave = async (selectedIds: number[]) => {
+    try {
+      await measurementsService.updateMeasurementSopVersions(measurementId, { sopVersionIds: selectedIds });
+      setShowSopVersionsDialog(false);
+      const sops = await measurementsService.getMeasurementSopVersions(measurementId);
+      setAssociatedSopVersions(sops);
+    } catch (err) {
+      console.error('Failed to update measurement SOP versions', err);
     }
   };
 
@@ -291,6 +319,25 @@ const TestResultsDetailView: React.FC<Props> = ({
               <button onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
             </div>
           )}
+
+          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated SOP Versions</h3>
+          {associatedSopVersions.length > 0 ? (
+            <ul className="item-list">
+              {associatedSopVersions.map(sop => (
+                <li key={sop.id}>
+                  {sop.docCode} (v{sop.versionNumber}) - {sop.title} {sop.externalEdmsId ? `[EDMS: ${sop.externalEdmsId}]` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated SOP versions</p>
+          )}
+
+          {!measurement.isReadonly && (
+            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+              <button onClick={() => setShowSopVersionsDialog(true)} className="action-button secondary">Manage SOP Versions</button>
+            </div>
+          )}
         </div>
 
         {showDialog && (
@@ -325,6 +372,18 @@ const TestResultsDetailView: React.FC<Props> = ({
             onSave={handleEquipmentSelectionSave}
             onClose={() => setShowEquipmentDialog(false)}
             idPrefix="equipment"
+          />
+        )}
+
+        {showSopVersionsDialog && (
+          <SelectSopVersionsDialog
+            open={true}
+            title="Select SOP Versions"
+            items={applicableSopVersions}
+            selectedIds={associatedSopVersions.map(sop => sop.id)}
+            onSave={handleSopVersionsSelectionSave}
+            onClose={() => setShowSopVersionsDialog(false)}
+            idPrefix="sop-version"
           />
         )}
 

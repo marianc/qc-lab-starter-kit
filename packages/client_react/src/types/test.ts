@@ -17,6 +17,7 @@ export interface TestDto {
   unitName?: string | null;
   normId?: number | null;
   normRef?: string | null;
+  sopId?: number | null;
   isParam: boolean;
   isArray: boolean;
   forCertification: boolean;
@@ -47,6 +48,7 @@ export interface CreateTestDto {
   unitId?: number | null;
   normId?: number | null;
   normRef?: string | null;
+  sopId?: number | null;
   nrOrd: number;
   isObsolete: boolean;
   isArray: boolean;

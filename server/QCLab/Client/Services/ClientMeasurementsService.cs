@@ -61,13 +61,34 @@ public class ClientMeasurementsService(HttpClient httpClient) : IMeasurementsSer
 
     public async Task<List<TestEquipmentDto>> GetMeasurementEquipments(long id)
     {
-        var result = await httpClient.GetFromJsonAsync<List<TestEquipmentDto>>($"/api/measurement_tests/{id}/equipments");
+        var result = await httpClient.GetFromJsonAsync<List<TestEquipmentDto>>($"/api/measurements/{id}/equipments");
         return result ?? new List<TestEquipmentDto>();
+    }
+
+    public async Task<List<MeasurementSopVersionDto>> GetMeasurementSopVersions(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<MeasurementSopVersionDto>>($"/api/measurements/{id}/sop_versions");
+        return result ?? new List<MeasurementSopVersionDto>();
+    }
+
+    public async Task<List<MeasurementSopVersionDto>> GetMeasurementApplicableSopVersions(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<MeasurementSopVersionDto>>($"/api/measurements/{id}/applicable_sop_versions");
+        return result ?? new List<MeasurementSopVersionDto>();
     }
 
     public async Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto)
     {
         var response = await httpClient.PutAsJsonAsync($"/api/measurement_tests/{id}/equipments", dto);
+        if (!response.IsSuccessStatusCode)
+        {
+            await HandleErrorResponse(response);
+        }
+    }
+
+    public async Task UpdateMeasurementSopVersions(long id, UpdateMeasurementSopVersionsDto dto)
+    {
+        var response = await httpClient.PutAsJsonAsync($"/api/measurements/{id}/sop_versions", dto);
         if (!response.IsSuccessStatusCode)
         {
             await HandleErrorResponse(response);
