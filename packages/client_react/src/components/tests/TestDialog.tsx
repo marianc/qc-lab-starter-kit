@@ -7,9 +7,11 @@ import type { TestDto } from '@/types/test';
 import type { UnitDto } from '@/types/unit';
 import type { NormDto } from '@/types/norm';
 import type { ValueTypeDto } from '@/types/valueType';
+import type { SopDto } from '@/types/sop';
 import unitsService from '@/services/unitsService';
 import normsService from '@/services/normsService';
 import valueTypesService from '@/services/valueTypesService';
+import sopsService from '@/services/sopsService';
 import testsService from '@/services/testsService';
 import { testSchema } from '@/lib/schemas/test';
 
@@ -34,6 +36,7 @@ type TestFormValues = {
   unitId: number | null;
   normId: number | null;
   normRef: string | null;
+  sopId: number | null;
   nrOrd: number;
   enumListString: string | null;
 };
@@ -43,6 +46,9 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   const [units, setUnits] = useState<UnitDto[]>([]);
   const [norms, setNorms] = useState<NormDto[]>([]);
   const [valueTypes, setValueTypes] = useState<ValueTypeDto[]>([]);
+  const [sops, setSops] = useState<SopDto[]>([]);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const prevNormIdRef = React.useRef<number | null>(null);
   
   const {
     register,
@@ -70,6 +76,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       unitId: null,
       normId: null,
       normRef: null,
+      sopId: null,
       nrOrd: 0,
       enumListString: null
     }
@@ -83,6 +90,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
 
   useEffect(() => {
     if (open) {
+      setIsInitializing(true);
       Promise.all([
         unitsService.getAllUnits(),
         normsService.getAllNorms(),
@@ -93,26 +101,37 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
         setValueTypes(vt);
 
         if (testData) {
-          reset({
-            id: testData.id,
-            name: testData.name,
-            code: testData.code,
-            description: testData.description || '',
-            typeId: testData.typeId,
-            isArray: testData.isArray,
-            isParam: testData.isParam,
-            forCertification: testData.forCertification,
-            relativeUncertaintyPct: testData.relativeUncertaintyPct ?? null,
-            defaultCoverageFactorK: testData.defaultCoverageFactorK ?? null,
-            unitId: testData.unitId || null,
-            normId: testData.normId || null,
-            normRef: testData.normRef || '',
-            nrOrd: testData.nrOrd,
-            enumListString: testData.id === 0 && testData.typeId === 4 && testData.enums 
-              ? testData.enums.map(e => e.name).join('\n') 
-              : ''
+          prevNormIdRef.current = testData.normId || null;
+          const loadSopsPromise = testData.normId 
+            ? sopsService.getSopsByNorm(testData.normId).then(setSops) 
+            : Promise.resolve(setSops([]));
+
+          loadSopsPromise.then(() => {
+            reset({
+              id: testData.id,
+              name: testData.name,
+              code: testData.code,
+              description: testData.description || '',
+              typeId: testData.typeId,
+              isArray: testData.isArray,
+              isParam: testData.isParam,
+              forCertification: testData.forCertification,
+              relativeUncertaintyPct: testData.relativeUncertaintyPct ?? null,
+              defaultCoverageFactorK: testData.defaultCoverageFactorK ?? null,
+              unitId: testData.unitId || null,
+              normId: testData.normId || null,
+              normRef: testData.normRef || '',
+              sopId: testData.sopId || null,
+              nrOrd: testData.nrOrd,
+              enumListString: testData.id === 0 && testData.typeId === 4 && testData.enums 
+                ? testData.enums.map(e => e.name).join('\n') 
+                : ''
+            });
+            setIsInitializing(false);
           });
         } else {
+          prevNormIdRef.current = null;
+          setSops([]);
           reset({
             id: 0,
             name: '',
@@ -127,19 +146,33 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             unitId: null,
             normId: null,
             normRef: '',
+            sopId: null,
             nrOrd: 0,
             enumListString: ''
           });
+          setIsInitializing(false);
         }
       });
     }
   }, [open, testData, reset]);
 
   useEffect(() => {
-    if (!watchNormId || watchNormId === 0) {
+    if (isInitializing) return;
+    const currentNormId = watchNormId ? Number(watchNormId) : null;
+    if (currentNormId === prevNormIdRef.current) return;
+
+    prevNormIdRef.current = currentNormId;
+
+    if (!currentNormId || currentNormId === 0) {
       setValue('normRef', null);
+      setValue('sopId', null);
+      setSops([]);
+    } else {
+      setValue('normRef', null);
+      setValue('sopId', null);
+      sopsService.getSopsByNorm(currentNormId).then(setSops);
     }
-  }, [watchNormId, setValue]);
+  }, [watchNormId, setValue, isInitializing]);
 
   useEffect(() => {
     if (watchForCertification) {
@@ -347,6 +380,16 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
               {errors.normRef && <span className="text-danger">{errors.normRef.message as string}</span>}
             </div>
           )}
+
+          <div className="form-group">
+            <label>SOP</label>
+            <select {...register('sopId', { valueAsNumber: true })} className="form-control" disabled={!watchNormId || Number(watchNormId) === 0}>
+              <option value="">None</option>
+              {sops.map(s => (
+                <option key={s.id} value={s.id}>{s.docCode} - {s.title}</option>
+              ))}
+            </select>
+          </div>
 
           <div className="form-group">
             <label>Order</label>

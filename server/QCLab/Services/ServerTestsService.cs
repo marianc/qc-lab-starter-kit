@@ -307,6 +307,7 @@ public class ServerTestsService : ITestsService
             test.UnitId = testData.UnitId;
             test.NormId = testData.NormId;
             test.NormRef = testData.NormRef;
+            test.SopId = testData.SopId;
             test.NrOrd = testData.NrOrd;
             test.IsObsolete = testData.IsObsolete;
             test.IsArray = testData.IsArray;

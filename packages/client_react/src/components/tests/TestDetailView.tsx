@@ -18,10 +18,12 @@ import TestEnumDialog from './TestEnumDialog';
 import styles from './TestDetailView.module.css';
 import type { CreateTestEnumDto, ReorderTestEnumDto, TestDto, TestEnumDto, UpdateTestDto, UpdateTestEnumDto, TestEquipmentDto } from '@/types/test';
 import type { NormDto } from '@/types/norm';
+import type { SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { SelectableItem } from '@/types/models';
 import testsService from '@/services/testsService';
 import normsService from '@/services/normsService';
+import sopsService from '@/services/sopsService';
 import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
 
@@ -41,6 +43,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
   const [test, setTest] = useState<TestDto | null>(null);
   const [enums, setEnums] = useState<TestEnumDto[]>([]);
   const [norms, setNorms] = useState<NormDto[]>([]);
+  const [sops, setSops] = useState<SopDto[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -62,6 +65,11 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
       if (data.typeId === 4) {
         const enumData = await testsService.getTestEnums(testId);
         setEnums([...enumData].sort((a, b) => a.nrOrd - b.nrOrd));
+      }
+      if (data.normId) {
+        sopsService.getSopsByNorm(data.normId).then(setSops);
+      } else {
+        setSops([]);
       }
       const equipments = await testsService.getTestEquipments(testId);
       setAssociatedEquipments(equipments);
@@ -102,6 +110,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
         unitId: updatedTest.unitId,
         normId: updatedTest.normId,
         normRef: updatedTest.normRef,
+        sopId: updatedTest.sopId,
         nrOrd: updatedTest.nrOrd,
         isObsolete: updatedTest.isObsolete
       };
@@ -239,6 +248,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               <DetailItem label="Unit" value={test.unitName || "-"} />
               <DetailItem label="Norm" value={norms.find(n => n.id === test.normId)?.name || "-"} />
               <DetailItem label="Norm Ref" value={test.normRef || "-"} />
+              <DetailItem label="SOP" value={sops.find(s => s.id === test.sopId) ? `${sops.find(s => s.id === test.sopId)?.docCode} - ${sops.find(s => s.id === test.sopId)?.title}` : "-"} />
               <DetailItem label="Order" value={test.nrOrd} />
               <DetailItem label="Is Form Validated" value={test.isFormValidated ? "Yes" : "No"} />
               <DetailItem label="Date Created" value={formatDate(test.dateCreated)} />

@@ -22,6 +22,7 @@ export const testSchema = z.object({
   unitId: z.any(),
   normId: z.any(),
   normRef: z.string().max(50).optional().nullable(),
+  sopId: z.any(),
   nrOrd: z.number().int(),
   enumListString: z.string().optional().nullable(),
 }).refine((data) => {
