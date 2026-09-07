@@ -82,6 +82,10 @@ const TestResultsDetailView: React.FC<Props> = ({
       const selectableItems: SopVersionSelectItem[] = applicableSops.map((sop: MeasurementSopVersionDto) => ({
         id: sop.id,
         sopId: sop.sopId,
+        docCode: sop.docCode,
+        title: sop.title,
+        versionNumber: sop.versionNumber,
+        isActive: sop.isActive,
         name: `${sop.docCode} (v${sop.versionNumber}) - ${sop.title}`
       }));
       setApplicableSopVersions(selectableItems);

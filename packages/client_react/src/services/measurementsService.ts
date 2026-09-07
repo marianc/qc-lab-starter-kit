@@ -64,7 +64,7 @@ const measurementsService = {
   },
 
   async updateMeasurementEquipments(id: number, dto: UpdateTestEquipmentsDto): Promise<void> {
-    await apiClient.put(`api/measurement_tests/${id}/equipments`, dto);
+    await apiClient.put(`api/measurements/${id}/equipments`, dto);
   },
 
   async updateMeasurementSopVersions(id: number, dto: UpdateMeasurementSopVersionsDto): Promise<void> {

@@ -5,6 +5,10 @@ import styles from '@/components/common/SelectDialog.module.css';
 export interface SopVersionSelectItem {
   id: number;
   sopId: number;
+  docCode: string;
+  title: string;
+  versionNumber: string;
+  isActive: boolean;
   name: string;
 }
 
@@ -66,10 +70,12 @@ const SelectSopVersionsDialog: React.FC<Props> = ({
         <div className={styles.formGroupList}>
           {Object.entries(groupedBySop).map(([sopIdStr, versions]) => {
             const sopId = Number(sopIdStr);
+            const firstVersion = versions[0];
+            const sopTitle = firstVersion ? firstVersion.title : '';
             return (
               <div key={sopId} style={{ marginBottom: '1rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: '#333' }}>
-                  SOP #{sopId}
+                  SOP #{sopId} {sopTitle ? `- ${sopTitle}` : ''}
                 </h4>
                 {versions.map((version) => {
                   const isChecked = selectedIds.includes(version.id);
@@ -82,7 +88,9 @@ const SelectSopVersionsDialog: React.FC<Props> = ({
                         checked={isChecked}
                         onChange={() => handleVersionChange(sopId, version.id)}
                       />
-                      <label htmlFor={`${idPrefix}-${version.id}`}>{version.name}</label>
+                      <label htmlFor={`${idPrefix}-${version.id}`}>
+                        {version.docCode} (v{version.versionNumber}){version.isActive ? ' *' : ''}
+                      </label>
                     </div>
                   );
                 })}
