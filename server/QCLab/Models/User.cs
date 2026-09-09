@@ -73,6 +73,8 @@ public partial class User
 
     public virtual ICollection<Measurement> MeasurementUserUpdates { get; set; } = new List<Measurement>();
 
+    public virtual ICollection<ReagentLot> ReagentLots { get; set; } = new List<ReagentLot>();
+
     public virtual ICollection<Reception> ReceptionUserReceiveds { get; set; } = new List<Reception>();
 
     public virtual ICollection<Reception> ReceptionUserRejecteds { get; set; } = new List<Reception>();

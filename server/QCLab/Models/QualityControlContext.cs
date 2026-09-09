@@ -53,6 +53,12 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<Norm> Norms { get; set; }
 
+    public virtual DbSet<ReagentLot> ReagentLots { get; set; }
+
+    public virtual DbSet<ReagentLotStatus> ReagentLotStatuses { get; set; }
+
+    public virtual DbSet<ReagentSupplierLot> ReagentSupplierLots { get; set; }
+
     public virtual DbSet<Reception> Receptions { get; set; }
 
     public virtual DbSet<ReceptionType> ReceptionTypes { get; set; }
@@ -283,6 +289,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.Code)
                 .HasMaxLength(50)
                 .HasColumnName("code");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
             entity.Property(e => e.IsReceptionReceived).HasColumnName("is_reception_received");
             entity.Property(e => e.MaterialId).HasColumnName("material_id");
 
@@ -605,6 +614,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
+            entity.Property(e => e.CasNumber)
+                .HasMaxLength(20)
+                .HasColumnName("cas_number");
             entity.Property(e => e.Code)
                 .HasMaxLength(5)
                 .HasColumnName("code");
@@ -615,6 +627,7 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.IsObsolete).HasColumnName("is_obsolete");
             entity.Property(e => e.IsProduct).HasColumnName("is_product");
             entity.Property(e => e.IsRawMaterial).HasColumnName("is_raw_material");
+            entity.Property(e => e.IsReagent).HasColumnName("is_reagent");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
@@ -696,6 +709,24 @@ public partial class QualityControlContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurements_user_update_id_fkey");
 
+            entity.HasMany(d => d.ControlCodes).WithMany(p => p.Measurements)
+                .UsingEntity<Dictionary<string, object>>(
+                    "MeasurementReagentLot",
+                    r => r.HasOne<ReagentLot>().WithMany()
+                        .HasForeignKey("ControlCodeId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("measurement_reagent_lots_control_code_id_fkey"),
+                    l => l.HasOne<Measurement>().WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .HasConstraintName("measurement_reagent_lots_measurement_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("MeasurementId", "ControlCodeId").HasName("measurement_reagent_lots_pkey");
+                        j.ToTable("measurement_reagent_lots");
+                        j.IndexerProperty<long>("MeasurementId").HasColumnName("measurement_id");
+                        j.IndexerProperty<long>("ControlCodeId").HasColumnName("control_code_id");
+                    });
+
             entity.HasMany(d => d.Equipment).WithMany(p => p.Measurements)
                 .UsingEntity<Dictionary<string, object>>(
                     "MeasurementEquipment",
@@ -705,7 +736,7 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("measurement_equipments_equipment_id_fkey"),
                     l => l.HasOne<Measurement>().WithMany()
                         .HasForeignKey("MeasurementId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("measurement_equipments_measurement_id_fkey"),
                     j =>
                     {
@@ -812,6 +843,128 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<ReagentLot>(entity =>
+        {
+            entity.HasKey(e => e.ControlCodeId).HasName("reagent_lots_pkey");
+
+            entity.ToTable("reagent_lots");
+
+            entity.Property(e => e.ControlCodeId)
+                .ValueGeneratedNever()
+                .HasColumnName("control_code_id");
+            entity.Property(e => e.ExpirationDate).HasColumnName("expiration_date");
+            entity.Property(e => e.IsProduced).HasColumnName("is_produced");
+            entity.Property(e => e.ProducedByUserId).HasColumnName("produced_by_user_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.StatusId)
+                .HasDefaultValue(1L)
+                .HasColumnName("status_id");
+            entity.Property(e => e.UnitId).HasColumnName("unit_id");
+
+            entity.HasOne(d => d.ControlCode).WithOne(p => p.ReagentLot)
+                .HasForeignKey<ReagentLot>(d => d.ControlCodeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_lots_control_code_id_fkey");
+
+            entity.HasOne(d => d.ProducedByUser).WithMany(p => p.ReagentLots)
+                .HasForeignKey(d => d.ProducedByUserId)
+                .HasConstraintName("reagent_lots_produced_by_user_id_fkey");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.ReagentLots)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_lots_status_id_fkey");
+
+            entity.HasOne(d => d.Unit).WithMany(p => p.ReagentLots)
+                .HasForeignKey(d => d.UnitId)
+                .HasConstraintName("reagent_lots_unit_id_fkey");
+
+            entity.HasMany(d => d.ControlCodes).WithMany(p => p.IngredientControlCodes)
+                .UsingEntity<Dictionary<string, object>>(
+                    "ReagentProductionLot",
+                    r => r.HasOne<ReagentLot>().WithMany()
+                        .HasForeignKey("ControlCodeId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("reagent_production_lots_control_code_id_fkey"),
+                    l => l.HasOne<ReagentLot>().WithMany()
+                        .HasForeignKey("IngredientControlCodeId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("reagent_production_lots_ingredient_control_code_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("ControlCodeId", "IngredientControlCodeId").HasName("reagent_production_lots_pkey");
+                        j.ToTable("reagent_production_lots");
+                        j.IndexerProperty<long>("ControlCodeId").HasColumnName("control_code_id");
+                        j.IndexerProperty<long>("IngredientControlCodeId").HasColumnName("ingredient_control_code_id");
+                    });
+
+            entity.HasMany(d => d.IngredientControlCodes).WithMany(p => p.ControlCodes)
+                .UsingEntity<Dictionary<string, object>>(
+                    "ReagentProductionLot",
+                    r => r.HasOne<ReagentLot>().WithMany()
+                        .HasForeignKey("IngredientControlCodeId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("reagent_production_lots_ingredient_control_code_id_fkey"),
+                    l => l.HasOne<ReagentLot>().WithMany()
+                        .HasForeignKey("ControlCodeId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("reagent_production_lots_control_code_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("ControlCodeId", "IngredientControlCodeId").HasName("reagent_production_lots_pkey");
+                        j.ToTable("reagent_production_lots");
+                        j.IndexerProperty<long>("ControlCodeId").HasColumnName("control_code_id");
+                        j.IndexerProperty<long>("IngredientControlCodeId").HasColumnName("ingredient_control_code_id");
+                    });
+        });
+
+        modelBuilder.Entity<ReagentLotStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("reagent_lot_statuses_pkey");
+
+            entity.ToTable("reagent_lot_statuses");
+
+            entity.HasIndex(e => e.Name, "reagent_lot_statuses_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<ReagentSupplierLot>(entity =>
+        {
+            entity.HasKey(e => e.ControlCodeId).HasName("reagent_supplier_lots_pkey");
+
+            entity.ToTable("reagent_supplier_lots");
+
+            entity.Property(e => e.ControlCodeId)
+                .ValueGeneratedNever()
+                .HasColumnName("control_code_id");
+            entity.Property(e => e.CatalogNumber)
+                .HasMaxLength(50)
+                .HasColumnName("catalog_number");
+            entity.Property(e => e.CertificateOfAnalysisRef)
+                .HasMaxLength(255)
+                .HasColumnName("certificate_of_analysis_ref");
+            entity.Property(e => e.ManufacturerLotNumber)
+                .HasMaxLength(50)
+                .HasColumnName("manufacturer_lot_number");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+            entity.Property(e => e.Supplier)
+                .HasMaxLength(100)
+                .HasColumnName("supplier");
+
+            entity.HasOne(d => d.ControlCode).WithOne(p => p.ReagentSupplierLot)
+                .HasForeignKey<ReagentSupplierLot>(d => d.ControlCodeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_supplier_lots_control_code_id_fkey");
         });
 
         modelBuilder.Entity<Reception>(entity =>
@@ -1212,6 +1365,24 @@ public partial class QualityControlContext : DbContext
                         j.ToTable("test_equipments");
                         j.IndexerProperty<long>("TestId").HasColumnName("test_id");
                         j.IndexerProperty<long>("EquipmentId").HasColumnName("equipment_id");
+                    });
+
+            entity.HasMany(d => d.MaterialsNavigation).WithMany(p => p.TestsNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TestReagent",
+                    r => r.HasOne<Material>().WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("test_reagents_material_id_fkey"),
+                    l => l.HasOne<Test>().WithMany()
+                        .HasForeignKey("TestId")
+                        .HasConstraintName("test_reagents_test_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("TestId", "MaterialId").HasName("test_reagents_pkey");
+                        j.ToTable("test_reagents");
+                        j.IndexerProperty<long>("TestId").HasColumnName("test_id");
+                        j.IndexerProperty<long>("MaterialId").HasColumnName("material_id");
                     });
         });
 

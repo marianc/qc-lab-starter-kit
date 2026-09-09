@@ -284,7 +284,8 @@ CREATE TABLE public.control_codes (
     id bigint NOT NULL,
     material_id bigint NOT NULL,
     code character varying(50) NOT NULL,
-    is_reception_received boolean DEFAULT false NOT NULL
+    is_reception_received boolean DEFAULT false NOT NULL,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -586,6 +587,8 @@ CREATE TABLE public.materials (
     norm_id bigint,
     is_product boolean DEFAULT false NOT NULL,
     is_raw_material boolean DEFAULT false NOT NULL,
+    is_reagent boolean DEFAULT false NOT NULL,
+    cas_number character varying(20),
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
     date_obsolete timestamp with time zone,
@@ -676,6 +679,18 @@ CREATE TABLE public.measurement_params (
 ALTER TABLE public.measurement_params OWNER TO postgres;
 
 --
+-- Name: measurement_reagent_lots; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.measurement_reagent_lots (
+    measurement_id bigint NOT NULL,
+    control_code_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.measurement_reagent_lots OWNER TO postgres;
+
+--
 -- Name: measurement_sop_versions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -732,6 +747,63 @@ ALTER TABLE public.norms ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     CACHE 1
 );
 
+
+--
+-- Name: reagent_lot_statuses; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_lot_statuses (
+    id bigint NOT NULL,
+    name character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.reagent_lot_statuses OWNER TO postgres;
+
+--
+-- Name: reagent_lots; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_lots (
+    control_code_id bigint NOT NULL,
+    is_produced boolean DEFAULT false NOT NULL,
+    produced_by_user_id bigint,
+    status_id bigint DEFAULT 1 NOT NULL,
+    unit_id bigint,
+    quantity numeric NOT NULL,
+    expiration_date date NOT NULL
+);
+
+
+ALTER TABLE public.reagent_lots OWNER TO postgres;
+
+--
+-- Name: reagent_production_lots; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_production_lots (
+    control_code_id bigint NOT NULL,
+    ingredient_control_code_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.reagent_production_lots OWNER TO postgres;
+
+--
+-- Name: reagent_supplier_lots; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_supplier_lots (
+    control_code_id bigint NOT NULL,
+    name character varying(100) NOT NULL,
+    catalog_number character varying(50),
+    supplier character varying(100),
+    manufacturer_lot_number character varying(50) NOT NULL,
+    certificate_of_analysis_ref character varying(255)
+);
+
+
+ALTER TABLE public.reagent_supplier_lots OWNER TO postgres;
 
 --
 -- Name: reception_tests; Type: TABLE; Schema: public; Owner: postgres
@@ -873,9 +945,9 @@ CREATE TABLE public.sop_versions (
     sop_id bigint NOT NULL,
     version_number character varying(20) NOT NULL,
     external_edms_id character varying(100),
+    comments text,
     is_active boolean DEFAULT true NOT NULL,
-    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
-    comments text
+    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -1033,6 +1105,18 @@ CREATE TABLE public.test_equipments (
 
 
 ALTER TABLE public.test_equipments OWNER TO postgres;
+
+--
+-- Name: test_reagents; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.test_reagents (
+    test_id bigint NOT NULL,
+    material_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.test_reagents OWNER TO postgres;
 
 --
 -- Name: tests; Type: TABLE; Schema: public; Owner: postgres
@@ -1375,6 +1459,14 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_reagent_lots measurement_reagent_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_pkey PRIMARY KEY (measurement_id, control_code_id);
+
+
+--
 -- Name: measurement_sop_versions measurement_sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1412,6 +1504,46 @@ ALTER TABLE ONLY public.norms
 
 ALTER TABLE ONLY public.norms
     ADD CONSTRAINT norms_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reagent_lot_statuses reagent_lot_statuses_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lot_statuses
+    ADD CONSTRAINT reagent_lot_statuses_name_key UNIQUE (name);
+
+
+--
+-- Name: reagent_lot_statuses reagent_lot_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lot_statuses
+    ADD CONSTRAINT reagent_lot_statuses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reagent_lots reagent_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_pkey PRIMARY KEY (control_code_id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_pkey PRIMARY KEY (control_code_id, ingredient_control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_pkey PRIMARY KEY (control_code_id);
 
 
 --
@@ -1524,6 +1656,14 @@ ALTER TABLE ONLY public.test_enums
 
 ALTER TABLE ONLY public.test_equipments
     ADD CONSTRAINT test_equipments_pkey PRIMARY KEY (test_id, equipment_id);
+
+
+--
+-- Name: test_reagents test_reagents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_pkey PRIMARY KEY (test_id, material_id);
 
 
 --
@@ -1963,6 +2103,22 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_reagent_lots measurement_reagent_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: measurement_reagent_lots measurement_reagent_lots_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
+
+
+--
 -- Name: measurement_sop_versions measurement_sop_versions_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2032,6 +2188,62 @@ ALTER TABLE ONLY public.measurements
 
 ALTER TABLE ONLY public.measurements
     ADD CONSTRAINT measurements_user_update_id_fkey FOREIGN KEY (user_update_id) REFERENCES public.users(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.control_codes(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_produced_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_produced_by_user_id_fkey FOREIGN KEY (produced_by_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_status_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_status_id_fkey FOREIGN KEY (status_id) REFERENCES public.reagent_lot_statuses(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_unit_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.units(id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_ingredient_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_ingredient_control_code_id_fkey FOREIGN KEY (ingredient_control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
 
 
 --
@@ -2267,6 +2479,22 @@ ALTER TABLE ONLY public.test_equipments
 
 
 --
+-- Name: test_reagents test_reagents_material_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materials(id);
+
+
+--
+-- Name: test_reagents test_reagents_test_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) ON DELETE CASCADE;
+
+
+--
 -- Name: tests tests_norm_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2319,6 +2547,16 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Data for Name: reagent_lot_statuses; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.reagent_lot_statuses VALUES (1, 'Quarantined');
+INSERT INTO public.reagent_lot_statuses VALUES (2, 'Active');
+INSERT INTO public.reagent_lot_statuses VALUES (3, 'Expired');
+INSERT INTO public.reagent_lot_statuses VALUES (4, 'Depleted');
+
 
 --
 -- Data for Name: reception_types; Type: TABLE DATA; Schema: public; Owner: postgres

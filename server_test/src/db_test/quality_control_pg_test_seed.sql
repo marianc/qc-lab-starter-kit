@@ -20,6 +20,8 @@ ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_value_ty
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_unit_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_sop_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_norm_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.test_reagents DROP CONSTRAINT IF EXISTS test_reagents_test_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.test_reagents DROP CONSTRAINT IF EXISTS test_reagents_material_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_equipment_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_test_id_fkey;
@@ -49,6 +51,13 @@ ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS reception
 ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS receptions_category_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_reception_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_supplier_lots DROP CONSTRAINT IF EXISTS reagent_supplier_lots_control_code_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_ingredient_control_code_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_control_code_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_unit_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_status_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_produced_by_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_control_code_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_user_update_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_user_reported_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_user_created_id_fkey;
@@ -58,6 +67,8 @@ ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS me
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_measurement_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_sop_version_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_measurement_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_reagent_lots DROP CONSTRAINT IF EXISTS measurement_reagent_lots_measurement_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_reagent_lots DROP CONSTRAINT IF EXISTS measurement_reagent_lots_control_code_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_measurement_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_form_id_test_id_fkey;
@@ -113,6 +124,7 @@ ALTER TABLE IF EXISTS ONLY public.units DROP CONSTRAINT IF EXISTS units_name_key
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_name_key;
 ALTER TABLE IF EXISTS ONLY public.tests DROP CONSTRAINT IF EXISTS tests_code_key;
+ALTER TABLE IF EXISTS ONLY public.test_reagents DROP CONSTRAINT IF EXISTS test_reagents_pkey;
 ALTER TABLE IF EXISTS ONLY public.test_equipments DROP CONSTRAINT IF EXISTS test_equipments_pkey;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_test_id_name_key;
 ALTER TABLE IF EXISTS ONLY public.test_enums DROP CONSTRAINT IF EXISTS test_enums_pkey;
@@ -127,11 +139,17 @@ ALTER TABLE IF EXISTS ONLY public.report_tests DROP CONSTRAINT IF EXISTS report_
 ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS receptions_pkey;
 ALTER TABLE IF EXISTS ONLY public.reception_types DROP CONSTRAINT IF EXISTS reception_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_supplier_lots DROP CONSTRAINT IF EXISTS reagent_supplier_lots_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lot_statuses DROP CONSTRAINT IF EXISTS reagent_lot_statuses_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_lot_statuses DROP CONSTRAINT IF EXISTS reagent_lot_statuses_name_key;
 ALTER TABLE IF EXISTS ONLY public.norms DROP CONSTRAINT IF EXISTS norms_pkey;
 ALTER TABLE IF EXISTS ONLY public.norms DROP CONSTRAINT IF EXISTS norms_name_key;
 ALTER TABLE IF EXISTS ONLY public.measurements DROP CONSTRAINT IF EXISTS measurements_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_tests DROP CONSTRAINT IF EXISTS measurement_tests_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_sop_versions DROP CONSTRAINT IF EXISTS measurement_sop_versions_pkey;
+ALTER TABLE IF EXISTS ONLY public.measurement_reagent_lots DROP CONSTRAINT IF EXISTS measurement_reagent_lots_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_params DROP CONSTRAINT IF EXISTS measurement_params_pkey;
 ALTER TABLE IF EXISTS ONLY public.measurement_equipments DROP CONSTRAINT IF EXISTS measurement_equipments_pkey;
 ALTER TABLE IF EXISTS ONLY public.materials DROP CONSTRAINT IF EXISTS materials_pkey;
@@ -160,6 +178,7 @@ DROP TABLE IF EXISTS public.value_types;
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.units;
 DROP TABLE IF EXISTS public.tests;
+DROP TABLE IF EXISTS public.test_reagents;
 DROP TABLE IF EXISTS public.test_equipments;
 DROP TABLE IF EXISTS public.test_enums;
 DROP TABLE IF EXISTS public.spec_tests;
@@ -172,9 +191,14 @@ DROP TABLE IF EXISTS public.report_tests;
 DROP TABLE IF EXISTS public.receptions;
 DROP TABLE IF EXISTS public.reception_types;
 DROP TABLE IF EXISTS public.reception_tests;
+DROP TABLE IF EXISTS public.reagent_supplier_lots;
+DROP TABLE IF EXISTS public.reagent_production_lots;
+DROP TABLE IF EXISTS public.reagent_lots;
+DROP TABLE IF EXISTS public.reagent_lot_statuses;
 DROP TABLE IF EXISTS public.norms;
 DROP TABLE IF EXISTS public.measurement_tests;
 DROP TABLE IF EXISTS public.measurement_sop_versions;
+DROP TABLE IF EXISTS public.measurement_reagent_lots;
 DROP TABLE IF EXISTS public.measurement_params;
 DROP TABLE IF EXISTS public.measurement_equipments;
 DROP TABLE IF EXISTS public.measurements;
@@ -452,7 +476,8 @@ CREATE TABLE public.control_codes (
     id bigint NOT NULL,
     material_id bigint NOT NULL,
     code character varying(50) NOT NULL,
-    is_reception_received boolean DEFAULT false NOT NULL
+    is_reception_received boolean DEFAULT false NOT NULL,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -732,6 +757,8 @@ CREATE TABLE public.materials (
     norm_id bigint,
     is_product boolean DEFAULT false NOT NULL,
     is_raw_material boolean DEFAULT false NOT NULL,
+    is_reagent boolean DEFAULT false NOT NULL,
+    cas_number character varying(20),
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
     date_obsolete timestamp with time zone,
@@ -814,6 +841,16 @@ CREATE TABLE public.measurement_params (
 
 
 --
+-- Name: measurement_reagent_lots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.measurement_reagent_lots (
+    measurement_id bigint NOT NULL,
+    control_code_id bigint NOT NULL
+);
+
+
+--
 -- Name: measurement_sop_versions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -862,6 +899,55 @@ ALTER TABLE public.norms ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+
+--
+-- Name: reagent_lot_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reagent_lot_statuses (
+    id bigint NOT NULL,
+    name character varying(50) NOT NULL
+);
+
+
+--
+-- Name: reagent_lots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reagent_lots (
+    control_code_id bigint NOT NULL,
+    is_produced boolean DEFAULT false NOT NULL,
+    produced_by_user_id bigint,
+    status_id bigint DEFAULT 1 NOT NULL,
+    unit_id bigint,
+    quantity numeric NOT NULL,
+    expiration_date date NOT NULL
+);
+
+
+--
+-- Name: reagent_production_lots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reagent_production_lots (
+    control_code_id bigint NOT NULL,
+    ingredient_control_code_id bigint NOT NULL
+);
+
+
+--
+-- Name: reagent_supplier_lots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reagent_supplier_lots (
+    control_code_id bigint NOT NULL,
+    name character varying(100) NOT NULL,
+    catalog_number character varying(50),
+    supplier character varying(100),
+    manufacturer_lot_number character varying(50) NOT NULL,
+    certificate_of_analysis_ref character varying(255)
 );
 
 
@@ -995,9 +1081,9 @@ CREATE TABLE public.sop_versions (
     sop_id bigint NOT NULL,
     version_number character varying(20) NOT NULL,
     external_edms_id character varying(100),
+    comments text,
     is_active boolean DEFAULT true NOT NULL,
-    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
-    comments text
+    date_activated timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -1139,6 +1225,16 @@ CREATE TABLE public.test_enums (
 CREATE TABLE public.test_equipments (
     test_id bigint NOT NULL,
     equipment_id bigint NOT NULL
+);
+
+
+--
+-- Name: test_reagents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.test_reagents (
+    test_id bigint NOT NULL,
+    material_id bigint NOT NULL
 );
 
 
@@ -1356,76 +1452,76 @@ INSERT INTO public.certificates (id, control_code_id, spec_id, is_conforming_spe
 -- Data for Name: control_codes; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (1, 15, 'BATCH-REC-1-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (2, 15, 'SN-REC-1-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (3, 18, 'BATCH-REC-1-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (4, 15, 'SN-REC-1-4', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (5, 20, 'BATCH-REC-1-5', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (6, 1, 'SN-REC-2-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (7, 15, 'SN-REC-2-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (8, 15, 'SN-REC-2-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (9, 20, 'SN-REC-2-4', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (10, 17, 'DEL-CODE-3-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (11, 17, 'DEL-CODE-3-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (12, 21, 'DEL-CODE-4-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (13, 17, 'DEL-CODE-4-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (14, 19, 'DEL-CODE-4-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (15, 1, 'STORAGE-CODE-5-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (16, 18, 'STORAGE-CODE-5-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (17, 20, 'STORAGE-CODE-5-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (18, 18, 'STORAGE-CODE-6-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (19, 18, 'STORAGE-CODE-6-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (20, 18, 'OWNERSHIP-CODE-7-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (21, 8, 'OWNERSHIP-CODE-7-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (22, 15, 'OWNERSHIP-CODE-7-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (23, 18, 'OWNERSHIP-CODE-8-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (24, 17, 'OWNERSHIP-CODE-8-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (25, 17, 'OWNERSHIP-CODE-8-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (26, 20, 'GEN-1-CODE-9-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (27, 11, 'GEN-1-CODE-9-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (28, 6, 'GEN-1-CODE-9-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (29, 15, 'GEN-1-CODE-9-4', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (30, 3, 'GEN-2-CODE-10-1', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (31, 19, 'GEN-2-CODE-10-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (32, 15, 'GEN-2-CODE-10-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (33, 4, 'GEN-2-CODE-10-4', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (34, 5, 'GEN-2-CODE-10-5', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (35, 5, 'GEN-3-CODE-11-1', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (36, 13, 'GEN-3-CODE-11-2', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (37, 20, 'GEN-3-CODE-11-3', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (38, 20, 'GEN-3-CODE-11-4', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (39, 13, 'GEN-3-CODE-11-5', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (40, 21, 'PROD-A-1-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (41, 1, 'GEN-1-2025-07-15', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (42, 2, 'GEN-2-2025-07-15', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (43, 3, 'GEN-3-2025-07-15', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (44, 21, 'PROD-A-2-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (45, 1, 'GEN-1-2025-07-05', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (46, 2, 'GEN-2-2025-07-05', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (47, 21, 'PROD-A-3-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (48, 1, 'GEN-1-2025-06-25', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (49, 2, 'GEN-2-2025-06-25', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (50, 3, 'GEN-3-2025-06-25', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (51, 21, 'PROD-A-4-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (52, 1, 'GEN-1-2025-06-15', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (53, 2, 'GEN-2-2025-06-15', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (54, 21, 'PROD-A-5-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (55, 1, 'GEN-1-2025-06-05', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (56, 2, 'GEN-2-2025-06-05', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (57, 3, 'GEN-3-2025-06-05', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (58, 21, 'PROD-A-6-212858', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (59, 1, 'GEN-1-2025-05-26', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (60, 2, 'GEN-2-2025-05-26', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (62, 4, 'GEN-4-2025-06-25', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (63, 5, 'GEN-5-2025-06-25', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (64, 3, 'GEN-3-2025-05-26', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (65, 4, 'GEN-4-2025-05-26', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (66, 3, 'GEN-3-2025-04-26', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (67, 4, 'GEN-4-2025-04-26', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (68, 5, 'GEN-5-2025-04-26', false);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (69, 3, 'GEN-3-2025-03-27', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (70, 4, 'GEN-4-2025-03-27', true);
-INSERT INTO public.control_codes (id, material_id, code, is_reception_received) OVERRIDING SYSTEM VALUE VALUES (71, 2, 'WERT-TER-ERT-ER', false);
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (1, 15, 'BATCH-REC-1-1', false, '2026-09-08 17:52:10.340701+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (2, 15, 'SN-REC-1-2', false, '2026-09-08 17:52:10.341082+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (3, 18, 'BATCH-REC-1-3', false, '2026-09-08 17:52:10.341086+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (4, 15, 'SN-REC-1-4', false, '2026-09-08 17:52:10.341088+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (5, 20, 'BATCH-REC-1-5', false, '2026-09-08 17:52:10.341089+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (6, 1, 'SN-REC-2-1', false, '2026-09-08 17:52:10.34109+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (7, 15, 'SN-REC-2-2', false, '2026-09-08 17:52:10.341092+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (8, 15, 'SN-REC-2-3', false, '2026-09-08 17:52:10.341093+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (9, 20, 'SN-REC-2-4', false, '2026-09-08 17:52:10.341094+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (10, 17, 'DEL-CODE-3-1', false, '2026-09-08 17:52:10.341095+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (11, 17, 'DEL-CODE-3-2', false, '2026-09-08 17:52:10.341097+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (12, 21, 'DEL-CODE-4-1', false, '2026-09-08 17:52:10.341098+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (13, 17, 'DEL-CODE-4-2', false, '2026-09-08 17:52:10.341099+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (14, 19, 'DEL-CODE-4-3', false, '2026-09-08 17:52:10.3411+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (15, 1, 'STORAGE-CODE-5-1', false, '2026-09-08 17:52:10.341102+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (16, 18, 'STORAGE-CODE-5-2', false, '2026-09-08 17:52:10.341103+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (17, 20, 'STORAGE-CODE-5-3', false, '2026-09-08 17:52:10.341104+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (18, 18, 'STORAGE-CODE-6-1', false, '2026-09-08 17:52:10.341105+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (19, 18, 'STORAGE-CODE-6-2', false, '2026-09-08 17:52:10.341106+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (20, 18, 'OWNERSHIP-CODE-7-1', false, '2026-09-08 17:52:10.341107+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (21, 8, 'OWNERSHIP-CODE-7-2', false, '2026-09-08 17:52:10.341108+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (22, 15, 'OWNERSHIP-CODE-7-3', false, '2026-09-08 17:52:10.341109+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (23, 18, 'OWNERSHIP-CODE-8-1', false, '2026-09-08 17:52:10.34111+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (24, 17, 'OWNERSHIP-CODE-8-2', false, '2026-09-08 17:52:10.341111+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (25, 17, 'OWNERSHIP-CODE-8-3', false, '2026-09-08 17:52:10.341112+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (26, 20, 'GEN-1-CODE-9-1', false, '2026-09-08 17:52:10.341113+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (27, 11, 'GEN-1-CODE-9-2', false, '2026-09-08 17:52:10.341115+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (28, 6, 'GEN-1-CODE-9-3', false, '2026-09-08 17:52:10.341116+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (29, 15, 'GEN-1-CODE-9-4', false, '2026-09-08 17:52:10.34112+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (30, 3, 'GEN-2-CODE-10-1', false, '2026-09-08 17:52:10.341122+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (31, 19, 'GEN-2-CODE-10-2', false, '2026-09-08 17:52:10.341123+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (32, 15, 'GEN-2-CODE-10-3', false, '2026-09-08 17:52:10.341124+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (33, 4, 'GEN-2-CODE-10-4', false, '2026-09-08 17:52:10.341125+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (34, 5, 'GEN-2-CODE-10-5', true, '2026-09-08 17:52:10.341126+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (35, 5, 'GEN-3-CODE-11-1', true, '2026-09-08 17:52:10.341127+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (36, 13, 'GEN-3-CODE-11-2', false, '2026-09-08 17:52:10.341128+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (37, 20, 'GEN-3-CODE-11-3', false, '2026-09-08 17:52:10.341147+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (38, 20, 'GEN-3-CODE-11-4', false, '2026-09-08 17:52:10.341165+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (39, 13, 'GEN-3-CODE-11-5', false, '2026-09-08 17:52:10.341166+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (40, 21, 'PROD-A-1-212858', false, '2026-09-08 17:52:10.341168+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (41, 1, 'GEN-1-2025-07-15', false, '2026-09-08 17:52:10.341169+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (42, 2, 'GEN-2-2025-07-15', false, '2026-09-08 17:52:10.34117+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (43, 3, 'GEN-3-2025-07-15', false, '2026-09-08 17:52:10.341171+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (44, 21, 'PROD-A-2-212858', false, '2026-09-08 17:52:10.341172+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (45, 1, 'GEN-1-2025-07-05', false, '2026-09-08 17:52:10.341173+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (46, 2, 'GEN-2-2025-07-05', false, '2026-09-08 17:52:10.341174+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (47, 21, 'PROD-A-3-212858', false, '2026-09-08 17:52:10.341175+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (48, 1, 'GEN-1-2025-06-25', false, '2026-09-08 17:52:10.341176+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (49, 2, 'GEN-2-2025-06-25', false, '2026-09-08 17:52:10.341177+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (50, 3, 'GEN-3-2025-06-25', false, '2026-09-08 17:52:10.341178+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (51, 21, 'PROD-A-4-212858', false, '2026-09-08 17:52:10.34118+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (52, 1, 'GEN-1-2025-06-15', false, '2026-09-08 17:52:10.341181+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (53, 2, 'GEN-2-2025-06-15', false, '2026-09-08 17:52:10.341182+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (54, 21, 'PROD-A-5-212858', false, '2026-09-08 17:52:10.341183+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (55, 1, 'GEN-1-2025-06-05', false, '2026-09-08 17:52:10.341184+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (56, 2, 'GEN-2-2025-06-05', false, '2026-09-08 17:52:10.341185+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (57, 3, 'GEN-3-2025-06-05', false, '2026-09-08 17:52:10.341186+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (58, 21, 'PROD-A-6-212858', false, '2026-09-08 17:52:10.341187+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (59, 1, 'GEN-1-2025-05-26', true, '2026-09-08 17:52:10.341188+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (60, 2, 'GEN-2-2025-05-26', true, '2026-09-08 17:52:10.341189+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (62, 4, 'GEN-4-2025-06-25', false, '2026-09-08 17:52:10.341191+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (63, 5, 'GEN-5-2025-06-25', true, '2026-09-08 17:52:10.341192+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (64, 3, 'GEN-3-2025-05-26', false, '2026-09-08 17:52:10.341193+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (65, 4, 'GEN-4-2025-05-26', false, '2026-09-08 17:52:10.341194+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (66, 3, 'GEN-3-2025-04-26', false, '2026-09-08 17:52:10.341195+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (67, 4, 'GEN-4-2025-04-26', false, '2026-09-08 17:52:10.341196+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (68, 5, 'GEN-5-2025-04-26', false, '2026-09-08 17:52:10.341197+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (69, 3, 'GEN-3-2025-03-27', true, '2026-09-08 17:52:10.341203+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (70, 4, 'GEN-4-2025-03-27', true, '2026-09-08 17:52:10.341205+03');
+INSERT INTO public.control_codes (id, material_id, code, is_reception_received, date_created) OVERRIDING SYSTEM VALUE VALUES (71, 2, 'WERT-TER-ERT-ER', false, '2026-09-08 17:52:10.341206+03');
 
 
 --
@@ -1762,27 +1858,27 @@ INSERT INTO public.material_tests (material_id, test_id) VALUES (11, 5);
 -- Data for Name: materials; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (1, 'Material A', 'MA', 'Description for Material A', 2, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (2, 'Material B', 'MB', 'Description for Material B', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (3, 'Material C', 'MC', 'Description for Material C', 1, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (4, 'Material D', 'MD', 'Description for Material D', 3, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (5, 'Material E', 'ME', 'Description for Material E', 1, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (6, 'Material F', 'NF', 'Description for Material F', 2, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (7, 'Material G', 'MG', 'Description for Material G', 3, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (8, 'Material H', 'MH', 'Description for Material H', 3, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (9, 'Material I', 'MI', 'Description for Material I', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (10, 'Material J', 'MJ', 'Description for Material J', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (11, 'Material K', 'MK', 'Description for Material K', 4, false, false, '2025-12-13 18:17:42.218999+02', true, '2026-01-23 22:43:26.698445+02', 'Some explanations ...');
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (12, 'Material L', 'ML', 'Description for Material L', 1, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (13, 'Material M', 'MM', 'Description for Material M', 1, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (14, 'Material N', 'MN', 'Description for Material N', 2, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (15, 'Material O', 'MO', 'Description for Material O', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (16, 'Material P', 'MP', 'Description for Material P', 3, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (17, 'Material Q', 'MQ', 'Description for Material Q', 3, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (18, 'Material R', 'MR', 'Description for Material R', 1, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (19, 'Material S', 'MS', 'Description for Material S', 2, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (20, 'Material T', 'MT', 'Description for Material T', 4, false, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
-INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (21, 'Finished Product A', 'FPA', 'A product made from various materials', 3, true, false, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (1, 'Material A', 'MA', 'Description for Material A', 2, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (2, 'Material B', 'MB', 'Description for Material B', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (3, 'Material C', 'MC', 'Description for Material C', 1, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (4, 'Material D', 'MD', 'Description for Material D', 3, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (5, 'Material E', 'ME', 'Description for Material E', 1, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (6, 'Material F', 'NF', 'Description for Material F', 2, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (7, 'Material G', 'MG', 'Description for Material G', 3, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (8, 'Material H', 'MH', 'Description for Material H', 3, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (9, 'Material I', 'MI', 'Description for Material I', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (10, 'Material J', 'MJ', 'Description for Material J', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (11, 'Material K', 'MK', 'Description for Material K', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', true, '2026-01-23 22:43:26.698445+02', 'Some explanations ...');
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (12, 'Material L', 'ML', 'Description for Material L', 1, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (13, 'Material M', 'MM', 'Description for Material M', 1, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (14, 'Material N', 'MN', 'Description for Material N', 2, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (15, 'Material O', 'MO', 'Description for Material O', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (16, 'Material P', 'MP', 'Description for Material P', 3, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (17, 'Material Q', 'MQ', 'Description for Material Q', 3, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (18, 'Material R', 'MR', 'Description for Material R', 1, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (19, 'Material S', 'MS', 'Description for Material S', 2, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (20, 'Material T', 'MT', 'Description for Material T', 4, false, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+INSERT INTO public.materials (id, name, code, description, norm_id, is_product, is_raw_material, is_reagent, cas_number, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (21, 'Finished Product A', 'FPA', 'A product made from various materials', 3, true, false, false, NULL, '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
 
 
 --
@@ -1956,6 +2052,12 @@ INSERT INTO public.measurement_params (measurement_id, form_id, test_id, idx, va
 
 
 --
+-- Data for Name: measurement_reagent_lots; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: measurement_sop_versions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2077,6 +2179,34 @@ INSERT INTO public.norms (id, name, description, date_created, is_obsolete, date
 INSERT INTO public.norms (id, name, description, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (2, 'Norm B', 'Description Norm B', '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
 INSERT INTO public.norms (id, name, description, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (3, 'Norm C', 'Description Norm C', '2025-12-13 18:17:42.218999+02', true, '2026-01-23 22:44:28.171813+02', 'Some explanations ...');
 INSERT INTO public.norms (id, name, description, date_created, is_obsolete, date_obsolete, comments_obsolete) OVERRIDING SYSTEM VALUE VALUES (4, 'Norm D', 'Description Norm D', '2025-12-13 18:17:42.218999+02', false, NULL, NULL);
+
+
+--
+-- Data for Name: reagent_lot_statuses; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.reagent_lot_statuses (id, name) VALUES (1, 'Quarantined');
+INSERT INTO public.reagent_lot_statuses (id, name) VALUES (2, 'Active');
+INSERT INTO public.reagent_lot_statuses (id, name) VALUES (3, 'Expired');
+INSERT INTO public.reagent_lot_statuses (id, name) VALUES (4, 'Depleted');
+
+
+--
+-- Data for Name: reagent_lots; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reagent_production_lots; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reagent_supplier_lots; Type: TABLE DATA; Schema: public; Owner: -
+--
+
 
 
 --
@@ -2423,6 +2553,12 @@ INSERT INTO public.test_enums (test_id, value, name, nr_ord, is_obsolete) VALUES
 
 --
 -- Data for Name: test_equipments; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: test_reagents; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 
@@ -2875,6 +3011,14 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_reagent_lots measurement_reagent_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_pkey PRIMARY KEY (measurement_id, control_code_id);
+
+
+--
 -- Name: measurement_sop_versions measurement_sop_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2912,6 +3056,46 @@ ALTER TABLE ONLY public.norms
 
 ALTER TABLE ONLY public.norms
     ADD CONSTRAINT norms_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reagent_lot_statuses reagent_lot_statuses_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lot_statuses
+    ADD CONSTRAINT reagent_lot_statuses_name_key UNIQUE (name);
+
+
+--
+-- Name: reagent_lot_statuses reagent_lot_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lot_statuses
+    ADD CONSTRAINT reagent_lot_statuses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reagent_lots reagent_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_pkey PRIMARY KEY (control_code_id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_pkey PRIMARY KEY (control_code_id, ingredient_control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_pkey PRIMARY KEY (control_code_id);
 
 
 --
@@ -3024,6 +3208,14 @@ ALTER TABLE ONLY public.test_enums
 
 ALTER TABLE ONLY public.test_equipments
     ADD CONSTRAINT test_equipments_pkey PRIMARY KEY (test_id, equipment_id);
+
+
+--
+-- Name: test_reagents test_reagents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_pkey PRIMARY KEY (test_id, material_id);
 
 
 --
@@ -3463,6 +3655,22 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_reagent_lots measurement_reagent_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: measurement_reagent_lots measurement_reagent_lots_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.measurement_reagent_lots
+    ADD CONSTRAINT measurement_reagent_lots_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
+
+
+--
 -- Name: measurement_sop_versions measurement_sop_versions_measurement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3532,6 +3740,62 @@ ALTER TABLE ONLY public.measurements
 
 ALTER TABLE ONLY public.measurements
     ADD CONSTRAINT measurements_user_update_id_fkey FOREIGN KEY (user_update_id) REFERENCES public.users(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.control_codes(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_produced_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_produced_by_user_id_fkey FOREIGN KEY (produced_by_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_status_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_status_id_fkey FOREIGN KEY (status_id) REFERENCES public.reagent_lot_statuses(id);
+
+
+--
+-- Name: reagent_lots reagent_lots_unit_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_lots
+    ADD CONSTRAINT reagent_lots_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES public.units(id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_production_lots reagent_production_lots_ingredient_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_production_lots
+    ADD CONSTRAINT reagent_production_lots_ingredient_control_code_id_fkey FOREIGN KEY (ingredient_control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
 
 
 --
@@ -3764,6 +4028,22 @@ ALTER TABLE ONLY public.test_equipments
 
 ALTER TABLE ONLY public.test_equipments
     ADD CONSTRAINT test_equipments_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) NOT VALID;
+
+
+--
+-- Name: test_reagents test_reagents_material_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materials(id);
+
+
+--
+-- Name: test_reagents test_reagents_test_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_reagents
+    ADD CONSTRAINT test_reagents_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) ON DELETE CASCADE;
 
 
 --

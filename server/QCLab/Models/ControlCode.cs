@@ -13,9 +13,13 @@ public partial class ControlCode
 
     public bool IsReceptionReceived { get; set; }
 
+    public DateTime DateCreated { get; set; }
+
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual Material Material { get; set; } = null!;
+
+    public virtual ReagentLot? ReagentLot { get; set; }
 
     public virtual ICollection<Reception> Receptions { get; set; } = new List<Reception>();
 }

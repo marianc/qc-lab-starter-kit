@@ -19,6 +19,10 @@ public partial class Material
 
     public bool IsRawMaterial { get; set; }
 
+    public bool IsReagent { get; set; }
+
+    public string? CasNumber { get; set; }
+
     public DateTime DateCreated { get; set; }
 
     public bool IsObsolete { get; set; }
@@ -34,4 +38,6 @@ public partial class Material
     public virtual ICollection<Spec> Specs { get; set; } = new List<Spec>();
 
     public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
+
+    public virtual ICollection<Test> TestsNavigation { get; set; } = new List<Test>();
 }

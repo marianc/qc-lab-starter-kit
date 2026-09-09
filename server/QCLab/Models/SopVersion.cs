@@ -13,11 +13,11 @@ public partial class SopVersion
 
     public string? ExternalEdmsId { get; set; }
 
+    public string? Comments { get; set; }
+
     public bool IsActive { get; set; }
 
     public DateTime DateActivated { get; set; }
-
-    public string? Comments { get; set; }
 
     public virtual Sop Sop { get; set; } = null!;
 

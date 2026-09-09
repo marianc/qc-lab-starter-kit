@@ -90,6 +90,19 @@ class Norms(Base):
     tests: Mapped[list['Tests']] = relationship('Tests', back_populates='norm')
 
 
+class ReagentLotStatuses(Base):
+    __tablename__ = 'reagent_lot_statuses'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='reagent_lot_statuses_pkey'),
+        UniqueConstraint('name', name='reagent_lot_statuses_name_key')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    reagent_lots: Mapped[list['ReagentLots']] = relationship('ReagentLots', back_populates='status')
+
+
 class ReceptionTypes(Base):
     __tablename__ = 'reception_types'
     __table_args__ = (
@@ -115,6 +128,7 @@ class Units(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
 
     tests: Mapped[list['Tests']] = relationship('Tests', back_populates='unit')
+    reagent_lots: Mapped[list['ReagentLots']] = relationship('ReagentLots', back_populates='unit')
 
 
 class Users(Base):
@@ -161,6 +175,7 @@ class Users(Base):
     specs_user_submitted: Mapped[list['Specs']] = relationship('Specs', foreign_keys='[Specs.user_submitted_id]', back_populates='user_submitted')
     certificates_user_cancelled: Mapped[list['Certificates']] = relationship('Certificates', foreign_keys='[Certificates.user_cancelled_id]', back_populates='user_cancelled')
     certificates_user_submitted: Mapped[list['Certificates']] = relationship('Certificates', foreign_keys='[Certificates.user_submitted_id]', back_populates='user_submitted')
+    reagent_lots: Mapped[list['ReagentLots']] = relationship('ReagentLots', back_populates='produced_by_user')
     receptions_user_received: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_received_id]', back_populates='user_received')
     receptions_user_rejected: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_rejected_id]', back_populates='user_rejected')
     receptions_user_submitted: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_submitted_id]', back_populates='user_submitted')
@@ -301,15 +316,18 @@ class Materials(Base):
     code: Mapped[str] = mapped_column(String(5), nullable=False)
     is_product: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_raw_material: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_reagent: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     description: Mapped[Optional[str]] = mapped_column(Text)
     norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    cas_number: Mapped[Optional[str]] = mapped_column(String(20))
     date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
 
     norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='materials')
-    test: Mapped[list['Tests']] = relationship('Tests', secondary='material_tests', back_populates='material')
+    tests_material_tests: Mapped[list['Tests']] = relationship('Tests', secondary='material_tests', back_populates='materials_material_tests')
+    tests_test_reagents: Mapped[list['Tests']] = relationship('Tests', secondary='test_reagents', back_populates='materials_test_reagents')
     control_codes: Mapped[list['ControlCodes']] = relationship('ControlCodes', back_populates='material')
     specs: Mapped[list['Specs']] = relationship('Specs', back_populates='material')
 
@@ -344,6 +362,7 @@ class ControlCodes(Base):
     material_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     code: Mapped[str] = mapped_column(String(50), nullable=False)
     is_reception_received: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
 
     material: Mapped['Materials'] = relationship('Materials', back_populates='control_codes')
     certificates: Mapped[list['Certificates']] = relationship('Certificates', back_populates='control_code')
@@ -455,7 +474,8 @@ class Tests(Base):
 
     category: Mapped[list['Categories']] = relationship('Categories', secondary='category_tests', back_populates='test')
     equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='test_equipments', back_populates='test')
-    material: Mapped[list['Materials']] = relationship('Materials', secondary='material_tests', back_populates='test')
+    materials_material_tests: Mapped[list['Materials']] = relationship('Materials', secondary='material_tests', back_populates='tests_material_tests')
+    materials_test_reagents: Mapped[list['Materials']] = relationship('Materials', secondary='test_reagents', back_populates='tests_test_reagents')
     norm: Mapped[Optional['Norms']] = relationship('Norms', back_populates='tests')
     sop: Mapped[Optional['Sops']] = relationship('Sops', back_populates='tests')
     type: Mapped['ValueTypes'] = relationship('ValueTypes', back_populates='tests')
@@ -557,6 +577,32 @@ t_material_tests = Table(
 )
 
 
+class ReagentLots(ControlCodes):
+    __tablename__ = 'reagent_lots'
+    __table_args__ = (
+        ForeignKeyConstraint(['control_code_id'], ['control_codes.id'], name='reagent_lots_control_code_id_fkey'),
+        ForeignKeyConstraint(['produced_by_user_id'], ['users.id'], name='reagent_lots_produced_by_user_id_fkey'),
+        ForeignKeyConstraint(['status_id'], ['reagent_lot_statuses.id'], name='reagent_lots_status_id_fkey'),
+        ForeignKeyConstraint(['unit_id'], ['units.id'], name='reagent_lots_unit_id_fkey'),
+        PrimaryKeyConstraint('control_code_id', name='reagent_lots_pkey')
+    )
+
+    control_code_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    is_produced: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    status_id: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('1'))
+    quantity: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    expiration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    produced_by_user_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    unit_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+
+    produced_by_user: Mapped[Optional['Users']] = relationship('Users', back_populates='reagent_lots')
+    status: Mapped['ReagentLotStatuses'] = relationship('ReagentLotStatuses', back_populates='reagent_lots')
+    unit: Mapped[Optional['Units']] = relationship('Units', back_populates='reagent_lots')
+    ingredient_control_code: Mapped[list['ReagentLots']] = relationship('ReagentLots', secondary='reagent_production_lots', primaryjoin=lambda: ReagentLots.control_code_id == t_reagent_production_lots.c.control_code_id, secondaryjoin=lambda: ReagentLots.control_code_id == t_reagent_production_lots.c.ingredient_control_code_id, back_populates='control_code')
+    control_code: Mapped[list['ReagentLots']] = relationship('ReagentLots', secondary='reagent_production_lots', primaryjoin=lambda: ReagentLots.control_code_id == t_reagent_production_lots.c.ingredient_control_code_id, secondaryjoin=lambda: ReagentLots.control_code_id == t_reagent_production_lots.c.control_code_id, back_populates='ingredient_control_code')
+    measurement: Mapped[list['Measurements']] = relationship('Measurements', secondary='measurement_reagent_lots', back_populates='control_code')
+
+
 class Receptions(Base):
     __tablename__ = 'receptions'
     __table_args__ = (
@@ -645,6 +691,16 @@ t_test_equipments = Table(
 )
 
 
+t_test_reagents = Table(
+    'test_reagents', Base.metadata,
+    Column('test_id', BigInteger, primary_key=True),
+    Column('material_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['material_id'], ['materials.id'], name='test_reagents_material_id_fkey'),
+    ForeignKeyConstraint(['test_id'], ['tests.id'], ondelete='CASCADE', name='test_reagents_test_id_fkey'),
+    PrimaryKeyConstraint('test_id', 'material_id', name='test_reagents_pkey')
+)
+
+
 class FormConditionEvals(Base):
     __tablename__ = 'form_condition_evals'
     __table_args__ = (
@@ -719,6 +775,7 @@ class Measurements(Base):
     date_readonly: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='measurement_equipments', back_populates='measurement')
+    control_code: Mapped[list['ReagentLots']] = relationship('ReagentLots', secondary='measurement_reagent_lots', back_populates='measurement')
     form: Mapped[Optional['Forms']] = relationship('Forms', back_populates='measurements')
     reception: Mapped['Receptions'] = relationship('Receptions', back_populates='measurements')
     user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurements_user_created')
@@ -729,6 +786,31 @@ class Measurements(Base):
     measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='measurement')
     report_tests: Mapped[list['ReportTests']] = relationship('ReportTests', back_populates='measurement')
     certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='measurement')
+
+
+t_reagent_production_lots = Table(
+    'reagent_production_lots', Base.metadata,
+    Column('control_code_id', BigInteger, primary_key=True),
+    Column('ingredient_control_code_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['control_code_id'], ['reagent_lots.control_code_id'], name='reagent_production_lots_control_code_id_fkey'),
+    ForeignKeyConstraint(['ingredient_control_code_id'], ['reagent_lots.control_code_id'], name='reagent_production_lots_ingredient_control_code_id_fkey'),
+    PrimaryKeyConstraint('control_code_id', 'ingredient_control_code_id', name='reagent_production_lots_pkey')
+)
+
+
+class ReagentSupplierLots(ReagentLots):
+    __tablename__ = 'reagent_supplier_lots'
+    __table_args__ = (
+        ForeignKeyConstraint(['control_code_id'], ['reagent_lots.control_code_id'], name='reagent_supplier_lots_control_code_id_fkey'),
+        PrimaryKeyConstraint('control_code_id', name='reagent_supplier_lots_pkey')
+    )
+
+    control_code_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    manufacturer_lot_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    catalog_number: Mapped[Optional[str]] = mapped_column(String(50))
+    supplier: Mapped[Optional[str]] = mapped_column(String(100))
+    certificate_of_analysis_ref: Mapped[Optional[str]] = mapped_column(String(255))
 
 
 t_reception_tests = Table(
@@ -826,6 +908,16 @@ class MeasurementParams(Base):
     form: Mapped['Forms'] = relationship('Forms', back_populates='measurement_params')
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='measurement_params')
     test: Mapped['Tests'] = relationship('Tests', back_populates='measurement_params')
+
+
+t_measurement_reagent_lots = Table(
+    'measurement_reagent_lots', Base.metadata,
+    Column('measurement_id', BigInteger, primary_key=True),
+    Column('control_code_id', BigInteger, primary_key=True),
+    ForeignKeyConstraint(['control_code_id'], ['reagent_lots.control_code_id'], name='measurement_reagent_lots_control_code_id_fkey'),
+    ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_reagent_lots_measurement_id_fkey'),
+    PrimaryKeyConstraint('measurement_id', 'control_code_id', name='measurement_reagent_lots_pkey')
+)
 
 
 t_measurement_sop_versions = Table(

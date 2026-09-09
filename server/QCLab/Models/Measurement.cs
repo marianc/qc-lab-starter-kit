@@ -51,6 +51,8 @@ public partial class Measurement
 
     public virtual User UserUpdate { get; set; } = null!;
 
+    public virtual ICollection<ReagentLot> ControlCodes { get; set; } = new List<ReagentLot>();
+
     public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
 
     public virtual ICollection<SopVersion> SopVersions { get; set; } = new List<SopVersion>();

@@ -83,5 +83,7 @@ public partial class Test
 
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
+    public virtual ICollection<Material> MaterialsNavigation { get; set; } = new List<Material>();
+
     public virtual ICollection<Reception> Receptions { get; set; } = new List<Reception>();
 }
