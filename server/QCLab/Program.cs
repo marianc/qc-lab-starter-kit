@@ -83,6 +83,7 @@ namespace QCLab
             builder.Services.AddTransient<IUsersService, ServerUsersService>();
             builder.Services.AddTransient<IValueTypesService, ServerValueTypesService>();
             builder.Services.AddTransient<IFormEvalsService, ServerFormEvalsService>();
+            builder.Services.AddTransient<IReagentsService, ServerReagentsService>();
 
             builder.Services.AddCors(options =>
             {
@@ -392,6 +393,45 @@ namespace QCLab
             apiGroup.MapPut("/equipment-calibrations/{calibrationId}", async (long calibrationId, [FromBody] CreateEquipmentCalibrationDto dto, IEquipmentsService s) =>
             {
                 try { await s.UpdateEquipmentCalibration(calibrationId, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+
+            // Reagents & Lots
+            apiGroup.MapGet("/reagents", (IReagentsService s) => s.GetAllReagents());
+            apiGroup.MapGet("/reagents/statuses", (IReagentsService s) => s.GetReagentLotStatuses());
+            apiGroup.MapGet("/reagents/{id}", (long id, IReagentsService s) => s.GetReagent(id));
+            apiGroup.MapPost("/reagents", async ([FromBody] CreateReagentDto dto, IReagentsService s) =>
+            {
+                try { return Results.Ok(await s.CreateReagent(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/reagents/{id}", async (long id, [FromBody] UpdateReagentDto dto, IReagentsService s) =>
+            {
+                try { await s.UpdateReagent(id, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/reagents/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IReagentsService s) => s.ToggleObsolete(id, dto));
+            apiGroup.MapGet("/reagents/{id}/lots", (long id, IReagentsService s) => s.GetReagentLots(id));
+            apiGroup.MapGet("/reagent_lots/active", (IReagentsService s) => s.GetAllActiveReagentLots());
+            apiGroup.MapGet("/reagent_lots/{controlCodeId}", (long controlCodeId, IReagentsService s) => s.GetReagentLot(controlCodeId));
+            apiGroup.MapPost("/reagents/supplier_lots", async ([FromBody] CreateSupplierLotDto dto, IReagentsService s) =>
+            {
+                try { return Results.Ok(await s.CreateSupplierLot(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/reagents/supplier_lots/{controlCodeId}", async (long controlCodeId, [FromBody] UpdateSupplierLotDto dto, IReagentsService s) =>
+            {
+                try { await s.UpdateSupplierLot(controlCodeId, dto); return Results.Ok(); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPost("/reagents/production_lots", async ([FromBody] CreateProductionLotDto dto, IReagentsService s) =>
+            {
+                try { return Results.Ok(await s.CreateProductionLot(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
+            apiGroup.MapPut("/reagents/production_lots/{controlCodeId}", async (long controlCodeId, [FromBody] UpdateProductionLotDto dto, IReagentsService s) =>
+            {
+                try { await s.UpdateProductionLot(controlCodeId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
             });
 
