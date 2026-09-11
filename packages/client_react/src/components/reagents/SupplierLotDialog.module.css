@@ -1,0 +1,12 @@
+.supplierSelectionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.flex1 {
+    flex: 1;
+}
+
+.dNone {
+    display: none;
+}

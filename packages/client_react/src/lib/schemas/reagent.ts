@@ -13,7 +13,8 @@ export const reagentSchema = z.object({
 export const supplierLotSchema = z.object({
   controlCode: z.string().min(1, "Control code is required.").max(50),
   catalogNumber: z.string().max(50).optional().nullable(),
-  supplierId: z.any().refine(val => val !== undefined && val !== null && val !== '', { message: "Supplier is required." }),
+  supplierId: z.any().optional().nullable(),
+  supplierName: z.string().max(100, 'Supplier name must be maximum 100 characters').optional().nullable(),
   manufacturerLotNumber: z.string().min(1, "Manufacturer lot number is required.").max(50),
   certificateOfAnalysisRef: z.string().max(255).optional().nullable(),
   comments: z.string().max(100).optional().nullable(),
@@ -21,6 +22,9 @@ export const supplierLotSchema = z.object({
   unitId: z.any(),
   quantity: z.number().min(0, "Quantity must be greater than or equal to 0."),
   expirationDate: z.string().min(1, "Expiration date is required.")
+}).refine(data => (data.supplierId !== undefined && data.supplierId !== null && data.supplierId !== '') || (data.supplierName && data.supplierName.trim().length > 0), {
+  message: "Please select an existing supplier or enter a new one.",
+  path: ["supplierId"]
 });
 
 export const productionLotSchema = z.object({

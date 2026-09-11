@@ -13,6 +13,7 @@ public interface IReagentsService
     Task<List<ReagentLotDto>> GetAllActiveReagentLots();
     Task<List<ReagentLotStatusDto>> GetReagentLotStatuses();
     Task<List<ReagentSupplierDto>> GetAllSuppliers();
+    Task<IdDto> CreateSupplier(CreateReagentSupplierDto dto);
     Task<ReagentLotDto?> GetReagentLot(long controlCodeId);
     Task<IdDto> CreateSupplierLot(CreateSupplierLotDto dto);
     Task UpdateSupplierLot(long controlCodeId, UpdateSupplierLotDto dto);

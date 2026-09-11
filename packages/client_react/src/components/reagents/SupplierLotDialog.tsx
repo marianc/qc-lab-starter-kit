@@ -6,7 +6,9 @@ import type { ReagentLotDto, ReagentLotStatusDto, ReagentSupplierDto } from '@/t
 import type { UnitDto } from '@/types/unit';
 import unitsService from '@/services/unitsService';
 import reagentsService from '@/services/reagentsService';
+import apiClient from '@/services/apiClient';
 import { supplierLotSchema } from '@/lib/schemas/reagent';
+import styles from './SupplierLotDialog.module.css';
 
 interface SupplierLotDialogProps {
   open: boolean;
@@ -19,6 +21,7 @@ type SupplierLotFormValues = {
   controlCode: string;
   catalogNumber?: string | null;
   supplierId: any;
+  supplierName?: string | null;
   manufacturerLotNumber: string;
   certificateOfAnalysisRef?: string | null;
   comments?: string | null;
@@ -38,7 +41,10 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     setError,
+    clearErrors,
     formState: { errors }
   } = useForm<SupplierLotFormValues>({
     resolver: zodResolver(supplierLotSchema) as any,
@@ -46,6 +52,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       controlCode: '',
       catalogNumber: '',
       supplierId: '',
+      supplierName: '',
       manufacturerLotNumber: '',
       certificateOfAnalysisRef: '',
       comments: '',
@@ -55,6 +62,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       expirationDate: ''
     }
   });
+
+  const watchSupplierId = watch('supplierId');
 
   useEffect(() => {
     if (open) {
@@ -72,6 +81,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
             controlCode: lot.controlCode,
             catalogNumber: lot.catalogNumber || '',
             supplierId: lot.supplierId !== undefined && lot.supplierId !== null ? String(lot.supplierId) : '',
+            supplierName: '',
             manufacturerLotNumber: lot.manufacturerLotNumber || '',
             certificateOfAnalysisRef: lot.certificateOfAnalysisRef || '',
             comments: lot.comments || '',
@@ -85,6 +95,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
             controlCode: '',
             catalogNumber: '',
             supplierId: '',
+            supplierName: '',
             manufacturerLotNumber: '',
             certificateOfAnalysisRef: '',
             comments: '',
@@ -98,12 +109,65 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
     }
   }, [open, lot, reset]);
 
+  const validateSupplierUniqueness = async (name: string): Promise<boolean> => {
+    if (!name.trim()) return true;
+    try {
+      return await reagentsService.validateSupplierUniqueness(name.trim());
+    } catch (err) {
+      console.error('Supplier uniqueness check failed:', err);
+      return true;
+    }
+  };
+
+  const handleSupplierNameBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val && val.trim()) {
+      const isUnique = await validateSupplierUniqueness(val);
+      if (!isUnique) {
+        setError('supplierName', { message: 'This supplier already exists.' });
+      } else {
+        clearErrors('supplierName');
+        setValue('supplierName', val);
+      }
+    } else {
+      clearErrors('supplierName');
+    }
+  };
+
+  const onSupplierInputFocus = () => {
+    setValue('supplierId', '');
+    clearErrors('supplierId');
+  };
+
+  const onSupplierSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? e.target.value : '';
+    setValue('supplierId', val);
+    if (val) {
+      setValue('supplierName', '');
+      clearErrors('supplierName');
+      clearErrors('supplierId');
+    }
+  };
+
   const onSubmit = async (values: SupplierLotFormValues) => {
     try {
+      if (values.supplierName?.trim()) {
+        const isUnique = await validateSupplierUniqueness(values.supplierName.trim());
+        if (!isUnique) {
+          setError('supplierName', { message: 'This supplier already exists.' });
+          return;
+        }
+      }
+
+      let finalSupplierId = values.supplierId ? Number(values.supplierId) : null;
+      if (values.supplierName?.trim()) {
+        const res = await reagentsService.createSupplier({ name: values.supplierName.trim() });
+        finalSupplierId = res.id;
+      }
+
       const parsedUnitId = values.unitId ? Number(values.unitId) : null;
       const parsedStatusId = Number(values.statusId);
       const parsedQuantity = Number(values.quantity);
-      const parsedSupplierId = Number(values.supplierId);
 
       if (isEdit && lot) {
         await reagentsService.updateSupplierLot(lot.controlCodeId, {
@@ -111,7 +175,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           unitId: parsedUnitId,
           quantity: parsedQuantity,
           expirationDate: values.expirationDate,
-          supplierId: parsedSupplierId,
+          supplierId: finalSupplierId!,
           catalogNumber: values.catalogNumber || null,
           manufacturerLotNumber: values.manufacturerLotNumber,
           certificateOfAnalysisRef: values.certificateOfAnalysisRef || null,
@@ -125,7 +189,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           unitId: parsedUnitId,
           quantity: parsedQuantity,
           expirationDate: values.expirationDate,
-          supplierId: parsedSupplierId,
+          supplierId: finalSupplierId!,
           catalogNumber: values.catalogNumber || null,
           manufacturerLotNumber: values.manufacturerLotNumber,
           certificateOfAnalysisRef: values.certificateOfAnalysisRef || null,
@@ -137,6 +201,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       console.error('Failed to save supplier lot', err);
       if (err.response?.data?.msg) {
         setError('root', { message: err.response.data.msg });
+      } else if (err.message) {
+        setError('root', { message: err.message });
       }
     }
   };
@@ -163,13 +229,30 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
 
           <div className="form-group">
             <label>Supplier</label>
-            <select {...register('supplierId')} className="form-control">
-              <option value="">-- Select Supplier --</option>
-              {suppliers.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            {errors.supplierId && <span className="text-danger">{errors.supplierId.message as string}</span>}
+            <div className={styles.supplierSelectionRow}>
+              <input 
+                type="text"
+                placeholder="Enter new supplier"
+                className={`form-control ${styles.flex1} ${isEdit ? styles.dNone : ''} ${errors.supplierName ? 'is-invalid' : ''}`}
+                {...register('supplierName')}
+                onFocus={onSupplierInputFocus}
+                onBlur={handleSupplierNameBlur}
+                disabled={isEdit}
+              />
+              <select 
+                className={`form-control ${styles.flex1} ${errors.supplierId ? 'is-invalid' : ''}`}
+                value={watchSupplierId || ''}
+                onChange={onSupplierSelectChange}
+                disabled={isEdit}
+              >
+                <option value="">-- {isEdit ? 'Select Supplier' : 'Or Select Supplier'} --</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            {errors.supplierId && <span className="text-danger d-block mt-1">{errors.supplierId.message as string}</span>}
+            {errors.supplierName && <span className="text-danger d-block mt-1">{errors.supplierName.message as string}</span>}
           </div>
 
           <div className="form-group">
@@ -200,16 +283,6 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
               placeholder="e.g. CoA-2026-0909"
             />
             {errors.certificateOfAnalysisRef && <span className="text-danger">{errors.certificateOfAnalysisRef.message}</span>}
-          </div>
-
-          <div className="form-group">
-            <label>Comments</label>
-            <input 
-              {...register('comments')} 
-              className="form-control"
-              placeholder="e.g. Additional notes"
-            />
-            {errors.comments && <span className="text-danger">{errors.comments.message}</span>}
           </div>
 
           <div className="form-group">
@@ -252,6 +325,17 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
               className="form-control"
             />
             {errors.expirationDate && <span className="text-danger">{errors.expirationDate.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label>Comments</label>
+            <textarea 
+              {...register('comments')} 
+              className="form-control"
+              rows={3}
+              placeholder="e.g. Additional notes"
+            />
+            {errors.comments && <span className="text-danger">{errors.comments.message}</span>}
           </div>
         </DialogContent>
         <DialogFooter>

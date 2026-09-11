@@ -157,6 +157,20 @@ public class ServerReagentsService : IReagentsService
             .ToListAsync();
     }
 
+    // POST /reagent_suppliers
+    public async Task<IdDto> CreateSupplier(CreateReagentSupplierDto dto)
+    {
+        var supplier = new ReagentSupplier
+        {
+            Name = dto.Name
+        };
+
+        _context.ReagentSuppliers.Add(supplier);
+        await _context.SaveChangesAsync();
+
+        return new IdDto { Id = supplier.Id };
+    }
+
     // GET /reagents/{reagentId}/lots
     public async Task<List<ReagentLotDto>> GetReagentLots(long reagentId)
     {

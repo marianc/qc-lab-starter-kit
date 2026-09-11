@@ -47,6 +47,11 @@ const reagentsService = {
     return response.data;
   },
 
+  createSupplier: async (dto: { name: string }): Promise<{ id: number }> => {
+    const response = await apiClient.post<{ id: number }>('/api/reagent_suppliers', dto);
+    return response.data;
+  },
+
   getReagentLots: async (reagentId: number): Promise<ReagentLotDto[]> => {
     const response = await apiClient.get<ReagentLotDto[]>(`/api/reagents/${reagentId}/lots`);
     return response.data;
@@ -87,6 +92,17 @@ const reagentsService = {
         property,
         value,
         id: id || undefined
+      }
+    });
+    return response.data.is_unique;
+  },
+
+  validateSupplierUniqueness: async (name: string): Promise<boolean> => {
+    const response = await apiClient.get<{ is_unique: boolean }>('/api/validate/unique', {
+      params: {
+        entity: 'ReagentSupplier',
+        property: 'Name',
+        value: name
       }
     });
     return response.data.is_unique;

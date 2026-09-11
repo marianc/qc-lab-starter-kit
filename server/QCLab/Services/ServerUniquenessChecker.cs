@@ -173,6 +173,23 @@ public class ServerUniquenessChecker : IUniquenessChecker
                 return !_context.Sops.Any(s => s.DocCode == strValue && s.Id != sopId);
             }
         }
+        else if (entityName == "ReagentSupplier")
+        {
+            long supplierId = 0;
+            if (entityId != null)
+            {
+                if (entityId is long idInt) supplierId = idInt;
+                else if (long.TryParse(entityId.ToString(), out long parsedId)) supplierId = parsedId;
+            }
+
+            string? strValue = value as string;
+            if (string.IsNullOrEmpty(strValue)) return true;
+
+            if (propertyName == "Name")
+            {
+                return !_context.ReagentSuppliers.Any(s => s.Name == strValue && s.Id != supplierId);
+            }
+        }
 
         return true;
     }

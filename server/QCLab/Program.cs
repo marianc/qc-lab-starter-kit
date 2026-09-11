@@ -400,6 +400,11 @@ namespace QCLab
             apiGroup.MapGet("/reagents", (IReagentsService s) => s.GetAllReagents());
             apiGroup.MapGet("/reagents/statuses", (IReagentsService s) => s.GetReagentLotStatuses());
             apiGroup.MapGet("/reagent_suppliers", (IReagentsService s) => s.GetAllSuppliers());
+            apiGroup.MapPost("/reagent_suppliers", async ([FromBody] CreateReagentSupplierDto dto, IReagentsService s) =>
+            {
+                try { return Results.Ok(await s.CreateSupplier(dto)); }
+                catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            });
             apiGroup.MapGet("/reagents/{id}", (long id, IReagentsService s) => s.GetReagent(id));
             apiGroup.MapPost("/reagents", async ([FromBody] CreateReagentDto dto, IReagentsService s) =>
             {

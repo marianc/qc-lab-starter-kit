@@ -57,6 +57,13 @@ public class ReagentSupplierDto
     public required string Name { get; set; }
 }
 
+public class CreateReagentSupplierDto
+{
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Supplier name is required.")]
+    [Unique("ReagentSupplier", ErrorMessage = "Supplier name is already in use.")]
+    public required string Name { get; set; }
+}
+
 public class ReagentLotDto
 {
     public long ControlCodeId { get; set; }
