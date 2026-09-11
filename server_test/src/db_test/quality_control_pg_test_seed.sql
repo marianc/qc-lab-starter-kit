@@ -51,6 +51,7 @@ ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS reception
 ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS receptions_category_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_reception_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_supplier_lots DROP CONSTRAINT IF EXISTS reagent_supplier_lots_supplier_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reagent_supplier_lots DROP CONSTRAINT IF EXISTS reagent_supplier_lots_control_code_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_ingredient_control_code_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_control_code_id_fkey;
@@ -139,6 +140,8 @@ ALTER TABLE IF EXISTS ONLY public.report_tests DROP CONSTRAINT IF EXISTS report_
 ALTER TABLE IF EXISTS ONLY public.receptions DROP CONSTRAINT IF EXISTS receptions_pkey;
 ALTER TABLE IF EXISTS ONLY public.reception_types DROP CONSTRAINT IF EXISTS reception_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.reception_tests DROP CONSTRAINT IF EXISTS reception_tests_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_suppliers DROP CONSTRAINT IF EXISTS reagent_suppliers_pkey;
+ALTER TABLE IF EXISTS ONLY public.reagent_suppliers DROP CONSTRAINT IF EXISTS reagent_suppliers_name_key;
 ALTER TABLE IF EXISTS ONLY public.reagent_supplier_lots DROP CONSTRAINT IF EXISTS reagent_supplier_lots_pkey;
 ALTER TABLE IF EXISTS ONLY public.reagent_production_lots DROP CONSTRAINT IF EXISTS reagent_production_lots_pkey;
 ALTER TABLE IF EXISTS ONLY public.reagent_lots DROP CONSTRAINT IF EXISTS reagent_lots_pkey;
@@ -191,6 +194,7 @@ DROP TABLE IF EXISTS public.report_tests;
 DROP TABLE IF EXISTS public.receptions;
 DROP TABLE IF EXISTS public.reception_types;
 DROP TABLE IF EXISTS public.reception_tests;
+DROP TABLE IF EXISTS public.reagent_suppliers;
 DROP TABLE IF EXISTS public.reagent_supplier_lots;
 DROP TABLE IF EXISTS public.reagent_production_lots;
 DROP TABLE IF EXISTS public.reagent_lots;
@@ -943,11 +947,35 @@ CREATE TABLE public.reagent_production_lots (
 
 CREATE TABLE public.reagent_supplier_lots (
     control_code_id bigint NOT NULL,
-    name character varying(100) NOT NULL,
+    supplier_id bigint NOT NULL,
     catalog_number character varying(50),
-    supplier character varying(100),
     manufacturer_lot_number character varying(50) NOT NULL,
-    certificate_of_analysis_ref character varying(255)
+    certificate_of_analysis_ref character varying(255),
+    comments character varying(100)
+);
+
+
+--
+-- Name: reagent_suppliers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reagent_suppliers (
+    id bigint NOT NULL,
+    name character varying(100) NOT NULL
+);
+
+
+--
+-- Name: reagent_suppliers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.reagent_suppliers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.reagent_suppliers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
 );
 
 
@@ -2210,6 +2238,12 @@ INSERT INTO public.reagent_lot_statuses (id, name) VALUES (4, 'Depleted');
 
 
 --
+-- Data for Name: reagent_suppliers; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: reception_tests; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2742,6 +2776,13 @@ SELECT pg_catalog.setval('public.norms_id_seq', 5, false);
 
 
 --
+-- Name: reagent_suppliers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.reagent_suppliers_id_seq', 1, false);
+
+
+--
 -- Name: receptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
@@ -3096,6 +3137,22 @@ ALTER TABLE ONLY public.reagent_production_lots
 
 ALTER TABLE ONLY public.reagent_supplier_lots
     ADD CONSTRAINT reagent_supplier_lots_pkey PRIMARY KEY (control_code_id);
+
+
+--
+-- Name: reagent_suppliers reagent_suppliers_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_suppliers
+    ADD CONSTRAINT reagent_suppliers_name_key UNIQUE (name);
+
+
+--
+-- Name: reagent_suppliers reagent_suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_suppliers
+    ADD CONSTRAINT reagent_suppliers_pkey PRIMARY KEY (id);
 
 
 --
@@ -3796,6 +3853,14 @@ ALTER TABLE ONLY public.reagent_production_lots
 
 ALTER TABLE ONLY public.reagent_supplier_lots
     ADD CONSTRAINT reagent_supplier_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.reagent_suppliers(id);
 
 
 --

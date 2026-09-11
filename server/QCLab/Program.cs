@@ -399,6 +399,7 @@ namespace QCLab
             // Reagents & Lots
             apiGroup.MapGet("/reagents", (IReagentsService s) => s.GetAllReagents());
             apiGroup.MapGet("/reagents/statuses", (IReagentsService s) => s.GetReagentLotStatuses());
+            apiGroup.MapGet("/reagent_suppliers", (IReagentsService s) => s.GetAllSuppliers());
             apiGroup.MapGet("/reagents/{id}", (long id, IReagentsService s) => s.GetReagent(id));
             apiGroup.MapPost("/reagents", async ([FromBody] CreateReagentDto dto, IReagentsService s) =>
             {

@@ -28,6 +28,11 @@ export interface ReagentLotStatusDto {
   name: string;
 }
 
+export interface ReagentSupplierDto {
+  id: number;
+  name: string;
+}
+
 export interface ReagentLotDto {
   controlCodeId: number;
   materialId: number;
@@ -44,11 +49,12 @@ export interface ReagentLotDto {
   dateCreated: string;
 
   // Supplier Lot fields
-  supplierLotName?: string | null;
+  supplierId?: number | null;
+  supplierName?: string | null;
   catalogNumber?: string | null;
-  supplier?: string | null;
   manufacturerLotNumber?: string | null;
   certificateOfAnalysisRef?: string | null;
+  comments?: string | null;
 
   // Production Lot fields
   ingredientControlCodeIds: number[];
@@ -62,11 +68,11 @@ export interface CreateSupplierLotDto {
   unitId?: number | null;
   quantity: number;
   expirationDate: string;
-  name: string;
+  supplierId: number;
   catalogNumber?: string | null;
-  supplier?: string | null;
   manufacturerLotNumber: string;
   certificateOfAnalysisRef?: string | null;
+  comments?: string | null;
 }
 
 export interface UpdateSupplierLotDto {
@@ -74,11 +80,11 @@ export interface UpdateSupplierLotDto {
   unitId?: number | null;
   quantity: number;
   expirationDate: string;
-  name: string;
+  supplierId: number;
   catalogNumber?: string | null;
-  supplier?: string | null;
   manufacturerLotNumber: string;
   certificateOfAnalysisRef?: string | null;
+  comments?: string | null;
 }
 
 export interface CreateProductionLotDto {

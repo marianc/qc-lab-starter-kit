@@ -210,7 +210,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                         {lot.expirationDate}
                       </td>
                       <td>
-                        {lot.isProduced ? (lot.producedByUserTag || "-") : (lot.supplier || "-")}
+                        {lot.isProduced ? (lot.producedByUserTag || "-") : (lot.supplierName || "-")}
                       </td>
                       <td>
                         {lot.isProduced ? (

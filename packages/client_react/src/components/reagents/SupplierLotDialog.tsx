@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from '@/components/common/ui';
-import type { ReagentLotDto, ReagentLotStatusDto } from '@/types/reagent';
+import type { ReagentLotDto, ReagentLotStatusDto, ReagentSupplierDto } from '@/types/reagent';
 import type { UnitDto } from '@/types/unit';
 import unitsService from '@/services/unitsService';
 import reagentsService from '@/services/reagentsService';
@@ -17,11 +17,11 @@ interface SupplierLotDialogProps {
 
 type SupplierLotFormValues = {
   controlCode: string;
-  name: string;
   catalogNumber?: string | null;
-  supplier?: string | null;
+  supplierId: any;
   manufacturerLotNumber: string;
   certificateOfAnalysisRef?: string | null;
+  comments?: string | null;
   statusId: number;
   unitId: any;
   quantity: number;
@@ -31,6 +31,7 @@ type SupplierLotFormValues = {
 const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, lot, onClose }) => {
   const [units, setUnits] = useState<UnitDto[]>([]);
   const [statuses, setStatuses] = useState<ReagentLotStatusDto[]>([]);
+  const [suppliers, setSuppliers] = useState<ReagentSupplierDto[]>([]);
   const isEdit = !!lot;
 
   const {
@@ -43,11 +44,11 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
     resolver: zodResolver(supplierLotSchema) as any,
     defaultValues: {
       controlCode: '',
-      name: '',
       catalogNumber: '',
-      supplier: '',
+      supplierId: '',
       manufacturerLotNumber: '',
       certificateOfAnalysisRef: '',
+      comments: '',
       statusId: 1,
       unitId: null,
       quantity: 0,
@@ -59,39 +60,41 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
     if (open) {
       Promise.all([
         unitsService.getAllUnits(),
-        reagentsService.getReagentLotStatuses()
-      ]).then(([unitsData, statusesData]) => {
+        reagentsService.getReagentLotStatuses(),
+        reagentsService.getSuppliers()
+      ]).then(([unitsData, statusesData, suppliersData]) => {
         setUnits(unitsData);
         setStatuses(statusesData);
-      });
+        setSuppliers(suppliersData);
 
-      if (lot) {
-        reset({
-          controlCode: lot.controlCode,
-          name: lot.supplierLotName || '',
-          catalogNumber: lot.catalogNumber || '',
-          supplier: lot.supplier || '',
-          manufacturerLotNumber: lot.manufacturerLotNumber || '',
-          certificateOfAnalysisRef: lot.certificateOfAnalysisRef || '',
-          statusId: lot.statusId,
-          unitId: lot.unitId || null,
-          quantity: lot.quantity,
-          expirationDate: lot.expirationDate
-        });
-      } else {
-        reset({
-          controlCode: '',
-          name: '',
-          catalogNumber: '',
-          supplier: '',
-          manufacturerLotNumber: '',
-          certificateOfAnalysisRef: '',
-          statusId: 1,
-          unitId: null,
-          quantity: 0,
-          expirationDate: ''
-        });
-      }
+        if (lot) {
+          reset({
+            controlCode: lot.controlCode,
+            catalogNumber: lot.catalogNumber || '',
+            supplierId: lot.supplierId !== undefined && lot.supplierId !== null ? String(lot.supplierId) : '',
+            manufacturerLotNumber: lot.manufacturerLotNumber || '',
+            certificateOfAnalysisRef: lot.certificateOfAnalysisRef || '',
+            comments: lot.comments || '',
+            statusId: lot.statusId,
+            unitId: lot.unitId || null,
+            quantity: lot.quantity,
+            expirationDate: lot.expirationDate
+          });
+        } else {
+          reset({
+            controlCode: '',
+            catalogNumber: '',
+            supplierId: '',
+            manufacturerLotNumber: '',
+            certificateOfAnalysisRef: '',
+            comments: '',
+            statusId: 1,
+            unitId: null,
+            quantity: 0,
+            expirationDate: ''
+          });
+        }
+      });
     }
   }, [open, lot, reset]);
 
@@ -100,6 +103,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       const parsedUnitId = values.unitId ? Number(values.unitId) : null;
       const parsedStatusId = Number(values.statusId);
       const parsedQuantity = Number(values.quantity);
+      const parsedSupplierId = Number(values.supplierId);
 
       if (isEdit && lot) {
         await reagentsService.updateSupplierLot(lot.controlCodeId, {
@@ -107,11 +111,11 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           unitId: parsedUnitId,
           quantity: parsedQuantity,
           expirationDate: values.expirationDate,
-          name: values.name,
+          supplierId: parsedSupplierId,
           catalogNumber: values.catalogNumber || null,
-          supplier: values.supplier || null,
           manufacturerLotNumber: values.manufacturerLotNumber,
-          certificateOfAnalysisRef: values.certificateOfAnalysisRef || null
+          certificateOfAnalysisRef: values.certificateOfAnalysisRef || null,
+          comments: values.comments || null
         });
       } else {
         await reagentsService.createSupplierLot({
@@ -121,11 +125,11 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           unitId: parsedUnitId,
           quantity: parsedQuantity,
           expirationDate: values.expirationDate,
-          name: values.name,
+          supplierId: parsedSupplierId,
           catalogNumber: values.catalogNumber || null,
-          supplier: values.supplier || null,
           manufacturerLotNumber: values.manufacturerLotNumber,
-          certificateOfAnalysisRef: values.certificateOfAnalysisRef || null
+          certificateOfAnalysisRef: values.certificateOfAnalysisRef || null,
+          comments: values.comments || null
         });
       }
       onClose(true);
@@ -158,13 +162,14 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           </div>
 
           <div className="form-group">
-            <label>Lot Name / Description</label>
-            <input 
-              {...register('name')} 
-              className="form-control"
-              placeholder="e.g. Hydrochloric Acid 37% Lot A"
-            />
-            {errors.name && <span className="text-danger">{errors.name.message}</span>}
+            <label>Supplier</label>
+            <select {...register('supplierId')} className="form-control">
+              <option value="">-- Select Supplier --</option>
+              {suppliers.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            {errors.supplierId && <span className="text-danger">{errors.supplierId.message as string}</span>}
           </div>
 
           <div className="form-group">
@@ -175,16 +180,6 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
               placeholder="e.g. MFR-2026-X1"
             />
             {errors.manufacturerLotNumber && <span className="text-danger">{errors.manufacturerLotNumber.message}</span>}
-          </div>
-
-          <div className="form-group">
-            <label>Supplier / Vendor</label>
-            <input 
-              {...register('supplier')} 
-              className="form-control"
-              placeholder="e.g. Sigma-Aldrich"
-            />
-            {errors.supplier && <span className="text-danger">{errors.supplier.message}</span>}
           </div>
 
           <div className="form-group">
@@ -205,6 +200,16 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
               placeholder="e.g. CoA-2026-0909"
             />
             {errors.certificateOfAnalysisRef && <span className="text-danger">{errors.certificateOfAnalysisRef.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label>Comments</label>
+            <input 
+              {...register('comments')} 
+              className="form-control"
+              placeholder="e.g. Additional notes"
+            />
+            {errors.comments && <span className="text-danger">{errors.comments.message}</span>}
           </div>
 
           <div className="form-group">

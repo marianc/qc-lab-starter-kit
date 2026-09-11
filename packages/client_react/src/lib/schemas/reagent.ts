@@ -12,11 +12,11 @@ export const reagentSchema = z.object({
 
 export const supplierLotSchema = z.object({
   controlCode: z.string().min(1, "Control code is required.").max(50),
-  name: z.string().min(1, "Name is required.").max(100),
   catalogNumber: z.string().max(50).optional().nullable(),
-  supplier: z.string().max(100).optional().nullable(),
+  supplierId: z.any().refine(val => val !== undefined && val !== null && val !== '', { message: "Supplier is required." }),
   manufacturerLotNumber: z.string().min(1, "Manufacturer lot number is required.").max(50),
   certificateOfAnalysisRef: z.string().max(255).optional().nullable(),
+  comments: z.string().max(100).optional().nullable(),
   statusId: z.number().min(1, "Status is required."),
   unitId: z.any(),
   quantity: z.number().min(0, "Quantity must be greater than or equal to 0."),

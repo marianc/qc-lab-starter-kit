@@ -57,6 +57,8 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<ReagentLotStatus> ReagentLotStatuses { get; set; }
 
+    public virtual DbSet<ReagentSupplier> ReagentSuppliers { get; set; }
+
     public virtual DbSet<ReagentSupplierLot> ReagentSupplierLots { get; set; }
 
     public virtual DbSet<Reception> Receptions { get; set; }
@@ -936,6 +938,22 @@ public partial class QualityControlContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<ReagentSupplier>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("reagent_suppliers_pkey");
+
+            entity.ToTable("reagent_suppliers");
+
+            entity.HasIndex(e => e.Name, "reagent_suppliers_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+        });
+
         modelBuilder.Entity<ReagentSupplierLot>(entity =>
         {
             entity.HasKey(e => e.ControlCodeId).HasName("reagent_supplier_lots_pkey");
@@ -951,20 +969,23 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.CertificateOfAnalysisRef)
                 .HasMaxLength(255)
                 .HasColumnName("certificate_of_analysis_ref");
+            entity.Property(e => e.Comments)
+                .HasMaxLength(100)
+                .HasColumnName("comments");
             entity.Property(e => e.ManufacturerLotNumber)
                 .HasMaxLength(50)
                 .HasColumnName("manufacturer_lot_number");
-            entity.Property(e => e.Name)
-                .HasMaxLength(100)
-                .HasColumnName("name");
-            entity.Property(e => e.Supplier)
-                .HasMaxLength(100)
-                .HasColumnName("supplier");
+            entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
 
             entity.HasOne(d => d.ControlCode).WithOne(p => p.ReagentSupplierLot)
                 .HasForeignKey<ReagentSupplierLot>(d => d.ControlCodeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reagent_supplier_lots_control_code_id_fkey");
+
+            entity.HasOne(d => d.Supplier).WithMany(p => p.ReagentSupplierLots)
+                .HasForeignKey(d => d.SupplierId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_supplier_lots_supplier_id_fkey");
         });
 
         modelBuilder.Entity<Reception>(entity =>

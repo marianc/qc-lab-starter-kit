@@ -144,6 +144,19 @@ public class ServerReagentsService : IReagentsService
             .ToListAsync();
     }
 
+    // GET /reagent_suppliers
+    public async Task<List<ReagentSupplierDto>> GetAllSuppliers()
+    {
+        return await _context.ReagentSuppliers
+            .OrderBy(s => s.Name)
+            .Select(s => new ReagentSupplierDto
+            {
+                Id = s.Id,
+                Name = s.Name
+            })
+            .ToListAsync();
+    }
+
     // GET /reagents/{reagentId}/lots
     public async Task<List<ReagentLotDto>> GetReagentLots(long reagentId)
     {
@@ -152,7 +165,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
-            .Include(rl => rl.ReagentSupplierLot)
+            .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
             .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
             .Where(rl => rl.ControlCode.MaterialId == reagentId)
             .OrderByDescending(rl => rl.ControlCodeId)
@@ -169,7 +182,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
-            .Include(rl => rl.ReagentSupplierLot)
+            .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
             .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
             .Where(rl => rl.StatusId == 2) // Active
             .OrderByDescending(rl => rl.ControlCodeId)
@@ -186,7 +199,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
-            .Include(rl => rl.ReagentSupplierLot)
+            .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
             .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
             .FirstOrDefaultAsync(rl => rl.ControlCodeId == controlCodeId);
 
@@ -220,11 +233,11 @@ public class ServerReagentsService : IReagentsService
         var supplierLot = new ReagentSupplierLot
         {
             ControlCodeId = cc.Id,
-            Name = dto.Name,
+            SupplierId = dto.SupplierId,
             CatalogNumber = dto.CatalogNumber,
-            Supplier = dto.Supplier,
             ManufacturerLotNumber = dto.ManufacturerLotNumber,
-            CertificateOfAnalysisRef = dto.CertificateOfAnalysisRef
+            CertificateOfAnalysisRef = dto.CertificateOfAnalysisRef,
+            Comments = dto.Comments
         };
         _context.ReagentSupplierLots.Add(supplierLot);
 
@@ -251,11 +264,11 @@ public class ServerReagentsService : IReagentsService
 
         if (lot.ReagentSupplierLot != null)
         {
-            lot.ReagentSupplierLot.Name = dto.Name;
+            lot.ReagentSupplierLot.SupplierId = dto.SupplierId;
             lot.ReagentSupplierLot.CatalogNumber = dto.CatalogNumber;
-            lot.ReagentSupplierLot.Supplier = dto.Supplier;
             lot.ReagentSupplierLot.ManufacturerLotNumber = dto.ManufacturerLotNumber;
             lot.ReagentSupplierLot.CertificateOfAnalysisRef = dto.CertificateOfAnalysisRef;
+            lot.ReagentSupplierLot.Comments = dto.Comments;
         }
 
         await _context.SaveChangesAsync();
@@ -355,11 +368,12 @@ public class ServerReagentsService : IReagentsService
             ExpirationDate = rl.ExpirationDate,
             DateCreated = rl.ControlCode.DateCreated,
 
-            SupplierLotName = rl.ReagentSupplierLot?.Name,
+            SupplierId = rl.ReagentSupplierLot?.SupplierId,
+            SupplierName = rl.ReagentSupplierLot?.Supplier != null ? rl.ReagentSupplierLot.Supplier.Name : null,
             CatalogNumber = rl.ReagentSupplierLot?.CatalogNumber,
-            Supplier = rl.ReagentSupplierLot?.Supplier,
-            ManufacturerLotNumber = rl.ReagentSupplierLot?.ManufacturerLotNumber,
+            ManufacturerLotNumber = rl.ReagentSupplierLot?.ManufacturerLotNumber ?? string.Empty,
             CertificateOfAnalysisRef = rl.ReagentSupplierLot?.CertificateOfAnalysisRef,
+            Comments = rl.ReagentSupplierLot?.Comments,
 
             IngredientControlCodeIds = rl.IngredientControlCodes.Select(i => i.ControlCodeId).ToList(),
             IngredientControlCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Code).ToList()

@@ -5,6 +5,7 @@ import type {
   UpdateReagentDto, 
   ReagentLotDto, 
   ReagentLotStatusDto, 
+  ReagentSupplierDto,
   CreateSupplierLotDto, 
   UpdateSupplierLotDto, 
   CreateProductionLotDto, 
@@ -38,6 +39,11 @@ const reagentsService = {
 
   getReagentLotStatuses: async (): Promise<ReagentLotStatusDto[]> => {
     const response = await apiClient.get<ReagentLotStatusDto[]>('/api/reagents/statuses');
+    return response.data;
+  },
+
+  getSuppliers: async (): Promise<ReagentSupplierDto[]> => {
+    const response = await apiClient.get<ReagentSupplierDto[]>('/api/reagent_suppliers');
     return response.data;
   },
 

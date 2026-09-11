@@ -172,7 +172,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
             <select {...register('producedByUserId')} className="form-control">
               <option value="">-- Select User --</option>
               {users.map(u => (
-                <option key={u.id} value={u.id}>{u.tag} ({u.name})</option>
+                <option key={u.id} value={u.id}>{u.tag}</option>
               ))}
             </select>
             {errors.producedByUserId && <span className="text-danger">{errors.producedByUserId.message as string}</span>}
@@ -236,7 +236,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
                       onChange={() => toggleIngredient(ing.controlCodeId)}
                     />
                     <label htmlFor={`ing-${ing.controlCodeId}`} style={{ marginBottom: 0, cursor: 'pointer' }}>
-                      <strong>{ing.controlCode}</strong> {ing.supplierLotName ? ` - ${ing.supplierLotName}` : ''} (Exp: {ing.expirationDate})
+                      <strong>{ing.controlCode}</strong> {ing.supplierName ? ` - ${ing.supplierName}` : ''} {ing.comments ? `(${ing.comments})` : ''} (Exp: {ing.expirationDate})
                     </label>
                   </div>
                 ))}

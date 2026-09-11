@@ -51,6 +51,12 @@ public class ReagentLotStatusDto
     public required string Name { get; set; }
 }
 
+public class ReagentSupplierDto
+{
+    public long Id { get; set; }
+    public required string Name { get; set; }
+}
+
 public class ReagentLotDto
 {
     public long ControlCodeId { get; set; }
@@ -68,11 +74,12 @@ public class ReagentLotDto
     public DateTime DateCreated { get; set; }
 
     // Supplier Lot details (if !IsProduced)
-    public string? SupplierLotName { get; set; }
+    public long? SupplierId { get; set; }
+    public string? SupplierName { get; set; }
     public string? CatalogNumber { get; set; }
-    public string? Supplier { get; set; }
     public string? ManufacturerLotNumber { get; set; }
     public string? CertificateOfAnalysisRef { get; set; }
+    public string? Comments { get; set; }
 
     // Production Lot details (if IsProduced)
     public List<long> IngredientControlCodeIds { get; set; } = new();
@@ -89,16 +96,15 @@ public class CreateSupplierLotDto
     public decimal Quantity { get; set; }
     public DateOnly ExpirationDate { get; set; }
 
-    [StringLength(100, MinimumLength = 1, ErrorMessage = "Name is required.")]
-    public required string Name { get; set; }
+    public long SupplierId { get; set; }
     [StringLength(50)]
     public string? CatalogNumber { get; set; }
-    [StringLength(100)]
-    public string? Supplier { get; set; }
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Manufacturer lot number is required.")]
     public required string ManufacturerLotNumber { get; set; }
     [StringLength(255)]
     public string? CertificateOfAnalysisRef { get; set; }
+    [StringLength(100)]
+    public string? Comments { get; set; }
 }
 
 public class UpdateSupplierLotDto
@@ -108,16 +114,15 @@ public class UpdateSupplierLotDto
     public decimal Quantity { get; set; }
     public DateOnly ExpirationDate { get; set; }
 
-    [StringLength(100, MinimumLength = 1, ErrorMessage = "Name is required.")]
-    public required string Name { get; set; }
+    public long SupplierId { get; set; }
     [StringLength(50)]
     public string? CatalogNumber { get; set; }
-    [StringLength(100)]
-    public string? Supplier { get; set; }
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Manufacturer lot number is required.")]
     public required string ManufacturerLotNumber { get; set; }
     [StringLength(255)]
     public string? CertificateOfAnalysisRef { get; set; }
+    [StringLength(100)]
+    public string? Comments { get; set; }
 }
 
 public class CreateProductionLotDto

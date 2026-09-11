@@ -795,15 +795,41 @@ ALTER TABLE public.reagent_production_lots OWNER TO postgres;
 
 CREATE TABLE public.reagent_supplier_lots (
     control_code_id bigint NOT NULL,
-    name character varying(100) NOT NULL,
+    supplier_id bigint NOT NULL,
     catalog_number character varying(50),
-    supplier character varying(100),
     manufacturer_lot_number character varying(50) NOT NULL,
-    certificate_of_analysis_ref character varying(255)
+    certificate_of_analysis_ref character varying(255),
+    comments character varying(100)
 );
 
 
 ALTER TABLE public.reagent_supplier_lots OWNER TO postgres;
+
+--
+-- Name: reagent_suppliers; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_suppliers (
+    id bigint NOT NULL,
+    name character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.reagent_suppliers OWNER TO postgres;
+
+--
+-- Name: reagent_suppliers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.reagent_suppliers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.reagent_suppliers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
 
 --
 -- Name: reception_tests; Type: TABLE; Schema: public; Owner: postgres
@@ -1547,6 +1573,22 @@ ALTER TABLE ONLY public.reagent_supplier_lots
 
 
 --
+-- Name: reagent_suppliers reagent_suppliers_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_suppliers
+    ADD CONSTRAINT reagent_suppliers_name_key UNIQUE (name);
+
+
+--
+-- Name: reagent_suppliers reagent_suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_suppliers
+    ADD CONSTRAINT reagent_suppliers_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: reception_tests reception_tests_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2244,6 +2286,14 @@ ALTER TABLE ONLY public.reagent_production_lots
 
 ALTER TABLE ONLY public.reagent_supplier_lots
     ADD CONSTRAINT reagent_supplier_lots_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_supplier_lots reagent_supplier_lots_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lots
+    ADD CONSTRAINT reagent_supplier_lots_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.reagent_suppliers(id);
 
 
 --

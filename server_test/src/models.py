@@ -103,6 +103,19 @@ class ReagentLotStatuses(Base):
     reagent_lots: Mapped[list['ReagentLots']] = relationship('ReagentLots', back_populates='status')
 
 
+class ReagentSuppliers(Base):
+    __tablename__ = 'reagent_suppliers'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='reagent_suppliers_pkey'),
+        UniqueConstraint('name', name='reagent_suppliers_name_key')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    reagent_supplier_lots: Mapped[list['ReagentSupplierLots']] = relationship('ReagentSupplierLots', back_populates='supplier')
+
+
 class ReceptionTypes(Base):
     __tablename__ = 'reception_types'
     __table_args__ = (
@@ -802,15 +815,18 @@ class ReagentSupplierLots(ReagentLots):
     __tablename__ = 'reagent_supplier_lots'
     __table_args__ = (
         ForeignKeyConstraint(['control_code_id'], ['reagent_lots.control_code_id'], name='reagent_supplier_lots_control_code_id_fkey'),
+        ForeignKeyConstraint(['supplier_id'], ['reagent_suppliers.id'], name='reagent_supplier_lots_supplier_id_fkey'),
         PrimaryKeyConstraint('control_code_id', name='reagent_supplier_lots_pkey')
     )
 
     control_code_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    supplier_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     manufacturer_lot_number: Mapped[str] = mapped_column(String(50), nullable=False)
     catalog_number: Mapped[Optional[str]] = mapped_column(String(50))
-    supplier: Mapped[Optional[str]] = mapped_column(String(100))
     certificate_of_analysis_ref: Mapped[Optional[str]] = mapped_column(String(255))
+    comments: Mapped[Optional[str]] = mapped_column(String(100))
+
+    supplier: Mapped['ReagentSuppliers'] = relationship('ReagentSuppliers', back_populates='reagent_supplier_lots')
 
 
 t_reception_tests = Table(
