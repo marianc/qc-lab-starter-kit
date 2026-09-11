@@ -17,3 +17,18 @@
   margin: 0;
   padding-left: 1.2rem;
 }
+
+.textCenter {
+  text-align: center;
+}
+
+.expiredDate {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.normalDate {
+  color: inherit;
+  font-weight: normal;
+}
+

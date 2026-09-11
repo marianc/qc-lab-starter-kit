@@ -190,7 +190,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
             <tbody>
               {lots.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center' }}>No lots registered for this reagent.</td>
+                  <td colSpan={9} className={styles.textCenter}>No lots registered for this reagent.</td>
                 </tr>
               ) : (
                 lots.map(lot => {
@@ -206,7 +206,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                       </td>
                       <td>{lot.quantity}</td>
                       <td>{lot.unitName || "-"}</td>
-                      <td style={{ color: isExpired ? '#dc3545' : 'inherit', fontWeight: isExpired ? 'bold' : 'normal' }}>
+                      <td className={isExpired ? styles.expiredDate : styles.normalDate}>
                         {formatDate(lot.expirationDate)}
                       </td>
                       <td>

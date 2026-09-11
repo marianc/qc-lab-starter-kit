@@ -9,6 +9,7 @@ import unitsService from '@/services/unitsService';
 import usersService from '@/services/usersService';
 import reagentsService from '@/services/reagentsService';
 import { productionLotSchema } from '@/lib/schemas/reagent';
+import styles from './ProductionLotDialog.module.css';
 
 interface ProductionLotDialogProps {
   open: boolean;
@@ -225,16 +226,16 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
             {availableLots.length === 0 ? (
               <p className="text-muted font-italic">No other active reagent lots available.</p>
             ) : (
-              <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #ced4da', borderRadius: '4px', padding: '8px' }}>
+              <div className={styles.ingredientsContainer}>
                 {availableLots.map(ing => (
-                  <div key={ing.controlCodeId} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <div key={ing.controlCodeId} className={styles.ingredientItem}>
                     <input 
                       type="checkbox" 
                       id={`ing-${ing.controlCodeId}`}
                       checked={selectedIngredients.includes(ing.controlCodeId)}
                       onChange={() => toggleIngredient(ing.controlCodeId)}
                     />
-                    <label htmlFor={`ing-${ing.controlCodeId}`} style={{ marginBottom: 0, cursor: 'pointer', fontWeight: 'normal' }}>
+                    <label htmlFor={`ing-${ing.controlCodeId}`} className={styles.ingredientLabel} style={{ fontWeight: 'normal' }}>
                       {ing.materialName} ({ing.controlCode})
                     </label>
                   </div>

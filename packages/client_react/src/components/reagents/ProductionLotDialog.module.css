@@ -1,0 +1,20 @@
+.ingredientsContainer {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.ingredientItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ingredientLabel {
+  margin-bottom: 0;
+  cursor: pointer;
+  font-weight: normal;
+}
