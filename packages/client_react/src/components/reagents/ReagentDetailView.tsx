@@ -207,7 +207,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                       <td>{lot.quantity}</td>
                       <td>{lot.unitName || "-"}</td>
                       <td style={{ color: isExpired ? '#dc3545' : 'inherit', fontWeight: isExpired ? 'bold' : 'normal' }}>
-                        {lot.expirationDate}
+                        {formatDate(lot.expirationDate)}
                       </td>
                       <td>
                         {lot.isProduced ? (lot.producedByUserTag || "-") : (lot.supplierName || "-")}
@@ -215,7 +215,12 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                       <td>
                         {lot.isProduced ? (
                           lot.ingredientControlCodes.length > 0 ? (
-                            <span>Used: {lot.ingredientControlCodes.join(', ')}</span>
+                            <span>
+                              {lot.ingredientControlCodes.map((code, idx) => {
+                                const matCode = lot.ingredientMaterialCodes?.[idx] || '';
+                                return `${matCode} (${code})`;
+                              }).join(', ')}
+                            </span>
                           ) : "-"
                         ) : (
                           lot.manufacturerLotNumber || "-"

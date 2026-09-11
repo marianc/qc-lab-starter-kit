@@ -60,6 +60,7 @@ export interface ReagentLotDto {
   // Production Lot fields
   ingredientControlCodeIds: number[];
   ingredientControlCodes: string[];
+  ingredientMaterialCodes: string[];
 }
 
 export interface CreateSupplierLotDto {

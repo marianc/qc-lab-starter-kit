@@ -92,6 +92,7 @@ public class ReagentLotDto
     // Production Lot details (if IsProduced)
     public List<long> IngredientControlCodeIds { get; set; } = new();
     public List<string> IngredientControlCodes { get; set; } = new();
+    public List<string> IngredientMaterialCodes { get; set; } = new();
 }
 
 public class CreateSupplierLotDto

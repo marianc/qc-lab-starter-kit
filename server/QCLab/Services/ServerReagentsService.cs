@@ -180,7 +180,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
             .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
-            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
+            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode).ThenInclude(cc => cc.Material)
             .Where(rl => rl.ControlCode.MaterialId == reagentId)
             .OrderByDescending(rl => rl.ControlCodeId)
             .ToListAsync();
@@ -197,7 +197,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
             .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
-            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
+            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode).ThenInclude(cc => cc.Material)
             .Where(rl => rl.StatusId == 2) // Active
             .OrderByDescending(rl => rl.ControlCodeId)
             .ToListAsync();
@@ -214,7 +214,7 @@ public class ServerReagentsService : IReagentsService
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
             .Include(rl => rl.ReagentSupplierLot).ThenInclude(sl => sl.Supplier)
-            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode)
+            .Include(rl => rl.IngredientControlCodes).ThenInclude(ing => ing.ControlCode).ThenInclude(cc => cc.Material)
             .FirstOrDefaultAsync(rl => rl.ControlCodeId == controlCodeId);
 
         return lot != null ? MapToLotDto(lot) : null;
@@ -391,7 +391,8 @@ public class ServerReagentsService : IReagentsService
             Comments = rl.ReagentSupplierLot?.Comments,
 
             IngredientControlCodeIds = rl.IngredientControlCodes.Select(i => i.ControlCodeId).ToList(),
-            IngredientControlCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Code).ToList()
+            IngredientControlCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Code).ToList(),
+            IngredientMaterialCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Material != null ? i.ControlCode.Material.Code : string.Empty).ToList()
         };
     }
 }
