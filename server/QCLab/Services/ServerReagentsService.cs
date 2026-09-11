@@ -175,7 +175,7 @@ public class ServerReagentsService : IReagentsService
     public async Task<List<ReagentLotDto>> GetReagentLots(long reagentId)
     {
         var lots = await _context.ReagentLots
-            .Include(rl => rl.ControlCode)
+            .Include(rl => rl.ControlCode).ThenInclude(cc => cc.Material)
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
@@ -192,7 +192,7 @@ public class ServerReagentsService : IReagentsService
     public async Task<List<ReagentLotDto>> GetAllActiveReagentLots()
     {
         var lots = await _context.ReagentLots
-            .Include(rl => rl.ControlCode)
+            .Include(rl => rl.ControlCode).ThenInclude(cc => cc.Material)
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
@@ -209,7 +209,7 @@ public class ServerReagentsService : IReagentsService
     public async Task<ReagentLotDto?> GetReagentLot(long controlCodeId)
     {
         var lot = await _context.ReagentLots
-            .Include(rl => rl.ControlCode)
+            .Include(rl => rl.ControlCode).ThenInclude(cc => cc.Material)
             .Include(rl => rl.Status)
             .Include(rl => rl.Unit)
             .Include(rl => rl.ProducedByUser)
@@ -370,6 +370,7 @@ public class ServerReagentsService : IReagentsService
         {
             ControlCodeId = rl.ControlCodeId,
             MaterialId = rl.ControlCode.MaterialId,
+            MaterialName = rl.ControlCode.Material != null ? rl.ControlCode.Material.Name : string.Empty,
             ControlCode = rl.ControlCode.Code,
             IsProduced = rl.IsProduced,
             ProducedByUserId = rl.ProducedByUserId,

@@ -34,5 +34,5 @@ export const productionLotSchema = z.object({
   unitId: z.any(),
   quantity: z.number().min(0, "Quantity must be greater than or equal to 0."),
   expirationDate: z.string().min(1, "Expiration date is required."),
-  ingredientControlCodeIds: z.array(z.number())
+  ingredientControlCodeIds: z.array(z.number()).min(1, "At least one reagent must be selected.")
 });

@@ -36,6 +36,7 @@ export interface ReagentSupplierDto {
 export interface ReagentLotDto {
   controlCodeId: number;
   materialId: number;
+  materialName: string;
   controlCode: string;
   isProduced: boolean;
   producedByUserId?: number | null;

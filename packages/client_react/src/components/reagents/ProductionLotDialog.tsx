@@ -222,7 +222,6 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
 
           <div className="form-group">
             <label>Constituent Ingredients (Reagent Lots Used)</label>
-            <p className="text-muted small">Select any active reagent lots used to prepare this solution or reagent mix:</p>
             {availableLots.length === 0 ? (
               <p className="text-muted font-italic">No other active reagent lots available.</p>
             ) : (
@@ -235,13 +234,14 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
                       checked={selectedIngredients.includes(ing.controlCodeId)}
                       onChange={() => toggleIngredient(ing.controlCodeId)}
                     />
-                    <label htmlFor={`ing-${ing.controlCodeId}`} style={{ marginBottom: 0, cursor: 'pointer' }}>
-                      <strong>{ing.controlCode}</strong> {ing.supplierName ? ` - ${ing.supplierName}` : ''} {ing.comments ? `(${ing.comments})` : ''} (Exp: {ing.expirationDate})
+                    <label htmlFor={`ing-${ing.controlCodeId}`} style={{ marginBottom: 0, cursor: 'pointer', fontWeight: 'normal' }}>
+                      {ing.materialName} ({ing.controlCode})
                     </label>
                   </div>
                 ))}
               </div>
             )}
+            {errors.ingredientControlCodeIds && <span className="text-danger d-block mt-1">{errors.ingredientControlCodeIds.message as string}</span>}
           </div>
         </DialogContent>
         <DialogFooter>

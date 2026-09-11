@@ -68,6 +68,7 @@ public class ReagentLotDto
 {
     public long ControlCodeId { get; set; }
     public long MaterialId { get; set; }
+    public string MaterialName { get; set; } = string.Empty;
     public required string ControlCode { get; set; }
     public bool IsProduced { get; set; }
     public long? ProducedByUserId { get; set; }
