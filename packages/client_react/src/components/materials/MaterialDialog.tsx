@@ -22,6 +22,7 @@ type MaterialFormValues = {
   normId: any;
   isProduct: boolean;
   isRawMaterial: boolean;
+  isReagent: boolean;
   isObsolete: boolean;
 };
 
@@ -46,6 +47,7 @@ const MaterialDialog: React.FC<MaterialDialogProps> = ({ open, materialId, onClo
       normId: null,
       isProduct: false,
       isRawMaterial: false,
+      isReagent: false,
       isObsolete: false
     }
   });
@@ -63,6 +65,7 @@ const MaterialDialog: React.FC<MaterialDialogProps> = ({ open, materialId, onClo
             normId: data.normId || null,
             isProduct: data.isProduct,
             isRawMaterial: data.isRawMaterial,
+            isReagent: data.isReagent,
             isObsolete: data.isObsolete
           });
         });
@@ -75,6 +78,7 @@ const MaterialDialog: React.FC<MaterialDialogProps> = ({ open, materialId, onClo
           normId: null,
           isProduct: false,
           isRawMaterial: false,
+          isReagent: false,
           isObsolete: false
         });
       }
@@ -122,6 +126,7 @@ const MaterialDialog: React.FC<MaterialDialogProps> = ({ open, materialId, onClo
             normId: values.normId ? Number(values.normId) : null,
             isProduct: values.isProduct,
             isRawMaterial: values.isRawMaterial,
+            isReagent: values.isReagent,
             isObsolete: values.isObsolete
           });
           savedId = values.id;
@@ -133,6 +138,7 @@ const MaterialDialog: React.FC<MaterialDialogProps> = ({ open, materialId, onClo
             normId: values.normId ? Number(values.normId) : null,
             isProduct: values.isProduct,
             isRawMaterial: values.isRawMaterial,
+            isReagent: values.isReagent,
             isObsolete: values.isObsolete
           });
           savedId = result.id;

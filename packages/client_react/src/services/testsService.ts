@@ -9,9 +9,12 @@ import type {
   ReorderTestDto, 
   ReorderTestEnumDto,
   TestEquipmentDto,
-  UpdateTestEquipmentsDto
+  UpdateTestEquipmentsDto,
+  TestReagentDto,
+  UpdateTestReagentsDto
 } from '../types/test';
 import type { IdDto, ToggleObsoleteDto } from '../types/models';
+
 
 const testsService = {
   async getAllTests(): Promise<TestDto[]> {
@@ -70,6 +73,15 @@ const testsService = {
 
   async updateTestEquipments(id: number, dto: UpdateTestEquipmentsDto): Promise<void> {
     await apiClient.put(`api/tests/${id}/equipments`, dto);
+  },
+
+  async getTestReagents(id: number): Promise<TestReagentDto[]> {
+    const response = await apiClient.get<TestReagentDto[]>(`api/tests/${id}/reagents`);
+    return response.data;
+  },
+
+  async updateTestReagents(id: number, dto: UpdateTestReagentsDto): Promise<void> {
+    await apiClient.put(`api/tests/${id}/reagents`, dto);
   },
 
   async validateUniqueness(property: string, value: string, id?: number | null, entity: string = "Test", scopeId?: number): Promise<boolean> {

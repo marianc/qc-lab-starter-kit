@@ -21,6 +21,7 @@ public class MaterialDto
     public string? NormName { get; set; }
     public bool IsProduct { get; set; }
     public bool IsRawMaterial { get; set; }
+    public bool IsReagent { get; set; }
     public bool IsObsolete { get; set; }
     public DateTime DateCreated { get; set; }
     public DateTime? DateObsolete { get; set; }
@@ -42,6 +43,7 @@ public class CreateMaterialDto
     public long? NormId { get; set; }
     public bool IsProduct { get; set; }
     public bool IsRawMaterial { get; set; }
+    public bool IsReagent { get; set; }
     public bool IsObsolete { get; set; }
 }
 

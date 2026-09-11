@@ -373,4 +373,37 @@ public class ServerTestsService : ITestsService
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<TestReagentDto>> GetTestReagents(long id)
+    {
+        var reagents = await _context.Tests
+            .Where(t => t.Id == id)
+            .SelectMany(t => t.MaterialsNavigation)
+            .Select(m => new TestReagentDto
+            {
+                Id = m.Id,
+                Code = m.Code,
+                Name = m.Name,
+                CasNumber = m.CasNumber
+            })
+            .ToListAsync();
+
+        return reagents;
+    }
+
+    public async Task UpdateTestReagents(long id, UpdateTestReagentsDto dto)
+    {
+        var test = await _context.Tests.Include(t => t.MaterialsNavigation).FirstOrDefaultAsync(t => t.Id == id);
+        if (test == null) throw new ArgumentException("Test not found");
+
+        test.MaterialsNavigation.Clear();
+
+        if (dto.MaterialIds != null && dto.MaterialIds.Count > 0)
+        {
+            var materials = await _context.Materials.Where(m => dto.MaterialIds.Contains(m.Id)).ToListAsync();
+            foreach (var mat in materials) test.MaterialsNavigation.Add(mat);
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

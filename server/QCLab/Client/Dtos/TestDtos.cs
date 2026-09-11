@@ -146,3 +146,17 @@ public class UpdateTestEquipmentsDto
     public List<long> EquipmentIds { get; set; } = new();
 }
 
+public class TestReagentDto
+{
+    public long Id { get; set; }
+    public required string Code { get; set; }
+    public required string Name { get; set; }
+    public string? CasNumber { get; set; }
+}
+
+public class UpdateTestReagentsDto
+{
+    public List<long> MaterialIds { get; set; } = new();
+}
+
+

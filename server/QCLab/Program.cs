@@ -706,6 +706,8 @@ namespace QCLab
             apiGroup.MapPut("/tests/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ITestsService s) => s.ToggleObsolete(id, dto));
             apiGroup.MapGet("/tests/{id}/equipments", (long id, ITestsService s) => s.GetTestEquipments(id));
             apiGroup.MapPut("/tests/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, ITestsService s) => s.UpdateTestEquipments(id, dto));
+            apiGroup.MapGet("/tests/{id}/reagents", (long id, ITestsService s) => s.GetTestReagents(id));
+            apiGroup.MapPut("/tests/{id}/reagents", (long id, [FromBody] UpdateTestReagentsDto dto, ITestsService s) => s.UpdateTestReagents(id, dto));
 
             // Units
             apiGroup.MapGet("/units", (IUnitsService s) => s.GetAllUnits());

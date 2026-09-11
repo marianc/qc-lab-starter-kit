@@ -16,15 +16,17 @@ import {
 import TestDialog from './TestDialog';
 import TestEnumDialog from './TestEnumDialog';
 import styles from './TestDetailView.module.css';
-import type { CreateTestEnumDto, ReorderTestEnumDto, TestDto, TestEnumDto, UpdateTestDto, UpdateTestEnumDto, TestEquipmentDto } from '@/types/test';
+import type { CreateTestEnumDto, ReorderTestEnumDto, TestDto, TestEnumDto, UpdateTestDto, UpdateTestEnumDto, TestEquipmentDto, TestReagentDto } from '@/types/test';
 import type { NormDto } from '@/types/norm';
 import type { SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
+import type { MaterialDto } from '@/types/material';
 import type { SelectableItem } from '@/types/models';
 import testsService from '@/services/testsService';
 import normsService from '@/services/normsService';
 import sopsService from '@/services/sopsService';
 import equipmentsService from '@/services/equipmentsService';
+import materialsService from '@/services/materialsService';
 import { formatDate } from '@/lib/utils';
 
 interface TestDetailViewProps {
@@ -46,9 +48,12 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
   const [sops, setSops] = useState<SopDto[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
+  const [associatedReagents, setAssociatedReagents] = useState<TestReagentDto[]>([]);
+  const [allMaterials, setAllMaterials] = useState<MaterialDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showEnumDialog, setShowEnumDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
+  const [showReagentDialog, setShowReagentDialog] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
   const [currentEnum, setCurrentEnum] = useState<TestEnumDto | null>(null);
@@ -73,6 +78,8 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
       }
       const equipments = await testsService.getTestEquipments(testId);
       setAssociatedEquipments(equipments);
+      const reagents = await testsService.getTestReagents(testId);
+      setAssociatedReagents(reagents);
     } catch (err) {
       console.error('Failed to fetch test data', err);
     }
@@ -82,6 +89,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
     fetchTestData();
     normsService.getAllNorms().then(setNorms);
     equipmentsService.getAllEquipments().then(setAllEquipments);
+    materialsService.getAllMaterials().then(setAllMaterials);
   }, [testId]);
 
   const handleEquipmentSelectionSave = async (selectedIds: number[]) => {
@@ -92,6 +100,17 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
       setAssociatedEquipments(equipments);
     } catch (err) {
       console.error('Failed to update test equipments', err);
+    }
+  };
+
+  const handleReagentSelectionSave = async (selectedIds: number[]) => {
+    try {
+      await testsService.updateTestReagents(testId, { materialIds: selectedIds });
+      setShowReagentDialog(false);
+      const reagents = await testsService.getTestReagents(testId);
+      setAssociatedReagents(reagents);
+    } catch (err) {
+      console.error('Failed to update test reagents', err);
     }
   };
 
@@ -367,6 +386,21 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
           <div className={styles.manageTestsContainer}>
             <button onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
           </div>
+
+          <h3 className="section-title">Associated Reagents</h3>
+          {associatedReagents.length > 0 ? (
+            <ul className="item-list">
+              {associatedReagents.map(reg => (
+                <li key={reg.id}>{reg.code} - {reg.name} {reg.casNumber ? `(CAS: ${reg.casNumber})` : ''}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated reagents</p>
+          )}
+
+          <div className={styles.manageTestsContainer}>
+            <button onClick={() => setShowReagentDialog(true)} className="action-button secondary">Manage Reagents</button>
+          </div>
         </div>
       </DetailViewContent>
 
@@ -398,6 +432,18 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
           onSave={handleEquipmentSelectionSave}
           onClose={() => setShowEquipmentDialog(false)}
           idPrefix="equipment"
+        />
+      )}
+
+      {showReagentDialog && (
+        <SelectDialog 
+          open={true}
+          title="Select Reagents"
+          items={allMaterials.filter(mat => mat.isReagent).map(mat => ({ id: mat.id, name: `${mat.name} (${mat.code})` }))}
+          selectedIds={associatedReagents.map(reg => reg.id)}
+          onSave={handleReagentSelectionSave}
+          onClose={() => setShowReagentDialog(false)}
+          idPrefix="reagent"
         />
       )}
 

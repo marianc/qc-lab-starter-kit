@@ -19,5 +19,7 @@ namespace QCLab.Client.Services.Interfaces
         Task<List<long>> GetCertifiedTestIds();
         Task<List<TestEquipmentDto>> GetTestEquipments(long id);
         Task UpdateTestEquipments(long id, UpdateTestEquipmentsDto dto);
+        Task<List<TestReagentDto>> GetTestReagents(long id);
+        Task UpdateTestReagents(long id, UpdateTestReagentsDto dto);
     }
 }

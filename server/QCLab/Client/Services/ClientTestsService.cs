@@ -89,5 +89,17 @@ public class ClientTestsService(HttpClient httpClient) : ITestsService
         if (!response.IsSuccessStatusCode) await HandleErrorResponse(response);
     }
 
+    public async Task<List<TestReagentDto>> GetTestReagents(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<TestReagentDto>>($"/api/tests/{id}/reagents");
+        return result ?? new List<TestReagentDto>();
+    }
+
+    public async Task UpdateTestReagents(long id, UpdateTestReagentsDto dto)
+    {
+        var response = await httpClient.PutAsJsonAsync($"/api/tests/{id}/reagents", dto);
+        if (!response.IsSuccessStatusCode) await HandleErrorResponse(response);
+    }
+
     private Task HandleErrorResponse(HttpResponseMessage response) => ServiceUtils.HandleErrorResponse(response);
 }

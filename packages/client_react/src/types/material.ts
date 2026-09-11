@@ -7,6 +7,7 @@ export interface MaterialDto {
   normName?: string | null;
   isProduct: boolean;
   isRawMaterial: boolean;
+  isReagent: boolean;
   isObsolete: boolean;
   dateCreated: string;
   dateObsolete?: string | null;
@@ -20,6 +21,7 @@ export interface CreateMaterialDto {
   normId?: number | null;
   isProduct: boolean;
   isRawMaterial: boolean;
+  isReagent: boolean;
   isObsolete: boolean;
 }
 

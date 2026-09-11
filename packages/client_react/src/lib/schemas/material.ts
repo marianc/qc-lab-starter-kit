@@ -8,6 +8,7 @@ export const materialSchema = z.object({
   normId: z.any(),
   isProduct: z.boolean(),
   isRawMaterial: z.boolean(),
+  isReagent: z.boolean(),
   isObsolete: z.boolean(),
 });
 

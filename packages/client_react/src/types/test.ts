@@ -88,3 +88,15 @@ export interface UpdateTestEquipmentsDto {
   equipmentIds: number[];
 }
 
+export interface TestReagentDto {
+  id: number;
+  code: string;
+  name: string;
+  casNumber?: string | null;
+}
+
+export interface UpdateTestReagentsDto {
+  materialIds: number[];
+}
+
+
