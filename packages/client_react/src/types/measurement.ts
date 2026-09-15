@@ -96,3 +96,36 @@ export interface AddMeasurementTestDto {
   value: any;
   note: string | null;
 }
+
+export interface MeasurementReagentLotDto {
+  controlCodeId: number;
+  controlCode: string;
+  materialId: number;
+  materialName: string;
+  isProduced: boolean;
+  statusName: string;
+  quantity: number;
+  unitName: string | null;
+  expirationDate: string;
+}
+
+export interface MeasurementReagentLotOptionDto {
+  controlCodeId: number;
+  controlCode: string;
+  statusId: number;
+  statusName: string;
+  quantity: number;
+  unitName: string | null;
+  expirationDate: string;
+  isSelected: boolean;
+}
+
+export interface MeasurementApplicableReagentLotDto {
+  materialId: number;
+  materialName: string;
+  lots: MeasurementReagentLotOptionDto[];
+}
+
+export interface UpdateMeasurementReagentLotsDto {
+  controlCodeIds: number[];
+}

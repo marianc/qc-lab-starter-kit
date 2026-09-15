@@ -5,7 +5,10 @@ import type {
   CreateMeasurementDto, 
   UpdateMeasurementTestBulkDto, 
   UpdateMeasurementParamDto,
-  AddMeasurementTestDto
+  AddMeasurementTestDto,
+  MeasurementReagentLotDto,
+  MeasurementApplicableReagentLotDto,
+  UpdateMeasurementReagentLotsDto
 } from '../types/measurement';
 import type { TestEquipmentDto, UpdateTestEquipmentsDto } from '../types/test';
 import type { MeasurementSopVersionDto, UpdateMeasurementSopVersionsDto } from '../types/sop';
@@ -58,6 +61,16 @@ const measurementsService = {
     return response.data;
   },
 
+  async getMeasurementReagentLots(id: number): Promise<MeasurementReagentLotDto[]> {
+    const response = await apiClient.get<MeasurementReagentLotDto[]>(`api/measurements/${id}/reagent_lots`);
+    return response.data;
+  },
+
+  async getMeasurementApplicableReagentLots(id: number): Promise<MeasurementApplicableReagentLotDto[]> {
+    const response = await apiClient.get<MeasurementApplicableReagentLotDto[]>(`api/measurements/${id}/applicable_reagent_lots`);
+    return response.data;
+  },
+
   async getMeasurementApplicableSopVersions(id: number): Promise<MeasurementSopVersionDto[]> {
     const response = await apiClient.get<MeasurementSopVersionDto[]>(`api/measurements/${id}/applicable_sop_versions`);
     return response.data;
@@ -69,6 +82,10 @@ const measurementsService = {
 
   async updateMeasurementSopVersions(id: number, dto: UpdateMeasurementSopVersionsDto): Promise<void> {
     await apiClient.put(`api/measurements/${id}/sop_versions`, dto);
+  },
+
+  async updateMeasurementReagentLots(id: number, dto: UpdateMeasurementReagentLotsDto): Promise<void> {
+    await apiClient.put(`api/measurements/${id}/reagent_lots`, dto);
   },
 };
 

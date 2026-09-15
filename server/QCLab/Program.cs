@@ -465,11 +465,18 @@ namespace QCLab
             apiGroup.MapGet("/measurement_tests/{id}", (long id, IMeasurementsService s) => s.GetMeasurementTest(id));
             apiGroup.MapGet("/measurements/{id}/equipments", (long id, IMeasurementsService s) => s.GetMeasurementEquipments(id));
             apiGroup.MapGet("/measurements/{id}/sop_versions", (long id, IMeasurementsService s) => s.GetMeasurementSopVersions(id));
+            apiGroup.MapGet("/measurements/{id}/reagent_lots", (long id, IMeasurementsService s) => s.GetMeasurementReagentLots(id));
+            apiGroup.MapGet("/measurements/{id}/applicable_reagent_lots", (long id, IMeasurementsService s) => s.GetMeasurementApplicableReagentLots(id));
             apiGroup.MapGet("/measurements/{id}/applicable_sop_versions", (long id, IMeasurementsService s) => s.GetMeasurementApplicableSopVersions(id));
             apiGroup.MapPut("/measurements/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, IMeasurementsService s) => s.UpdateMeasurementEquipments(id, dto));
             apiGroup.MapPut("/measurements/{id}/sop_versions", async (long id, [FromBody] UpdateMeasurementSopVersionsDto dto, IMeasurementsService s) => 
             {
                 await s.UpdateMeasurementSopVersions(id, dto);
+                return Results.Ok();
+            });
+            apiGroup.MapPut("/measurements/{id}/reagent_lots", async (long id, [FromBody] UpdateMeasurementReagentLotsDto dto, IMeasurementsService s) => 
+            {
+                await s.UpdateMeasurementReagentLots(id, dto);
                 return Results.Ok();
             });
             apiGroup.MapPut("/measurement_tests/{id}", (long id, [FromBody] UpdateMeasurementTestBulkDto dto, IMeasurementsService s) => s.UpdateMeasurementTest(id, dto));

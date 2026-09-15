@@ -71,3 +71,37 @@ public class UpdateMeasurementSopVersionsDto
 {
     public List<long> SopVersionIds { get; set; } = new();
 }
+
+public class UpdateMeasurementReagentLotsDto
+{
+    public List<long> ControlCodeIds { get; set; } = new();
+}
+
+public class MeasurementReagentLotDto
+{
+    public long ControlCodeId { get; set; }
+    public required string ControlCode { get; set; }
+    public long MaterialId { get; set; }
+    public required string MaterialName { get; set; }
+    public bool IsProduced { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public string? UnitName { get; set; }
+    public DateOnly ExpirationDate { get; set; }
+}
+
+public class MeasurementApplicableReagentLotDto
+{
+    public long MaterialId { get; set; }
+    public required string MaterialName { get; set; }
+    public List<MeasurementReagentLotOptionDto> Lots { get; set; } = new();
+}
+
+public class MeasurementReagentLotOptionDto
+{
+    public long ControlCodeId { get; set; }
+    public required string ControlCode { get; set; }
+    public long StatusId { get; set; }
+    public DateOnly ExpirationDate { get; set; }
+    public bool IsSelected { get; set; }
+}

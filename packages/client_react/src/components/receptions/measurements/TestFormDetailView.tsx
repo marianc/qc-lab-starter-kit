@@ -13,12 +13,13 @@ import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import ArrayItemDialog from '@/components/common/ArrayItemDialog';
 import SelectDialog from '@/components/common/SelectDialog';
 import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
+import SelectReagentLotsDialog from './SelectReagentLotsDialog';
 import type { TestDto, TestEnumDto, TestEquipmentDto } from '@/types/test';
 import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto, FormParamDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
-import type { MeasurementParamDetailDto } from '@/types/measurement';
+import type { MeasurementParamDetailDto, MeasurementReagentLotDto, MeasurementApplicableReagentLotDto } from '@/types/measurement';
 import measurementsService from '@/services/measurementsService';
 import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
@@ -52,6 +53,7 @@ const TestFormDetailView: React.FC<Props> = ({
   const [allFormParamEnums, setAllFormParamEnums] = useState<TestEnumDto[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
   const [associatedSopVersions, setAssociatedSopVersions] = useState<MeasurementSopVersionDto[]>([]);
+  const [associatedReagentLots, setAssociatedReagentLots] = useState<MeasurementReagentLotDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   
   const [showCommentDialog, setShowCommentDialog] = useState(false);
@@ -59,7 +61,9 @@ const TestFormDetailView: React.FC<Props> = ({
   const [showArrayItemDialog, setShowArrayItemDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
   const [showSopVersionsDialog, setShowSopVersionsDialog] = useState(false);
+  const [showReagentLotsDialog, setShowReagentLotsDialog] = useState(false);
   const [applicableSopVersions, setApplicableSopVersions] = useState<SopVersionSelectItem[]>([]);
+  const [applicableReagentLots, setApplicableReagentLots] = useState<MeasurementApplicableReagentLotDto[]>([]);
   
   const [groupedParamsForDialog, setGroupedParamsForDialog] = useState<FormParamDto[]>([]);
   const [editingArrayIndex, setEditingArrayIndex] = useState<number>(-1);
@@ -154,6 +158,9 @@ const TestFormDetailView: React.FC<Props> = ({
         const sops = await measurementsService.getMeasurementSopVersions(measurementId);
         setAssociatedSopVersions(sops);
 
+        const reagentLots = await measurementsService.getMeasurementReagentLots(measurementId);
+        setAssociatedReagentLots(reagentLots);
+
         const applicableSops = await measurementsService.getMeasurementApplicableSopVersions(measurementId);
         const selectableItems: SopVersionSelectItem[] = applicableSops.map((sop: MeasurementSopVersionDto) => ({
           id: sop.id,
@@ -165,6 +172,9 @@ const TestFormDetailView: React.FC<Props> = ({
           name: `${sop.docCode} (v${sop.versionNumber}) - ${sop.title}`
         }));
         setApplicableSopVersions(selectableItems);
+
+        const applicableReagents = await measurementsService.getMeasurementApplicableReagentLots(measurementId);
+        setApplicableReagentLots(applicableReagents);
       } catch (err) {
         console.error('Failed to fetch measurement param:', err);
       }
@@ -194,6 +204,21 @@ const TestFormDetailView: React.FC<Props> = ({
       setShowSopVersionsDialog(false);
     } catch (err) {
       console.error('Failed to update measurement SOP versions', err);
+    }
+  };
+
+  const handleReagentLotsSelectionSave = async (selectedIds: number[]) => {
+    try {
+      if (measurement && measurement.id > 0) {
+        await measurementsService.updateMeasurementReagentLots(measurement.id, { controlCodeIds: selectedIds });
+        setShowReagentLotsDialog(false);
+        const reagentLots = await measurementsService.getMeasurementReagentLots(measurement.id);
+        setAssociatedReagentLots(reagentLots);
+        const applicableReagents = await measurementsService.getMeasurementApplicableReagentLots(measurement.id);
+        setApplicableReagentLots(applicableReagents);
+      }
+    } catch (err) {
+      console.error('Failed to update measurement reagent lots', err);
     }
   };
 
@@ -531,6 +556,25 @@ const TestFormDetailView: React.FC<Props> = ({
               <button type="button" onClick={() => setShowSopVersionsDialog(true)} className="action-button secondary">Manage SOP Versions</button>
             </div>
           )}
+
+          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated Reagent Lots</h3>
+          {associatedReagentLots.length > 0 ? (
+            <ul className="item-list">
+              {associatedReagentLots.map(lot => (
+                <li key={lot.controlCodeId}>
+                  {lot.materialName} - {lot.controlCode}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated reagent lots</p>
+          )}
+
+          {!measurement.isReadonly && measurement.id > 0 && (
+            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+              <button type="button" onClick={() => setShowReagentLotsDialog(true)} className="action-button secondary">Manage Reagent Lots</button>
+            </div>
+          )}
         </div>
 
         {showArrayItemDialog && (
@@ -577,6 +621,17 @@ const TestFormDetailView: React.FC<Props> = ({
             onSave={handleSopVersionsSelectionSave}
             onClose={() => setShowSopVersionsDialog(false)}
             idPrefix="sop-version"
+          />
+        )}
+
+        {showReagentLotsDialog && (
+          <SelectReagentLotsDialog
+            open={true}
+            title="Manage Reagent Lots"
+            items={applicableReagentLots}
+            onSave={handleReagentLotsSelectionSave}
+            onClose={() => setShowReagentLotsDialog(false)}
+            idPrefix="reagent-lot"
           />
         )}
 

@@ -71,6 +71,18 @@ public class ClientMeasurementsService(HttpClient httpClient) : IMeasurementsSer
         return result ?? new List<MeasurementSopVersionDto>();
     }
 
+    public async Task<List<MeasurementReagentLotDto>> GetMeasurementReagentLots(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<MeasurementReagentLotDto>>($"/api/measurements/{id}/reagent_lots");
+        return result ?? new List<MeasurementReagentLotDto>();
+    }
+
+    public async Task<List<MeasurementApplicableReagentLotDto>> GetMeasurementApplicableReagentLots(long id)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<MeasurementApplicableReagentLotDto>>($"/api/measurements/{id}/applicable_reagent_lots");
+        return result ?? new List<MeasurementApplicableReagentLotDto>();
+    }
+
     public async Task<List<MeasurementSopVersionDto>> GetMeasurementApplicableSopVersions(long id)
     {
         var result = await httpClient.GetFromJsonAsync<List<MeasurementSopVersionDto>>($"/api/measurements/{id}/applicable_sop_versions");
@@ -89,6 +101,15 @@ public class ClientMeasurementsService(HttpClient httpClient) : IMeasurementsSer
     public async Task UpdateMeasurementSopVersions(long id, UpdateMeasurementSopVersionsDto dto)
     {
         var response = await httpClient.PutAsJsonAsync($"/api/measurements/{id}/sop_versions", dto);
+        if (!response.IsSuccessStatusCode)
+        {
+            await HandleErrorResponse(response);
+        }
+    }
+
+    public async Task UpdateMeasurementReagentLots(long id, UpdateMeasurementReagentLotsDto dto)
+    {
+        var response = await httpClient.PutAsJsonAsync($"/api/measurements/{id}/reagent_lots", dto);
         if (!response.IsSuccessStatusCode)
         {
             await HandleErrorResponse(response);

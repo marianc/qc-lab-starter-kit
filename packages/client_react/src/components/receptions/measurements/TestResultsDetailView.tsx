@@ -12,13 +12,14 @@ import MeasurementEditDialog from './MeasurementEditDialog';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import SelectDialog from '@/components/common/SelectDialog';
 import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
+import SelectReagentLotsDialog from './SelectReagentLotsDialog';
 import MeasurementTestDialog from './MeasurementTestDialog';
 import type { TestDto, TestEquipmentDto } from '@/types/test';
 import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
-import type { MeasurementTestDetailDto, MeasurementTestDto } from '@/types/measurement';
+import type { MeasurementTestDetailDto, MeasurementTestDto, MeasurementReagentLotDto, MeasurementApplicableReagentLotDto } from '@/types/measurement';
 import measurementsService from '@/services/measurementsService';
 import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
@@ -45,12 +46,15 @@ const TestResultsDetailView: React.FC<Props> = ({
   const [applicableTests, setApplicableTests] = useState<{id: number, name: string}[]>([]);
   const [associatedEquipments, setAssociatedEquipments] = useState<TestEquipmentDto[]>([]);
   const [associatedSopVersions, setAssociatedSopVersions] = useState<MeasurementSopVersionDto[]>([]);
+  const [associatedReagentLots, setAssociatedReagentLots] = useState<MeasurementReagentLotDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
   const [showSopVersionsDialog, setShowSopVersionsDialog] = useState(false);
+  const [showReagentLotsDialog, setShowReagentLotsDialog] = useState(false);
   const [applicableSopVersions, setApplicableSopVersions] = useState<SopVersionSelectItem[]>([]);
+  const [applicableReagentLots, setApplicableReagentLots] = useState<MeasurementApplicableReagentLotDto[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [editableTest, setEditableTest] = useState<MeasurementTestDto | undefined>();
 
@@ -78,6 +82,9 @@ const TestResultsDetailView: React.FC<Props> = ({
       const sops = await measurementsService.getMeasurementSopVersions(measurementId);
       setAssociatedSopVersions(sops);
 
+      const reagentLots = await measurementsService.getMeasurementReagentLots(measurementId);
+      setAssociatedReagentLots(reagentLots);
+
       const applicableSops = await measurementsService.getMeasurementApplicableSopVersions(measurementId);
       const selectableItems: SopVersionSelectItem[] = applicableSops.map((sop: MeasurementSopVersionDto) => ({
         id: sop.id,
@@ -89,6 +96,9 @@ const TestResultsDetailView: React.FC<Props> = ({
         name: `${sop.docCode} (v${sop.versionNumber}) - ${sop.title}`
       }));
       setApplicableSopVersions(selectableItems);
+
+      const applicableReagents = await measurementsService.getMeasurementApplicableReagentLots(measurementId);
+      setApplicableReagentLots(applicableReagents);
 
     } catch (err) {
       console.error('Failed to fetch measurement:', err);
@@ -114,6 +124,19 @@ const TestResultsDetailView: React.FC<Props> = ({
       setAssociatedSopVersions(sops);
     } catch (err) {
       console.error('Failed to update measurement SOP versions', err);
+    }
+  };
+
+  const handleReagentLotsSelectionSave = async (selectedIds: number[]) => {
+    try {
+      await measurementsService.updateMeasurementReagentLots(measurementId, { controlCodeIds: selectedIds });
+      setShowReagentLotsDialog(false);
+      const reagentLots = await measurementsService.getMeasurementReagentLots(measurementId);
+      setAssociatedReagentLots(reagentLots);
+      const applicableReagents = await measurementsService.getMeasurementApplicableReagentLots(measurementId);
+      setApplicableReagentLots(applicableReagents);
+    } catch (err) {
+      console.error('Failed to update measurement reagent lots', err);
     }
   };
 
@@ -342,6 +365,25 @@ const TestResultsDetailView: React.FC<Props> = ({
               <button onClick={() => setShowSopVersionsDialog(true)} className="action-button secondary">Manage SOP Versions</button>
             </div>
           )}
+
+          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated Reagent Lots</h3>
+          {associatedReagentLots.length > 0 ? (
+            <ul className="item-list">
+              {associatedReagentLots.map(lot => (
+                <li key={lot.controlCodeId}>
+                  {lot.materialName} - {lot.controlCode}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated reagent lots</p>
+          )}
+
+          {!measurement.isReadonly && (
+            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+              <button onClick={() => setShowReagentLotsDialog(true)} className="action-button secondary">Manage Reagent Lots</button>
+            </div>
+          )}
         </div>
 
         {showDialog && (
@@ -388,6 +430,17 @@ const TestResultsDetailView: React.FC<Props> = ({
             onSave={handleSopVersionsSelectionSave}
             onClose={() => setShowSopVersionsDialog(false)}
             idPrefix="sop-version"
+          />
+        )}
+
+        {showReagentLotsDialog && (
+          <SelectReagentLotsDialog
+            open={true}
+            title="Manage Reagent Lots"
+            items={applicableReagentLots}
+            onSave={handleReagentLotsSelectionSave}
+            onClose={() => setShowReagentLotsDialog(false)}
+            idPrefix="reagent-lot"
           />
         )}
 
