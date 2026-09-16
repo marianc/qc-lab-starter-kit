@@ -16,7 +16,9 @@ import MaterialDialog from './MaterialDialog';
 import styles from './MaterialDetailView.module.css';
 import type { MaterialDto, MaterialTestDto } from '@/types/material';
 import type { TestDto } from '@/types/test';
+import type { FormDto } from '@/types/form';
 import materialsService from '@/services/materialsService';
+import formsService from '@/services/formsService';
 import type { SelectableItem } from '@/types/models';
 import { formatDate } from '@/lib/utils';
 
@@ -37,10 +39,15 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
 }) => {
   const [material, setMaterial] = useState<MaterialDto | null>(null);
   const [associatedTests, setAssociatedTests] = useState<MaterialTestDto[]>([]);
+  const [allForms, setAllForms] = useState<FormDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showApplicableFormsDialog, setShowApplicableFormsDialog] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
+
+  const [pendingFormTestIds, setPendingFormTestIds] = useState<number[]>([]);
+  const [missingTestNames, setMissingTestNames] = useState<string[]>([]);
 
   const fetchMaterialData = async () => {
     try {
@@ -56,8 +63,18 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
     }
   };
 
+  const fetchFormsData = async () => {
+    try {
+      const forms = await formsService.getAllForms();
+      setAllForms(forms);
+    } catch (err) {
+      console.error('Failed to fetch forms', err);
+    }
+  };
+
   useEffect(() => {
     fetchMaterialData();
+    fetchFormsData();
   }, [materialId]);
 
   const handleEditDialogClose = (savedId?: number | null) => {
@@ -75,6 +92,65 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
       setAssociatedTests(tests);
     } catch (err) {
       console.error('Failed to update tests', err);
+    }
+  };
+
+  const handleApplicableFormsSave = async (selectedFormIds: number[]) => {
+    if (selectedFormIds.length === 0) {
+      setShowApplicableFormsDialog(false);
+      return;
+    }
+
+    try {
+      // Gather all test IDs from the selected forms' formParams, filtering out test parameters (isParam === true)
+      const formTestIdSet = new Set<number>();
+      for (const formId of selectedFormIds) {
+        const params = await formsService.getFormParams(formId);
+        params.forEach(p => {
+          const testObj = allTests.find(t => t.id === p.testId);
+          if (testObj && !testObj.isParam) {
+            formTestIdSet.add(p.testId);
+          }
+        });
+      }
+
+      const currentTestIds = new Set(associatedTests.map(t => t.id));
+      const missingIds = Array.from(formTestIdSet).filter(id => !currentTestIds.has(id));
+
+      if (missingIds.length > 0) {
+        const sortedMissingTests = missingIds
+          .map(id => allTests.find(t => t.id === id))
+          .filter((t): t is TestDto => t !== undefined)
+          .sort((a, b) => a.nrOrd - b.nrOrd);
+
+        const names = sortedMissingTests.map(t => t.name);
+        setMissingTestNames(names);
+        setPendingFormTestIds(Array.from(formTestIdSet));
+        setShowApplicableFormsDialog(false);
+        setShowConfirmationDialog(true);
+      } else {
+        // No missing tests, update immediately or merge
+        const combinedIds = Array.from(new Set([...currentTestIds, ...formTestIdSet]));
+        await materialsService.updateMaterialTests(materialId, { testIds: combinedIds });
+        setShowApplicableFormsDialog(false);
+        fetchMaterialData();
+      }
+    } catch (err) {
+      console.error('Failed to process applicable forms', err);
+    }
+  };
+
+  const handleConfirmAddMissingTests = async () => {
+    try {
+      const currentTestIds = associatedTests.map(t => t.id);
+      const combinedIds = Array.from(new Set([...currentTestIds, ...pendingFormTestIds]));
+      await materialsService.updateMaterialTests(materialId, { testIds: combinedIds });
+      setShowConfirmationDialog(false);
+      setPendingFormTestIds([]);
+      setMissingTestNames([]);
+      fetchMaterialData();
+    } catch (err) {
+      console.error('Failed to update material tests with applicable forms', err);
     }
   };
 
@@ -112,6 +188,10 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
   const selectableTests: SelectableItem[] = allTests
     .filter(t => !t.isParam)
     .map(t => ({ id: t.id, name: t.name }));
+
+  const validForms: SelectableItem[] = allForms
+    .filter(f => f.isValidated && !f.isCancelled)
+    .map(f => ({ id: f.id, name: f.name }));
 
   return (
     <DetailView>
@@ -162,6 +242,7 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
 
           <div className={styles.manageTestsContainer}>
             <button onClick={() => setShowTestDialog(true)} className="action-button secondary">Manage Tests</button>
+            <button onClick={() => setShowApplicableFormsDialog(true)} className="action-button secondary">Applicable Forms</button>
           </div>
         </div>
       </DetailViewContent>
@@ -186,7 +267,43 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
         />
       )}
 
-      {showConfirmationDialog && (
+      {showApplicableFormsDialog && (
+        <SelectDialog 
+          open={true}
+          title="Select Applicable Forms"
+          items={validForms}
+          selectedIds={[]}
+          onSave={handleApplicableFormsSave}
+          onClose={() => setShowApplicableFormsDialog(false)}
+          idPrefix="form"
+        />
+      )}
+
+      {showConfirmationDialog && missingTestNames.length > 0 ? (
+        <ConfirmationDialog 
+          open={true}
+          title="Add Missing Tests"
+          message={
+            <div>
+              <p>The following tests present in the selected forms are not currently associated with this material and will be added:</p>
+              <br />
+              <ul style={{ listStyleType: 'disc', paddingLeft: '20px', margin: 0 }}>
+                {missingTestNames.map((testName, idx) => (
+                  <li key={idx}>{testName}</li>
+                ))}
+              </ul>
+              <br />
+              <p>Do you want to proceed?</p>
+            </div>
+          }
+          onConfirm={handleConfirmAddMissingTests}
+          onCancel={() => {
+            setShowConfirmationDialog(false);
+            setPendingFormTestIds([]);
+            setMissingTestNames([]);
+          }}
+        />
+      ) : showConfirmationDialog ? (
         <ConfirmationDialog 
           open={true}
           title="Confirm Material Activation"
@@ -194,7 +311,7 @@ const MaterialDetailView: React.FC<MaterialDetailViewProps> = ({
           onConfirm={handleConfirmActivation}
           onCancel={() => setShowConfirmationDialog(false)}
         />
-      )}
+      ) : null}
 
       {showDeactivateCommentDialog && (
         <CommentDialog 

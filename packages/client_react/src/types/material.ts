@@ -34,6 +34,7 @@ export interface MaterialTestDto {
   typeId: number;
   isArray: boolean;
   typeName: string;
+  nrOrd: number;
 }
 
 export interface UpdateMaterialTestsDto {

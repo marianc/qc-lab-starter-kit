@@ -57,6 +57,7 @@ public class MaterialTestDto
     public long TypeId { get; set; }
     public bool IsArray { get; set; }
     public string TypeName { get; set; } = string.Empty;
+    public long NrOrd { get; set; }
 }
 
 public class UpdateMaterialTestsDto

@@ -15,9 +15,12 @@ import {
 import CategoryDialog from './CategoryDialog';
 import styles from './CategoryDetailView.module.css';
 import type { CategoryDto, CategoryTestDto } from '@/types/category';
+import type { TestDto } from '@/types/test';
+import type { FormDto } from '@/types/form';
 import type { SelectableItem } from '@/types/models';
 import categoriesService from '@/services/categoriesService';
 import testsService from '@/services/testsService';
+import formsService from '@/services/formsService';
 import { formatDate } from '@/lib/utils';
 
 interface CategoryDetailViewProps {
@@ -33,11 +36,16 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
 }) => {
   const [category, setCategory] = useState<CategoryDto | null>(null);
   const [associatedTests, setAssociatedTests] = useState<CategoryTestDto[]>([]);
-  const [allTests, setAllTests] = useState<SelectableItem[]>([]);
+  const [allTests, setAllTests] = useState<TestDto[]>([]);
+  const [allForms, setAllForms] = useState<FormDto[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showApplicableFormsDialog, setShowApplicableFormsDialog] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
+
+  const [pendingFormTestIds, setPendingFormTestIds] = useState<number[]>([]);
+  const [missingTestNames, setMissingTestNames] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -53,18 +61,25 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   const fetchAllTests = async () => {
     try {
       const tests = await testsService.getAllTests();
-      setAllTests(tests
-        .filter(t => !t.isParam)
-        .map(t => ({ id: t.id, name: t.name }))
-      );
+      setAllTests(tests);
     } catch (err) {
       console.error('Failed to fetch tests', err);
+    }
+  };
+
+  const fetchFormsData = async () => {
+    try {
+      const forms = await formsService.getAllForms();
+      setAllForms(forms);
+    } catch (err) {
+      console.error('Failed to fetch forms', err);
     }
   };
 
   useEffect(() => {
     fetchData();
     fetchAllTests();
+    fetchFormsData();
   }, [categoryId]);
 
   const handleEditSave = async (savedId?: number | null) => {
@@ -82,6 +97,63 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
       setAssociatedTests(tests);
     } catch (err) {
       console.error('Failed to save test selection', err);
+    }
+  };
+
+  const handleApplicableFormsSave = async (selectedFormIds: number[]) => {
+    if (selectedFormIds.length === 0) {
+      setShowApplicableFormsDialog(false);
+      return;
+    }
+
+    try {
+      const formTestIdSet = new Set<number>();
+      for (const formId of selectedFormIds) {
+        const params = await formsService.getFormParams(formId);
+        params.forEach(p => {
+          const testObj = allTests.find(t => t.id === p.testId);
+          if (testObj && !testObj.isParam) {
+            formTestIdSet.add(p.testId);
+          }
+        });
+      }
+
+      const currentTestIds = new Set(associatedTests.map(t => t.id));
+      const missingIds = Array.from(formTestIdSet).filter(id => !currentTestIds.has(id));
+
+      if (missingIds.length > 0) {
+        const sortedMissingTests = missingIds
+          .map(id => allTests.find(t => t.id === id))
+          .filter((t): t is TestDto => t !== undefined)
+          .sort((a, b) => a.nrOrd - b.nrOrd);
+
+        const names = sortedMissingTests.map(t => t.name);
+        setMissingTestNames(names);
+        setPendingFormTestIds(Array.from(formTestIdSet));
+        setShowApplicableFormsDialog(false);
+        setShowConfirmationDialog(true);
+      } else {
+        const combinedIds = Array.from(new Set([...currentTestIds, ...formTestIdSet]));
+        await categoriesService.updateCategoryTests(categoryId, { testIds: combinedIds });
+        setShowApplicableFormsDialog(false);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to process applicable forms', err);
+    }
+  };
+
+  const handleConfirmAddMissingTests = async () => {
+    try {
+      const currentTestIds = associatedTests.map(t => t.id);
+      const combinedIds = Array.from(new Set([...currentTestIds, ...pendingFormTestIds]));
+      await categoriesService.updateCategoryTests(categoryId, { testIds: combinedIds });
+      setShowConfirmationDialog(false);
+      setPendingFormTestIds([]);
+      setMissingTestNames([]);
+      fetchData();
+    } catch (err) {
+      console.error('Failed to update category tests with applicable forms', err);
     }
   };
 
@@ -117,6 +189,14 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   };
 
   if (!category) return null;
+
+  const selectableTests: SelectableItem[] = allTests
+    .filter(t => !t.isParam)
+    .map(t => ({ id: t.id, name: t.name }));
+
+  const validForms: SelectableItem[] = allForms
+    .filter(f => f.isValidated && !f.isCancelled)
+    .map(f => ({ id: f.id, name: f.name }));
 
   return (
     <DetailView>
@@ -166,6 +246,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
           
           <div className={styles.manageTestsContainer}>
             <button onClick={() => setShowTestDialog(true)} className="action-button secondary">Manage Tests</button>
+            <button onClick={() => setShowApplicableFormsDialog(true)} className="action-button secondary">Applicable Forms</button>
           </div>
         </div>
       </DetailViewContent>
@@ -182,7 +263,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
         <SelectDialog 
           open={true}
           title="Select Tests"
-          items={allTests}
+          items={selectableTests}
           selectedIds={associatedTests.map(t => t.id)}
           onSave={handleTestSelectionSave}
           onClose={() => setShowTestDialog(false)}
@@ -190,7 +271,43 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
         />
       )}
 
-      {showConfirmationDialog && (
+      {showApplicableFormsDialog && (
+        <SelectDialog 
+          open={true}
+          title="Select Applicable Forms"
+          items={validForms}
+          selectedIds={[]}
+          onSave={handleApplicableFormsSave}
+          onClose={() => setShowApplicableFormsDialog(false)}
+          idPrefix="form"
+        />
+      )}
+
+      {showConfirmationDialog && missingTestNames.length > 0 ? (
+        <ConfirmationDialog 
+          open={true}
+          title="Add Missing Tests"
+          message={
+            <div>
+              <p>The following tests present in the selected forms are not currently associated with this category and will be added:</p>
+              <br />
+              <ul style={{ listStyleType: 'disc', paddingLeft: '20px', margin: 0 }}>
+                {missingTestNames.map((testName, idx) => (
+                  <li key={idx}>{testName}</li>
+                ))}
+              </ul>
+              <br />
+              <p>Do you want to proceed?</p>
+            </div>
+          }
+          onConfirm={handleConfirmAddMissingTests}
+          onCancel={() => {
+            setShowConfirmationDialog(false);
+            setPendingFormTestIds([]);
+            setMissingTestNames([]);
+          }}
+        />
+      ) : showConfirmationDialog ? (
         <ConfirmationDialog 
           open={true}
           title="Confirm Category Activation"
@@ -198,7 +315,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
           onConfirm={handleConfirmActivation}
           onCancel={() => setShowConfirmationDialog(false)}
         />
-      )}
+      ) : null}
 
       {showDeactivateCommentDialog && (
         <CommentDialog 

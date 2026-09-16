@@ -104,6 +104,7 @@ public class ServerCategoriesService : ICategoriesService
             .SelectMany(c => c.Tests)
             .Where(t => !t.IsParam)
             .Include(t => t.Type)
+            .OrderBy(t => t.NrOrd)
             .Select(t => new CategoryTestDto
             {
                 Id = t.Id,
@@ -111,7 +112,8 @@ public class ServerCategoriesService : ICategoriesService
                 Code = t.Code,
                 TypeId = t.TypeId,
                 IsArray = t.IsArray,
-                TypeName = t.Type.Name
+                TypeName = t.Type.Name,
+                NrOrd = t.NrOrd
             })
             .ToListAsync();
 

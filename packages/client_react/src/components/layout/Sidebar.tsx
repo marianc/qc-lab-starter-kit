@@ -35,6 +35,14 @@ const Sidebar: React.FC = () => {
               </li>
               <li>
                 <NavLink 
+                  to="/categories" 
+                  className={({ isActive }) => isActive ? styles.active : undefined}
+                >
+                  Categories
+                </NavLink>
+              </li>
+              <li>
+                <NavLink 
                   to="/units" 
                   className={({ isActive }) => isActive ? styles.active : undefined}
                 >
@@ -55,14 +63,6 @@ const Sidebar: React.FC = () => {
                   className={({ isActive }) => isActive ? styles.active : undefined}
                 >
                   Tests & Parameters
-                </NavLink>
-              </li>
-              <li>
-                <NavLink 
-                  to="/categories" 
-                  className={({ isActive }) => isActive ? styles.active : undefined}
-                >
-                  Categories
                 </NavLink>
               </li>
               <li>

@@ -152,6 +152,7 @@ public class ServerMaterialsService : IMaterialsService
             .SelectMany(m => m.Tests)
             .Where(t => !t.IsParam)
             .Include(t => t.Type)
+            .OrderBy(t => t.NrOrd)
             .Select(t => new MaterialTestDto
             {
                 Id = t.Id,
@@ -159,7 +160,8 @@ public class ServerMaterialsService : IMaterialsService
                 Code = t.Code,
                 TypeId = t.TypeId,
                 IsArray = t.IsArray,
-                TypeName = t.Type.Name
+                TypeName = t.Type.Name,
+                NrOrd = t.NrOrd
             })
             .ToListAsync();
 

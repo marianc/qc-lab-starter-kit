@@ -4,7 +4,7 @@ import { Dialog, DialogHeader, DialogContent, DialogFooter } from './ui';
 interface Props {
   open: boolean;
   title?: string;
-  message?: string;
+  message?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 }
