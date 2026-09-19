@@ -1845,7 +1845,7 @@ ALTER TABLE ONLY public.audit_logs
 --
 
 ALTER TABLE ONLY public.category_tests
-    ADD CONSTRAINT category_tests_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id);
+    ADD CONSTRAINT category_tests_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON DELETE CASCADE;
 
 
 --
@@ -1861,7 +1861,7 @@ ALTER TABLE ONLY public.category_tests
 --
 
 ALTER TABLE ONLY public.certificate_tests
-    ADD CONSTRAINT certificate_tests_certificates_id_fkey FOREIGN KEY (certificate_id) REFERENCES public.certificates(id);
+    ADD CONSTRAINT certificate_tests_certificates_id_fkey FOREIGN KEY (certificate_id) REFERENCES public.certificates(id) ON DELETE CASCADE;
 
 
 --
@@ -1957,7 +1957,7 @@ ALTER TABLE ONLY public.electronic_signatures
 --
 
 ALTER TABLE ONLY public.equipment_calibrations
-    ADD CONSTRAINT equipment_calibrations_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id);
+    ADD CONSTRAINT equipment_calibrations_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id) ON DELETE CASCADE;
 
 
 --
@@ -1965,7 +1965,7 @@ ALTER TABLE ONLY public.equipment_calibrations
 --
 
 ALTER TABLE ONLY public.form_condition_evals
-    ADD CONSTRAINT form_condition_evals_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id);
+    ADD CONSTRAINT form_condition_evals_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id) ON DELETE CASCADE;
 
 
 --
@@ -1973,7 +1973,7 @@ ALTER TABLE ONLY public.form_condition_evals
 --
 
 ALTER TABLE ONLY public.form_condition_evals
-    ADD CONSTRAINT form_condition_evals_form_id_test_id_fkey FOREIGN KEY (form_id, test_id) REFERENCES public.form_params(form_id, test_id);
+    ADD CONSTRAINT form_condition_evals_form_id_test_id_fkey FOREIGN KEY (form_id, test_id) REFERENCES public.form_params(form_id, test_id) ON DELETE CASCADE;
 
 
 --
@@ -1989,7 +1989,7 @@ ALTER TABLE ONLY public.form_condition_evals
 --
 
 ALTER TABLE ONLY public.form_eval_params
-    ADD CONSTRAINT form_eval_params_eval_id_fkey FOREIGN KEY (eval_id) REFERENCES public.form_evals(id);
+    ADD CONSTRAINT form_eval_params_eval_id_fkey FOREIGN KEY (eval_id) REFERENCES public.form_evals(id) ON DELETE CASCADE;
 
 
 --
@@ -1997,7 +1997,7 @@ ALTER TABLE ONLY public.form_eval_params
 --
 
 ALTER TABLE ONLY public.form_eval_params
-    ADD CONSTRAINT form_eval_params_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id);
+    ADD CONSTRAINT form_eval_params_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id) ON DELETE CASCADE;
 
 
 --
@@ -2005,7 +2005,7 @@ ALTER TABLE ONLY public.form_eval_params
 --
 
 ALTER TABLE ONLY public.form_eval_params
-    ADD CONSTRAINT form_eval_params_form_id_test_id_fkey FOREIGN KEY (form_id, test_id) REFERENCES public.form_params(form_id, test_id);
+    ADD CONSTRAINT form_eval_params_form_id_test_id_fkey FOREIGN KEY (form_id, test_id) REFERENCES public.form_params(form_id, test_id) ON DELETE CASCADE;
 
 
 --
@@ -2021,7 +2021,7 @@ ALTER TABLE ONLY public.form_eval_params
 --
 
 ALTER TABLE ONLY public.form_evals
-    ADD CONSTRAINT form_evals_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id);
+    ADD CONSTRAINT form_evals_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id) ON DELETE CASCADE;
 
 
 --
@@ -2029,7 +2029,7 @@ ALTER TABLE ONLY public.form_evals
 --
 
 ALTER TABLE ONLY public.form_params
-    ADD CONSTRAINT form_params_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id);
+    ADD CONSTRAINT form_params_form_id_fkey FOREIGN KEY (form_id) REFERENCES public.forms(id) ON DELETE CASCADE;
 
 
 --
@@ -2077,7 +2077,7 @@ ALTER TABLE ONLY public.forms
 --
 
 ALTER TABLE ONLY public.material_tests
-    ADD CONSTRAINT material_tests_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materials(id);
+    ADD CONSTRAINT material_tests_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materials(id) ON DELETE CASCADE;
 
 
 --
@@ -2109,7 +2109,7 @@ ALTER TABLE ONLY public.measurement_equipments
 --
 
 ALTER TABLE ONLY public.measurement_equipments
-    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
+    ADD CONSTRAINT measurement_equipments_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
 
 
 --
@@ -2133,7 +2133,7 @@ ALTER TABLE ONLY public.measurement_params
 --
 
 ALTER TABLE ONLY public.measurement_params
-    ADD CONSTRAINT measurement_params_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
+    ADD CONSTRAINT measurement_params_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
 
 
 --
@@ -2181,7 +2181,7 @@ ALTER TABLE ONLY public.measurement_sop_versions
 --
 
 ALTER TABLE ONLY public.measurement_tests
-    ADD CONSTRAINT measurement_tests_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id);
+    ADD CONSTRAINT measurement_tests_measurement_id_fkey FOREIGN KEY (measurement_id) REFERENCES public.measurements(id) ON DELETE CASCADE;
 
 
 --
@@ -2373,7 +2373,7 @@ ALTER TABLE ONLY public.report_tests
 --
 
 ALTER TABLE ONLY public.report_tests
-    ADD CONSTRAINT report_tests_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id);
+    ADD CONSTRAINT report_tests_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.reports(id) ON DELETE CASCADE;
 
 
 --
@@ -2421,7 +2421,7 @@ ALTER TABLE ONLY public.reports
 --
 
 ALTER TABLE ONLY public.sop_versions
-    ADD CONSTRAINT sop_versions_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id);
+    ADD CONSTRAINT sop_versions_sop_id_fkey FOREIGN KEY (sop_id) REFERENCES public.sops(id) ON DELETE CASCADE;
 
 
 --
@@ -2429,7 +2429,7 @@ ALTER TABLE ONLY public.sop_versions
 --
 
 ALTER TABLE ONLY public.sops
-    ADD CONSTRAINT sops_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id);
+    ADD CONSTRAINT sops_norm_id_fkey FOREIGN KEY (norm_id) REFERENCES public.norms(id) ON DELETE CASCADE;
 
 
 --
@@ -2445,7 +2445,7 @@ ALTER TABLE ONLY public.spec_test_evals
 --
 
 ALTER TABLE ONLY public.spec_test_evals
-    ADD CONSTRAINT spec_test_evals_spec_id_test_id_fkey FOREIGN KEY (spec_id, test_id) REFERENCES public.spec_tests(spec_id, test_id);
+    ADD CONSTRAINT spec_test_evals_spec_id_test_id_fkey FOREIGN KEY (spec_id, test_id) REFERENCES public.spec_tests(spec_id, test_id) ON DELETE CASCADE;
 
 
 --
@@ -2461,7 +2461,7 @@ ALTER TABLE ONLY public.spec_test_evals
 --
 
 ALTER TABLE ONLY public.spec_tests
-    ADD CONSTRAINT spec_tests_specs_id_fkey FOREIGN KEY (spec_id) REFERENCES public.specs(id);
+    ADD CONSTRAINT spec_tests_specs_id_fkey FOREIGN KEY (spec_id) REFERENCES public.specs(id) ON DELETE CASCADE;
 
 
 --
@@ -2509,7 +2509,7 @@ ALTER TABLE ONLY public.specs
 --
 
 ALTER TABLE ONLY public.test_enums
-    ADD CONSTRAINT test_enums_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id);
+    ADD CONSTRAINT test_enums_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) ON DELETE CASCADE;
 
 
 --
@@ -2525,7 +2525,7 @@ ALTER TABLE ONLY public.test_equipments
 --
 
 ALTER TABLE ONLY public.test_equipments
-    ADD CONSTRAINT test_equipments_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) NOT VALID;
+    ADD CONSTRAINT test_equipments_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) ON DELETE CASCADE;
 
 
 --

@@ -171,7 +171,6 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("category_tests_test_id_fkey"),
                     l => l.HasOne<Category>().WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("category_tests_category_id_fkey"),
                     j =>
                     {
@@ -255,7 +254,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Certificate).WithMany(p => p.CertificateTests)
                 .HasForeignKey(d => d.CertificateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("certificate_tests_certificates_id_fkey");
 
             entity.HasOne(d => d.Measurement).WithMany(p => p.CertificateTests)
@@ -411,7 +409,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Equipment).WithMany(p => p.EquipmentCalibrations)
                 .HasForeignKey(d => d.EquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("equipment_calibrations_equipment_id_fkey");
         });
 
@@ -482,7 +479,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Form).WithMany(p => p.FormConditionEvals)
                 .HasForeignKey(d => d.FormId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_condition_evals_form_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.FormConditionEvals)
@@ -492,7 +488,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.FormParam).WithMany(p => p.FormConditionEvals)
                 .HasForeignKey(d => new { d.FormId, d.TestId })
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_condition_evals_form_id_test_id_fkey");
         });
 
@@ -510,7 +505,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Form).WithMany(p => p.FormEvals)
                 .HasForeignKey(d => d.FormId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_evals_form_id_fkey");
         });
 
@@ -530,12 +524,10 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Eval).WithMany(p => p.FormEvalParams)
                 .HasForeignKey(d => d.EvalId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_eval_params_eval_id_fkey");
 
             entity.HasOne(d => d.Form).WithMany(p => p.FormEvalParams)
                 .HasForeignKey(d => d.FormId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_eval_params_form_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.FormEvalParams)
@@ -545,7 +537,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.FormParam).WithMany(p => p.FormEvalParams)
                 .HasForeignKey(d => new { d.FormId, d.TestId })
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("form_eval_params_form_id_test_id_fkey");
         });
 
@@ -594,7 +585,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Form).WithMany(p => p.FormParams)
                 .HasForeignKey(d => d.FormId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("form_params_form_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.FormParams)
@@ -648,7 +638,6 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("material_tests_test_id_fkey"),
                     l => l.HasOne<Material>().WithMany()
                         .HasForeignKey("MaterialId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("material_tests_material_id_fkey"),
                     j =>
                     {
@@ -738,7 +727,6 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("measurement_equipments_equipment_id_fkey"),
                     l => l.HasOne<Measurement>().WithMany()
                         .HasForeignKey("MeasurementId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("measurement_equipments_measurement_id_fkey"),
                     j =>
                     {
@@ -787,7 +775,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Measurement).WithMany(p => p.MeasurementParams)
                 .HasForeignKey(d => d.MeasurementId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurement_params_measurement_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.MeasurementParams)
@@ -797,7 +784,7 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.FormParam).WithMany(p => p.MeasurementParams)
                 .HasForeignKey(d => new { d.FormId, d.TestId })
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurement_params_form_id_test_id_fkey");
         });
 
@@ -817,7 +804,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Measurement).WithMany(p => p.MeasurementTests)
                 .HasForeignKey(d => d.MeasurementId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurement_tests_measurement_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.MeasurementTests)
@@ -1134,7 +1120,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Report).WithMany(p => p.ReportTests)
                 .HasForeignKey(d => d.ReportId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("report_tests_report_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.ReportTests)
@@ -1167,6 +1152,7 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Norm).WithMany(p => p.Sops)
                 .HasForeignKey(d => d.NormId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sops_norm_id_fkey");
         });
 
@@ -1202,7 +1188,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Sop).WithMany(p => p.SopVersions)
                 .HasForeignKey(d => d.SopId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("sop_versions_sop_id_fkey");
         });
 
@@ -1263,7 +1248,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Spec).WithMany(p => p.SpecTests)
                 .HasForeignKey(d => d.SpecId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("spec_tests_specs_id_fkey");
 
             entity.HasOne(d => d.Test).WithMany(p => p.SpecTests)
@@ -1303,7 +1287,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.SpecTest).WithMany(p => p.SpecTestEvals)
                 .HasForeignKey(d => new { d.SpecId, d.TestId })
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("spec_test_evals_spec_id_test_id_fkey");
         });
 
@@ -1378,7 +1361,6 @@ public partial class QualityControlContext : DbContext
                         .HasConstraintName("test_equipments_equipment_id_fkey"),
                     l => l.HasOne<Test>().WithMany()
                         .HasForeignKey("TestId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("test_equipments_test_id_fkey"),
                     j =>
                     {
@@ -1425,7 +1407,6 @@ public partial class QualityControlContext : DbContext
 
             entity.HasOne(d => d.Test).WithMany(p => p.TestEnums)
                 .HasForeignKey(d => d.TestId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("test_enums_test_id_fkey");
         });
 

@@ -257,7 +257,7 @@ class ElectronicSignatures(Base):
 class EquipmentCalibrations(Base):
     __tablename__ = 'equipment_calibrations'
     __table_args__ = (
-        ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='equipment_calibrations_equipment_id_fkey'),
+        ForeignKeyConstraint(['equipment_id'], ['equipments.id'], ondelete='CASCADE', name='equipment_calibrations_equipment_id_fkey'),
         PrimaryKeyConstraint('id', name='equipment_calibrations_pkey')
     )
 
@@ -348,7 +348,7 @@ class Materials(Base):
 class Sops(Base):
     __tablename__ = 'sops'
     __table_args__ = (
-        ForeignKeyConstraint(['norm_id'], ['norms.id'], name='sops_norm_id_fkey'),
+        ForeignKeyConstraint(['norm_id'], ['norms.id'], ondelete='CASCADE', name='sops_norm_id_fkey'),
         PrimaryKeyConstraint('id', name='sops_pkey'),
         UniqueConstraint('doc_code', name='sops_doc_code_key')
     )
@@ -385,7 +385,7 @@ class ControlCodes(Base):
 class FormEvals(Base):
     __tablename__ = 'form_evals'
     __table_args__ = (
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_evals_form_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], ondelete='CASCADE', name='form_evals_form_id_fkey'),
         PrimaryKeyConstraint('id', name='form_evals_pkey')
     )
 
@@ -400,7 +400,7 @@ class FormEvals(Base):
 class SopVersions(Base):
     __tablename__ = 'sop_versions'
     __table_args__ = (
-        ForeignKeyConstraint(['sop_id'], ['sops.id'], name='sop_versions_sop_id_fkey'),
+        ForeignKeyConstraint(['sop_id'], ['sops.id'], ondelete='CASCADE', name='sop_versions_sop_id_fkey'),
         PrimaryKeyConstraint('id', name='sop_versions_pkey'),
         UniqueConstraint('sop_id', 'version_number', name='unq_sop_version_number'),
         Index('unq_single_active_sop_version', 'sop_id', postgresql_where='(is_active = true)', unique=True)
@@ -510,7 +510,7 @@ t_category_tests = Table(
     'category_tests', Base.metadata,
     Column('category_id', BigInteger, primary_key=True),
     Column('test_id', BigInteger, primary_key=True),
-    ForeignKeyConstraint(['category_id'], ['categories.id'], name='category_tests_category_id_fkey'),
+    ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='CASCADE', name='category_tests_category_id_fkey'),
     ForeignKeyConstraint(['test_id'], ['tests.id'], name='category_tests_test_id_fkey'),
     PrimaryKeyConstraint('category_id', 'test_id', name='category_tests_pkey')
 )
@@ -554,7 +554,7 @@ class Certificates(Base):
 class FormParams(Base):
     __tablename__ = 'form_params'
     __table_args__ = (
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_params_form_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], ondelete='CASCADE', name='form_params_form_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_params_test_id_fkey'),
         PrimaryKeyConstraint('form_id', 'test_id', name='form_params_pkey')
     )
@@ -584,7 +584,7 @@ t_material_tests = Table(
     'material_tests', Base.metadata,
     Column('material_id', BigInteger, primary_key=True),
     Column('test_id', BigInteger, primary_key=True),
-    ForeignKeyConstraint(['material_id'], ['materials.id'], name='material_tests_material_id_fkey'),
+    ForeignKeyConstraint(['material_id'], ['materials.id'], ondelete='CASCADE', name='material_tests_material_id_fkey'),
     ForeignKeyConstraint(['test_id'], ['tests.id'], name='material_tests_test_id_fkey'),
     PrimaryKeyConstraint('material_id', 'test_id', name='material_tests_pkey')
 )
@@ -660,7 +660,7 @@ class Receptions(Base):
 class SpecTests(Base):
     __tablename__ = 'spec_tests'
     __table_args__ = (
-        ForeignKeyConstraint(['spec_id'], ['specs.id'], name='spec_tests_specs_id_fkey'),
+        ForeignKeyConstraint(['spec_id'], ['specs.id'], ondelete='CASCADE', name='spec_tests_specs_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='spec_tests_tests_id_fkey'),
         PrimaryKeyConstraint('spec_id', 'test_id', name='spec_tests_pkey')
     )
@@ -680,7 +680,7 @@ class SpecTests(Base):
 class TestEnums(Base):
     __tablename__ = 'test_enums'
     __table_args__ = (
-        ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_enums_test_id_fkey'),
+        ForeignKeyConstraint(['test_id'], ['tests.id'], ondelete='CASCADE', name='test_enums_test_id_fkey'),
         PrimaryKeyConstraint('test_id', 'value', name='test_enums_pkey'),
         UniqueConstraint('test_id', 'name', name='test_enums_test_id_name_key')
     )
@@ -699,7 +699,7 @@ t_test_equipments = Table(
     Column('test_id', BigInteger, primary_key=True),
     Column('equipment_id', BigInteger, primary_key=True),
     ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='test_equipments_equipment_id_fkey'),
-    ForeignKeyConstraint(['test_id'], ['tests.id'], name='test_equipments_test_id_fkey'),
+    ForeignKeyConstraint(['test_id'], ['tests.id'], ondelete='CASCADE', name='test_equipments_test_id_fkey'),
     PrimaryKeyConstraint('test_id', 'equipment_id', name='test_equipments_pkey')
 )
 
@@ -717,8 +717,8 @@ t_test_reagents = Table(
 class FormConditionEvals(Base):
     __tablename__ = 'form_condition_evals'
     __table_args__ = (
-        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_condition_evals_form_id_test_id_fkey'),
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_condition_evals_form_id_fkey'),
+        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], ondelete='CASCADE', name='form_condition_evals_form_id_test_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], ondelete='CASCADE', name='form_condition_evals_form_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_condition_evals_test_id_fkey'),
         PrimaryKeyConstraint('id', name='form_condition_evals_pkey')
     )
@@ -740,9 +740,9 @@ class FormConditionEvals(Base):
 class FormEvalParams(Base):
     __tablename__ = 'form_eval_params'
     __table_args__ = (
-        ForeignKeyConstraint(['eval_id'], ['form_evals.id'], name='form_eval_params_eval_id_fkey'),
-        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='form_eval_params_form_id_test_id_fkey'),
-        ForeignKeyConstraint(['form_id'], ['forms.id'], name='form_eval_params_form_id_fkey'),
+        ForeignKeyConstraint(['eval_id'], ['form_evals.id'], ondelete='CASCADE', name='form_eval_params_eval_id_fkey'),
+        ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], ondelete='CASCADE', name='form_eval_params_form_id_test_id_fkey'),
+        ForeignKeyConstraint(['form_id'], ['forms.id'], ondelete='CASCADE', name='form_eval_params_form_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='form_eval_params_test_id_fkey'),
         PrimaryKeyConstraint('eval_id', 'form_id', 'test_id', 'idx', name='form_eval_params_pkey')
     )
@@ -873,7 +873,7 @@ class Reports(Base):
 class SpecTestEvals(Base):
     __tablename__ = 'spec_test_evals'
     __table_args__ = (
-        ForeignKeyConstraint(['spec_id', 'test_id'], ['spec_tests.spec_id', 'spec_tests.test_id'], name='spec_test_evals_spec_id_test_id_fkey'),
+        ForeignKeyConstraint(['spec_id', 'test_id'], ['spec_tests.spec_id', 'spec_tests.test_id'], ondelete='CASCADE', name='spec_test_evals_spec_id_test_id_fkey'),
         ForeignKeyConstraint(['spec_id'], ['specs.id'], name='spec_test_evals_spec_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='spec_test_evals_test_id_fkey'),
         PrimaryKeyConstraint('id', name='spec_test_evals_pkey')
@@ -898,7 +898,7 @@ t_measurement_equipments = Table(
     Column('measurement_id', BigInteger, primary_key=True),
     Column('equipment_id', BigInteger, primary_key=True),
     ForeignKeyConstraint(['equipment_id'], ['equipments.id'], name='measurement_equipments_equipment_id_fkey'),
-    ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='measurement_equipments_measurement_id_fkey'),
+    ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_equipments_measurement_id_fkey'),
     PrimaryKeyConstraint('measurement_id', 'equipment_id', name='measurement_equipments_pkey')
 )
 
@@ -908,7 +908,7 @@ class MeasurementParams(Base):
     __table_args__ = (
         ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='measurement_params_form_id_test_id_fkey'),
         ForeignKeyConstraint(['form_id'], ['forms.id'], name='measurement_params_form_id_fkey'),
-        ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='measurement_params_measurement_id_fkey'),
+        ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_params_measurement_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='measurement_params_test_id_fkey'),
         PrimaryKeyConstraint('measurement_id', 'form_id', 'test_id', 'idx', name='measurement_params_pkey')
     )
@@ -949,7 +949,7 @@ t_measurement_sop_versions = Table(
 class MeasurementTests(Base):
     __tablename__ = 'measurement_tests'
     __table_args__ = (
-        ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='measurement_tests_measurement_id_fkey'),
+        ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_tests_measurement_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='measurement_tests_test_id_fkey'),
         PrimaryKeyConstraint('measurement_id', 'test_id', 'idx', name='measurement_tests_pkey')
     )
@@ -968,7 +968,7 @@ class ReportTests(Base):
     __tablename__ = 'report_tests'
     __table_args__ = (
         ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='report_tests_measurement_id_fkey'),
-        ForeignKeyConstraint(['report_id'], ['reports.id'], name='report_tests_report_id_fkey'),
+        ForeignKeyConstraint(['report_id'], ['reports.id'], ondelete='CASCADE', name='report_tests_report_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='report_tests_test_id_fkey'),
         PrimaryKeyConstraint('report_id', 'measurement_id', 'test_id', 'idx', name='report_tests_pkey')
     )
@@ -990,7 +990,7 @@ class ReportTests(Base):
 class CertificateTests(Base):
     __tablename__ = 'certificate_tests'
     __table_args__ = (
-        ForeignKeyConstraint(['certificate_id'], ['certificates.id'], name='certificate_tests_certificates_id_fkey'),
+        ForeignKeyConstraint(['certificate_id'], ['certificates.id'], ondelete='CASCADE', name='certificate_tests_certificates_id_fkey'),
         ForeignKeyConstraint(['measurement_id'], ['measurements.id'], name='certificate_tests_measurement_id_fkey'),
         ForeignKeyConstraint(['report_id', 'measurement_id', 'test_id', 'idx'], ['report_tests.report_id', 'report_tests.measurement_id', 'report_tests.test_id', 'report_tests.idx'], name='certificate_tests_report_id_measurement_id_test_id_idx_fkey'),
         ForeignKeyConstraint(['report_id'], ['reports.id'], name='certificate_tests_report_id_fkey'),
