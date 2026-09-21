@@ -96,6 +96,7 @@ const TestFormDetailView: React.FC<Props> = ({
         name: test?.name || 'Unknown',
         typeId: test?.typeId || 0,
         isArray: test?.isArray || false,
+        unitName: test?.unitName || null,
         dependencies: '',
         isFormSubmitted: false,
         hasCondition: false,
@@ -255,8 +256,7 @@ const TestFormDetailView: React.FC<Props> = ({
           receptionId: measurement.receptionId,
           formId: measurement.formId,
           comments: measurement.comments || null,
-          isReported: measurement.isReported,
-          userUpdateId: currentUser.id
+          isReported: measurement.isReported
         });
         finalId = res.id;
       }
@@ -275,7 +275,6 @@ const TestFormDetailView: React.FC<Props> = ({
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
-        userUpdateId: currentUser.id,
         measurementData: dataToSave
       });
       onClose();
@@ -444,7 +443,9 @@ const TestFormDetailView: React.FC<Props> = ({
           <h2>Form Data</h2>
           {nonArrayParams.map(param => (
             <div key={param.testId} className="form-group">
-              <label htmlFor={param.code}>{param.name}:</label>
+              <label htmlFor={param.code}>
+                {param.name}{param.unitName ? ` [${param.unitName}]` : ''}:
+              </label>
               {measurement.isReadonly ? (
                 <p>{getDisplayValue(param, formData[param.code])}</p>
               ) : (
@@ -455,7 +456,7 @@ const TestFormDetailView: React.FC<Props> = ({
 
           {standaloneArrayParams.map(param => (
             <div key={param.testId} className="form-group">
-              <p>Array parameter: {param.name}</p>
+              <p>Array parameter: {param.name}{param.unitName ? ` [${param.unitName}]` : ''}</p>
               {!measurement.isReadonly && (
                 <button type="button" onClick={() => openArrayItemDialog(param)} className="action-button primary small-button">+</button>
               )}
@@ -486,7 +487,7 @@ const TestFormDetailView: React.FC<Props> = ({
               <table className="data-table">
                 <thead>
                   <tr>
-                    {group.map(p => <th key={p.testId}>{p.name}</th>)}
+                    {group.map(p => <th key={p.testId}>{p.name}{p.unitName ? ` [${p.unitName}]` : ''}</th>)}
                     {!measurement.isReadonly && <th>Actions</th>}
                   </tr>
                 </thead>

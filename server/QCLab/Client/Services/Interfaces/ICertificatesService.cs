@@ -20,7 +20,7 @@ namespace QCLab.Client.Services.Interfaces
         Task<bool> HasExistingValidCertificates(long id);
         Task SubmitCertificate(long id, CertificateActionDto dto);
         Task CancelCertificate(long id, CertificateActionDto dto);
-        Task DeleteCertificate(long id);
+        Task DeleteCertificate(long id, long userId);
         Task<byte[]?> GetCertificatePdf(long id);
         Task<byte[]?> ExportCertificatesExcel(
             bool isQCPersonnel,

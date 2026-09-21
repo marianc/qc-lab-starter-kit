@@ -42,6 +42,12 @@ public class TestDto
     public long TypeId { get; set; }
 
     public string TypeName { get; set; } = string.Empty;
+    public bool IsArray { get; set; }
+    public bool IsParam { get; set; }
+    public bool ForEnvironmentalControl { get; set; }
+    public bool ForCertification { get; set; }
+    public decimal? RelativeUncertaintyPct { get; set; }
+    public decimal? DefaultCoverageFactorK { get; set; }
     public long? UnitId { get; set; }
     public string? UnitName { get; set; }
     public long? NormId { get; set; }
@@ -51,11 +57,6 @@ public class TestDto
 
     public long? SopId { get; set; }
 
-    public bool IsParam { get; set; }
-    public bool IsArray { get; set; }
-    public bool ForCertification { get; set; }
-    public decimal? RelativeUncertaintyPct { get; set; }
-    public decimal? DefaultCoverageFactorK { get; set; }
     public bool IsFormValidated { get; set; }
     public long NrOrd { get; set; }
     public bool IsObsolete { get; set; }
@@ -82,18 +83,23 @@ public class CreateTestDto
     [StringLength(50, MinimumLength = 3, ErrorMessage = "Name must be between 3 and 50 characters.")]
     public required string Name { get; set; }
 
-    public string? Description { get; set; }
-
     [Required(ErrorMessage = "Code is required.")]
     [Unique("Test", ErrorMessage = "Test code is already in use.")]
     [StringLength(50, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 50 characters.")]
     [RegularExpression(@"^(?!.*__)[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z0-9]$", ErrorMessage = "Code must start with a letter, end with an alphanumeric character, contain only alphanumeric characters and underscores, and cannot have consecutive underscores.")]
     public required string Code { get; set; }
 
+    public string? Description { get; set; }
+
     [Range(1, long.MaxValue, ErrorMessage = "Value Type is required.")]
     public long TypeId { get; set; }
 
+    public bool IsArray { get; set; }
     public bool IsParam { get; set; }
+    public bool ForEnvironmentalControl { get; set; }
+    public bool ForCertification { get; set; }
+    public decimal? RelativeUncertaintyPct { get; set; }
+    public decimal? DefaultCoverageFactorK { get; set; }
     public long? UnitId { get; set; }
     public long? NormId { get; set; }
 
@@ -104,10 +110,6 @@ public class CreateTestDto
 
     public long NrOrd { get; set; }
     public bool IsObsolete { get; set; }
-    public bool IsArray { get; set; }
-    public bool ForCertification { get; set; }
-    public decimal? RelativeUncertaintyPct { get; set; }
-    public decimal? DefaultCoverageFactorK { get; set; }
     public List<CreateTestEnumDto>? Enums { get; set; }
 }
 

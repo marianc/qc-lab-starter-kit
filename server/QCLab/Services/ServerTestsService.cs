@@ -31,16 +31,17 @@ public class ServerTestsService : ITestsService
             Description = test.Description,
             TypeId = test.TypeId,
             TypeName = test.Type.Name,
+            IsArray = test.IsArray,
+            IsParam = test.IsParam,
+            ForCertification = test.ForCertification,
+            ForEnvironmentalControl = test.ForEnvironmentalControl,
+            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
+            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             UnitId = test.UnitId,
             UnitName = test.Unit?.Name,
             NormId = test.NormId,
             NormRef = test.NormRef,
             SopId = test.SopId,
-            IsParam = test.IsParam,
-            IsArray = test.IsArray,
-            ForCertification = test.ForCertification,
-            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
-            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             IsFormValidated = test.IsFormValidated,
             NrOrd = test.NrOrd,
             IsObsolete = test.IsObsolete,
@@ -101,16 +102,17 @@ public class ServerTestsService : ITestsService
             Description = test.Description,
             TypeId = test.TypeId,
             TypeName = test.Type.Name,
+            IsArray = test.IsArray,
+            IsParam = test.IsParam,
+            ForEnvironmentalControl = test.ForEnvironmentalControl,
+            ForCertification = test.ForCertification,
+            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
+            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             UnitId = test.UnitId,
             UnitName = test.Unit?.Name,
             NormId = test.NormId,
             NormRef = test.NormRef,
             SopId = test.SopId,
-            IsParam = test.IsParam,
-            IsArray = test.IsArray,
-            ForCertification = test.ForCertification,
-            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
-            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
             IsFormValidated = test.IsFormValidated,
             NrOrd = test.NrOrd,
             IsObsolete = test.IsObsolete,
@@ -231,19 +233,21 @@ public class ServerTestsService : ITestsService
         var test = new Test
         {
             Name = newTest.Name,
-            Description = newTest.Description,
             Code = newTest.Code,
+            Description = newTest.Description,
             TypeId = newTest.TypeId,
+            IsArray = newTest.IsArray,
             IsParam = newTest.IsParam,
+            ForCertification = newTest.ForCertification,
+            ForEnvironmentalControl = newTest.IsParam ? false : newTest.ForEnvironmentalControl,
+            RelativeUncertaintyPct = newTest.ForCertification ? newTest.RelativeUncertaintyPct : null,
+            DefaultCoverageFactorK = newTest.ForCertification ? newTest.DefaultCoverageFactorK : null,
             UnitId = newTest.UnitId,
             NormId = newTest.NormId,
             NormRef = newTest.NormRef,
+            SopId = newTest.SopId,
             NrOrd = newTest.NrOrd,
             IsObsolete = newTest.IsObsolete,
-            IsArray = newTest.IsArray,
-            ForCertification = newTest.ForCertification,
-            RelativeUncertaintyPct = newTest.ForCertification ? newTest.RelativeUncertaintyPct : null,
-            DefaultCoverageFactorK = newTest.ForCertification ? newTest.DefaultCoverageFactorK : null,
             DateCreated = DateTime.UtcNow
         };
 
@@ -300,20 +304,21 @@ public class ServerTestsService : ITestsService
             if (test == null) throw new ArgumentException("Test not found");
 
             test.Name = testData.Name;
-            test.Description = testData.Description;
             test.Code = testData.Code;
+            test.Description = testData.Description;
             test.TypeId = testData.TypeId;
+            test.IsArray = testData.IsArray;
             test.IsParam = testData.IsParam;
+            test.ForCertification = testData.ForCertification;
+            test.ForEnvironmentalControl = testData.IsParam ? false : testData.ForEnvironmentalControl;
+            test.RelativeUncertaintyPct = testData.ForCertification ? testData.RelativeUncertaintyPct : null;
+            test.DefaultCoverageFactorK = testData.ForCertification ? testData.DefaultCoverageFactorK : null;
             test.UnitId = testData.UnitId;
             test.NormId = testData.NormId;
             test.NormRef = testData.NormRef;
             test.SopId = testData.SopId;
             test.NrOrd = testData.NrOrd;
             test.IsObsolete = testData.IsObsolete;
-            test.IsArray = testData.IsArray;
-            test.ForCertification = testData.ForCertification;
-            test.RelativeUncertaintyPct = testData.ForCertification ? testData.RelativeUncertaintyPct : null;
-            test.DefaultCoverageFactorK = testData.ForCertification ? testData.DefaultCoverageFactorK : null;
 
             if (test.TypeId != 4)
             {

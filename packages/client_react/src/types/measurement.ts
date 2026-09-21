@@ -57,14 +57,12 @@ export interface CreateMeasurementDto {
   comments: string | null;
   isReported: boolean;
   formId: number | null;
-  userUpdateId: number;
 }
 
 export interface UpdateMeasurementTestBulkDto {
   comments: string | null;
   useDefaultEquipment: boolean;
   isReported: boolean;
-  userUpdateId: number;
   tests?: MeasurementTestDto[];
 }
 
@@ -72,7 +70,6 @@ export interface UpdateMeasurementParamDto {
   comments: string | null;
   useDefaultEquipment: boolean;
   isReported: boolean;
-  userUpdateId: number;
   measurementData: Record<string, any>;
 }
 

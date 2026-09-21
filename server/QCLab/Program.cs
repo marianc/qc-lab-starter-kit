@@ -270,11 +270,12 @@ namespace QCLab
             apiGroup.MapGet("/certificates/{id}/analyze_results", (long id, ICertificatesService s) => s.AnalyzeResults(id));
             apiGroup.MapPut("/certificates/{id}/submit", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.SubmitCertificate(id, dto));
             apiGroup.MapPut("/certificates/{id}/cancel", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.CancelCertificate(id, dto));
-            apiGroup.MapDelete("/certificates/{id}", async (long id, ICertificatesService s) =>
+            apiGroup.MapDelete("/certificates/{id}", async (long id, HttpContext httpContext, ICertificatesService s) =>
             {
                 try
                 {
-                    await s.DeleteCertificate(id);
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    await s.DeleteCertificate(id, userId);
                     return Results.Ok(new { success = true });
                 }
                 catch (UnauthorizedAccessException)
@@ -479,15 +480,52 @@ namespace QCLab
                 await s.UpdateMeasurementReagentLots(id, dto);
                 return Results.Ok();
             });
-            apiGroup.MapPut("/measurement_tests/{id}", (long id, [FromBody] UpdateMeasurementTestBulkDto dto, IMeasurementsService s) => s.UpdateMeasurementTest(id, dto));
-            apiGroup.MapGet("/measurement_params/{id}", (long id, IMeasurementsService s) => s.GetMeasurementParam(id));
-            apiGroup.MapPut("/measurement_params/{id}", (long id, [FromBody] UpdateMeasurementParamDto dto, IMeasurementsService s) => s.UpdateMeasurementParam(id, dto));
-            apiGroup.MapPost("/measurements", ([FromBody] CreateMeasurementDto dto, IMeasurementsService s) => s.CreateMeasurement(dto));
-            apiGroup.MapDelete("/measurements/{id}", (long id, IMeasurementsService s) => s.DeleteMeasurement(id));
-            apiGroup.MapPut("/measurements/{id}/toggle_reported", async (long id, [FromQuery] long userId, IMeasurementsService s) => 
+            apiGroup.MapPut("/measurement_tests/{id}", async (long id, [FromBody] UpdateMeasurementTestBulkDto dto, HttpContext httpContext, IMeasurementsService s) => 
             {
                 try
                 {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    await s.UpdateMeasurementTest(id, dto, userId);
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+            apiGroup.MapGet("/measurement_params/{id}", (long id, IMeasurementsService s) => s.GetMeasurementParam(id));
+            apiGroup.MapPut("/measurement_params/{id}", async (long id, [FromBody] UpdateMeasurementParamDto dto, HttpContext httpContext, IMeasurementsService s) => 
+            {
+                try
+                {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    await s.UpdateMeasurementParam(id, dto, userId);
+                    return Results.Ok();
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+            apiGroup.MapPost("/measurements", async ([FromBody] CreateMeasurementDto dto, HttpContext httpContext, IMeasurementsService s) => 
+            {
+                try
+                {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    var res = await s.CreateMeasurement(dto, userId);
+                    return Results.Ok(res);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+            apiGroup.MapDelete("/measurements/{id}", (long id, IMeasurementsService s) => s.DeleteMeasurement(id));
+            apiGroup.MapPut("/measurements/{id}/toggle_reported", async (long id, HttpContext httpContext, IMeasurementsService s) => 
+            {
+                try
+                {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                     await s.ToggleReported(id, userId);
                     return Results.Ok();
                 }

@@ -30,6 +30,7 @@ type TestFormValues = {
   typeId: number;
   isArray: boolean;
   isParam: boolean;
+  forEnvironmentalControl: boolean;
   forCertification: boolean;
   relativeUncertaintyPct: number | null;
   defaultCoverageFactorK: number | null;
@@ -70,6 +71,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       typeId: undefined as any,
       isArray: false,
       isParam: false,
+      forEnvironmentalControl: false,
       forCertification: false,
       relativeUncertaintyPct: null,
       defaultCoverageFactorK: null,
@@ -86,6 +88,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   const watchTypeId = watch('typeId');
   const watchId = watch('id');
   const watchForCertification = watch('forCertification');
+  const watchForEnvironmentalControl = watch('forEnvironmentalControl');
   const watchIsParam = watch('isParam');
 
   useEffect(() => {
@@ -96,7 +99,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
         normsService.getAllNorms(),
         valueTypesService.getAllValueTypes()
       ]).then(([u, n, vt]) => {
-        setUnits(u);
+        setUnits([...u].sort((a, b) => a.name.localeCompare(b.name)));
         setNorms(n);
         setValueTypes(vt);
 
@@ -115,6 +118,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
               typeId: testData.typeId,
               isArray: testData.isArray,
               isParam: testData.isParam,
+              forEnvironmentalControl: testData.forEnvironmentalControl,
               forCertification: testData.forCertification,
               relativeUncertaintyPct: testData.relativeUncertaintyPct ?? null,
               defaultCoverageFactorK: testData.defaultCoverageFactorK ?? null,
@@ -140,6 +144,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             typeId: undefined as any,
             isArray: false,
             isParam: false,
+            forEnvironmentalControl: false,
             forCertification: false,
             relativeUncertaintyPct: null,
             defaultCoverageFactorK: null,
@@ -197,7 +202,16 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
     if (watchIsParam && watchForCertification) {
       setValue('forCertification', false);
     }
-  }, [watchIsParam, watchForCertification, setValue]);
+    if (watchIsParam && watchForEnvironmentalControl) {
+      setValue('forEnvironmentalControl', false);
+    }
+    if (watchIsParam) {
+      setValue('forEnvironmentalControl', false);
+    }
+    if (watchForEnvironmentalControl) {
+      setValue('isParam', false);
+    }
+  }, [watchIsParam, watchForCertification, watchForEnvironmentalControl, setValue]);
 
   const validateUniqueness = async (property: "Name" | "Code"): Promise<boolean> => {
     const value = getValues(property.toLowerCase() as any);
@@ -313,10 +327,17 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             <label htmlFor="is_array">Is Array</label>
           </div>
 
-          {!watchForCertification && (
+          {!watchForCertification && !watchForEnvironmentalControl && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="is_param" {...register('isParam')} disabled={Boolean(testData?.isFormValidated)} />
               <label htmlFor="is_param">Is Parameter</label>
+            </div>
+          )}
+
+          {!watchIsParam && (
+            <div className={`form-group ${styles.checkboxGroup}`}>
+              <input type="checkbox" id="for_environmental_control" {...register('forEnvironmentalControl')} />
+              <label htmlFor="for_environmental_control">For Environmental Control</label>
             </div>
           )}
 

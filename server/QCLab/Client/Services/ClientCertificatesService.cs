@@ -74,7 +74,7 @@ public class ClientCertificatesService(HttpClient httpClient) : ICertificatesSer
         if (!response.IsSuccessStatusCode) await HandleErrorResponse(response);
     }
 
-    public async Task DeleteCertificate(long id)
+    public async Task DeleteCertificate(long id, long userId)
     {
         var response = await httpClient.DeleteAsync($"/api/certificates/{id}");
         if (!response.IsSuccessStatusCode) await HandleErrorResponse(response);

@@ -143,7 +143,7 @@ public class ServerMeasurementsService : IMeasurementsService
     }
 
     // POST /measurements
-    public async Task<IdDto> CreateMeasurement(CreateMeasurementDto dto)
+    public async Task<IdDto> CreateMeasurement(CreateMeasurementDto dto, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -155,7 +155,8 @@ public class ServerMeasurementsService : IMeasurementsService
                 UseDefaultEquipment = true,
                 IsReported = dto.IsReported,
                 FormId = dto.FormId,
-                UserUpdateId = dto.UserUpdateId,
+                UserCreatedId = userId,
+                UserUpdateId = userId,
                 DateUpdate = DateTime.UtcNow
             };
 
@@ -173,7 +174,7 @@ public class ServerMeasurementsService : IMeasurementsService
     }
 
     // PUT /measurement_tests/{id}
-    public async Task UpdateMeasurementTest(long id, UpdateMeasurementTestBulkDto dto)
+    public async Task UpdateMeasurementTest(long id, UpdateMeasurementTestBulkDto dto, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -185,7 +186,8 @@ public class ServerMeasurementsService : IMeasurementsService
             measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
             measurement.IsReported = false;
             measurement.UserReportedId = null;
-            measurement.UserUpdateId = dto.UserUpdateId;
+            measurement.DateReported = null;
+            measurement.UserUpdateId = userId;
             measurement.DateUpdate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -267,7 +269,7 @@ public class ServerMeasurementsService : IMeasurementsService
         }
     }
 
-    public async Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto)
+    public async Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -278,7 +280,7 @@ public class ServerMeasurementsService : IMeasurementsService
             measurement.Comments = dto.Comments;
             measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
             measurement.IsReported = dto.IsReported;
-            measurement.UserUpdateId = dto.UserUpdateId;
+            measurement.UserUpdateId = userId;
             measurement.DateUpdate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -342,6 +344,7 @@ public class ServerMeasurementsService : IMeasurementsService
             {
                 measurement.IsReported = false;
                 measurement.UserReportedId = null;
+                measurement.DateReported = null;
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return;
@@ -351,6 +354,7 @@ public class ServerMeasurementsService : IMeasurementsService
             {
                 measurement.IsReported = true;
                 measurement.UserReportedId = userId;
+                measurement.DateReported = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
             else
@@ -384,6 +388,7 @@ public class ServerMeasurementsService : IMeasurementsService
 
                 measurement.IsReported = true;
                 measurement.UserReportedId = userId;
+                measurement.DateReported = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
 
@@ -842,9 +847,10 @@ public class ServerMeasurementsService : IMeasurementsService
         }
         var formId = measurement.FormId.Value;
 
-        // Ensure is_reported is set to false and UserReportedId is cleared when saving measurement params
+        // Ensure is_reported is set to false, UserReportedId is cleared, and DateReported is cleared when saving measurement params
         measurement.IsReported = false;
         measurement.UserReportedId = null;
+        measurement.DateReported = null;
         await _context.SaveChangesAsync();
 
         var formParamsSchema = await _formsService.GetFormParams(formId);

@@ -42,8 +42,8 @@ const measurementsService = {
     await apiClient.delete(`api/measurements/${id}`);
   },
 
-  async toggleReported(id: number, userId: number): Promise<void> {
-    await apiClient.put(`api/measurements/${id}/toggle_reported?userId=${userId}`, null);
+  async toggleReported(id: number): Promise<void> {
+    await apiClient.put(`api/measurements/${id}/toggle_reported`, null);
   },
 
   async addMeasurementTest(id: number, dto: AddMeasurementTestDto): Promise<IdDto> {

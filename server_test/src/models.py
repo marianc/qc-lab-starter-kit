@@ -779,7 +779,7 @@ class Measurements(Base):
     date_update: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('1'))
+    user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     form_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     comments: Mapped[Optional[str]] = mapped_column(Text)

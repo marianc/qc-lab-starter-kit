@@ -10,7 +10,8 @@ import {
 } from '../../common/ui';
 import { 
   ConfirmationDialog, 
-  CommentDialog 
+  CommentDialog,
+  NotificationDialog 
 } from '../../common';
 import FormDialog from './FormDialog';
 import FormParamDialog from './FormParamDialog';
@@ -243,12 +244,14 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
         code: newTest.code,
         description: newTest.description,
         typeId: newTest.typeId,
+        isArray: newTest.isArray,
         isParam: newTest.isParam,
+        forEnvironmentalControl: newTest.forEnvironmentalControl,
+        forCertification: newTest.forCertification,
         unitId: newTest.unitId,
         normId: newTest.normId,
         normRef: newTest.normRef,
-        isArray: newTest.isArray,
-        forCertification: newTest.forCertification,
+        sopId: newTest.sopId,
         nrOrd: newTest.nrOrd,
         isObsolete: false,
         enums: newTest.enums?.map(e => ({ name: e.name, value: e.value, nrOrd: e.nrOrd }))
@@ -692,6 +695,13 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
         <ConfirmationDialog open={showConfirmDeleteParam} title="Delete Parameter" message="Are you sure you want to delete this form parameter?" onConfirm={handleDeleteParam} onCancel={() => setShowConfirmDeleteParam(false)} />
         <ConfirmationDialog open={showConfirmDeleteEval} title="Delete Test Data" message="Are you sure you want to delete this test case?" onConfirm={handleDeleteEval} onCancel={() => setShowConfirmDeleteEval(false)} />
         <ConfirmationDialog open={showConfirmReactivate} title="Reactivate Form" message="Are you sure you want to reactivate this form?" onConfirm={handleReactivateForm} onCancel={() => setShowConfirmReactivate(false)} />
+        
+        <NotificationDialog 
+          open={!!error} 
+          title="Error" 
+          message={error || ""} 
+          onClose={() => setError(null)} 
+        />
       </DetailViewContent>
     </DetailView>
   );

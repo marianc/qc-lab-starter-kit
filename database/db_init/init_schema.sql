@@ -629,7 +629,7 @@ CREATE TABLE public.measurements (
     date_reported timestamp with time zone,
     is_readonly boolean DEFAULT false NOT NULL,
     date_readonly timestamp with time zone,
-    user_created_id bigint DEFAULT 1 NOT NULL,
+    user_created_id bigint NOT NULL,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 

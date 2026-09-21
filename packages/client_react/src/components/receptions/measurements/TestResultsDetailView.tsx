@@ -194,7 +194,6 @@ const TestResultsDetailView: React.FC<Props> = ({
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
-        userUpdateId: currentUser.id,
         tests
       });
 
@@ -218,7 +217,6 @@ const TestResultsDetailView: React.FC<Props> = ({
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
-        userUpdateId: currentUser.id,
         tests: newTests
       });
       fetchMeasurement();
@@ -234,7 +232,6 @@ const TestResultsDetailView: React.FC<Props> = ({
         comments: comment,
         useDefaultEquipment: useDefaultEquipment,
         isReported: measurement.isReported,
-        userUpdateId: currentUser.id,
         tests: measurement.tests
       });
       setShowCommentDialog(false);

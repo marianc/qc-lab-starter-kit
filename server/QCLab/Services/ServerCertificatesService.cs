@@ -9,13 +9,11 @@ namespace QCLab.Services;
 public class ServerCertificatesService : ICertificatesService
 {
     private readonly QualityControlContext _context;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ElectronicSignatureService _signatureService;
 
-    public ServerCertificatesService(QualityControlContext context, IHttpContextAccessor httpContextAccessor, ElectronicSignatureService signatureService)
+    public ServerCertificatesService(QualityControlContext context, ElectronicSignatureService signatureService)
     {
         _context = context;
-        _httpContextAccessor = httpContextAccessor;
         _signatureService = signatureService;
     }
 
@@ -825,34 +823,11 @@ public class ServerCertificatesService : ICertificatesService
     }
 
     // DELETE /certificates/{id}
-    public async Task DeleteCertificate(long id)
+    public async Task DeleteCertificate(long id, long userId)
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null || httpContext.User.Identity?.IsAuthenticated != true)
-        {
-            throw new UnauthorizedAccessException("User is not authenticated.");
-        }
-
-        long userId = 0;
-        var nameIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (nameIdClaim != null && long.TryParse(nameIdClaim.Value, out var parsedId))
-        {
-            userId = parsedId;
-        }
-
         if (userId == 0)
         {
-            var emailClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email);
-            if (emailClaim != null)
-            {
-                var dbUsr = await _context.Users.FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
-                if (dbUsr != null) userId = dbUsr.Id;
-            }
-        }
-
-        if (userId == 0)
-        {
-            throw new UnauthorizedAccessException("Could not determine user identity from session.");
+            throw new UnauthorizedAccessException("User ID is required.");
         }
 
         // Verify user is is_qc_pers = true

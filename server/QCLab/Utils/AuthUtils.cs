@@ -1,9 +1,21 @@
+using System.Security.Claims;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 
 namespace QCLab.Utils;
 
 public static class AuthUtils
 {
+    public static long GetCurrentUserId(HttpContext? httpContext)
+    {
+        var userIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (long.TryParse(userIdClaim, out long userId) && userId > 0)
+        {
+            return userId;
+        }
+        return 1L; // Fallback or throw if required
+    }
+
     public static (bool isValid, string message) IsStrongPassword(string password)
     {
         if (password.Length < 8)

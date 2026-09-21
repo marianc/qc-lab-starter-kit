@@ -6,9 +6,9 @@ namespace QCLab.Client.Services.Interfaces
     {
         Task<MeasurementTestDetailDto?> GetMeasurementTest(long id);
         Task<MeasurementParamDetailDto?> GetMeasurementParam(long id);
-        Task<IdDto> CreateMeasurement(CreateMeasurementDto dto);
-        Task UpdateMeasurementTest(long id, UpdateMeasurementTestBulkDto dto);
-        Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto);
+        Task<IdDto> CreateMeasurement(CreateMeasurementDto dto, long userId);
+        Task UpdateMeasurementTest(long id, UpdateMeasurementTestBulkDto dto, long userId);
+        Task UpdateMeasurementParam(long id, UpdateMeasurementParamDto dto, long userId);
         Task DeleteMeasurement(long id);
         Task ToggleReported(long id, long userId);
         Task<List<TestEquipmentDto>> GetMeasurementEquipments(long id);

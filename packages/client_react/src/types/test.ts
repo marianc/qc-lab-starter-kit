@@ -13,16 +13,17 @@ export interface TestDto {
   description?: string | null;
   typeId: number;
   typeName: string;
+  isArray: boolean;
+  isParam: boolean;
+  forEnvironmentalControl: boolean;
+  forCertification: boolean;
+  relativeUncertaintyPct?: number | null;
+  defaultCoverageFactorK?: number | null;
   unitId?: number | null;
   unitName?: string | null;
   normId?: number | null;
   normRef?: string | null;
   sopId?: number | null;
-  isParam: boolean;
-  isArray: boolean;
-  forCertification: boolean;
-  relativeUncertaintyPct?: number | null;
-  defaultCoverageFactorK?: number | null;
   isFormValidated: boolean;
   nrOrd: number;
   isObsolete: boolean;
@@ -41,20 +42,21 @@ export interface CreateTestEnumDto {
 
 export interface CreateTestDto {
   name: string;
-  description?: string | null;
   code: string;
+  description?: string | null;
   typeId: number;
+  isArray: boolean;
   isParam: boolean;
+  forEnvironmentalControl: boolean;
+  forCertification: boolean;
+  relativeUncertaintyPct?: number | null;
+  defaultCoverageFactorK?: number | null;
   unitId?: number | null;
   normId?: number | null;
   normRef?: string | null;
   sopId?: number | null;
   nrOrd: number;
   isObsolete: boolean;
-  isArray: boolean;
-  forCertification: boolean;
-  relativeUncertaintyPct?: number | null;
-  defaultCoverageFactorK?: number | null;
   enums?: CreateTestEnumDto[] | null;
 }
 

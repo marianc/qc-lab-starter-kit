@@ -206,8 +206,7 @@ const TestingFormA: React.FC<Props> = ({
           receptionId: measurement.receptionId,
           formId: measurement.formId,
             comments: measurement.comments || null,
-          isReported: measurement.isReported,
-          userUpdateId: currentUser.id
+          isReported: measurement.isReported
         });
         finalId = res.id;
       }
@@ -240,7 +239,6 @@ const TestingFormA: React.FC<Props> = ({
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
-        userUpdateId: currentUser.id,
         measurementData: dataToSave
       });
       onClose();
@@ -283,6 +281,19 @@ const TestingFormA: React.FC<Props> = ({
     return "-";
   };
 
+  const getParamLabel = (code: string, defaultLabel: string) => {
+    const f = allForms.find(form => form.id === formId);
+    if (!f || !f.formParams) return defaultLabel;
+    const fp = f.formParams.find(p => {
+      const test = allTests.find(t => t.id === p.testId);
+      return test?.code === code;
+    });
+    if (!fp) return defaultLabel;
+    const test = allTests.find(t => t.id === fp.testId);
+    if (!test) return defaultLabel;
+    return `${test.name}${test.unitName ? ` [${test.unitName}]` : ''}:`;
+  };
+
   const getEnumName = (value: any) => {
     if (value === null || value === undefined) return "";
     const item = enumParamAc.find(i => i.value.toString() === value.toString());
@@ -322,7 +333,7 @@ const TestingFormA: React.FC<Props> = ({
           <h2>Form A Data</h2>
 
           <div className="form-group">
-            <label htmlFor="param_aa">Parameter AA:</label>
+            <label htmlFor="param_aa">{getParamLabel('param_aa', 'Parameter AA:')}</label>
             {measurement.isReadonly ? (
               <p>{formData.param_aa}</p>
             ) : (
@@ -337,7 +348,7 @@ const TestingFormA: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="param_ab">Parameter AB:</label>
+            <label htmlFor="param_ab">{getParamLabel('param_ab', 'Parameter AB:')}</label>
             {measurement.isReadonly ? (
               <p>{formData.param_ab}</p>
             ) : (
@@ -352,7 +363,7 @@ const TestingFormA: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="param_ac">Parameter AC:</label>
+            <label htmlFor="param_ac">{getParamLabel('param_ac', 'Parameter AC:')}</label>
             {measurement.isReadonly ? (
               <p>{getEnumName(formData.param_ac)}</p>
             ) : (
@@ -371,7 +382,7 @@ const TestingFormA: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="param_ad">Parameter AD:</label>
+            <label htmlFor="param_ad">{getParamLabel('param_ad', 'Parameter AD:')}</label>
             {measurement.isReadonly ? (
               <p>{formData.param_ad}</p>
             ) : (
@@ -386,7 +397,7 @@ const TestingFormA: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="param_ae">Parameter AE:</label>
+            <label htmlFor="param_ae">{getParamLabel('param_ae', 'Parameter AE:')}</label>
             {measurement.isReadonly ? (
               <p>{getBooleanDisplay(formData.param_ae)}</p>
             ) : (
@@ -404,7 +415,7 @@ const TestingFormA: React.FC<Props> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="param_af">Parameter AF:</label>
+            <label htmlFor="param_af">{getParamLabel('param_af', 'Parameter AF:')}</label>
             {measurement.isReadonly ? (
               <p>{formData.param_af}</p>
             ) : (

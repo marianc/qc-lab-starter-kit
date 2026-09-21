@@ -123,6 +123,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
         typeId: updatedTest.typeId,
         isArray: updatedTest.isArray,
         isParam: updatedTest.isParam,
+        forEnvironmentalControl: updatedTest.forEnvironmentalControl,
         forCertification: updatedTest.forCertification,
         relativeUncertaintyPct: updatedTest.relativeUncertaintyPct,
         defaultCoverageFactorK: updatedTest.defaultCoverageFactorK,
@@ -255,6 +256,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               <DetailItem label="Value Type" value={test.typeName} />
               <DetailItem label="Is Array" value={test.isArray ? "Yes" : "No"} />
               <DetailItem label="Is Parameter" value={test.isParam ? "Yes" : "No"} />
+              <DetailItem label="For Environmental Control" value={test.forEnvironmentalControl ? "Yes" : "No"} />
               <DetailItem label="For Certification" value={test.forCertification ? "Yes" : "No"} />
               {test.forCertification && (
                 <>
@@ -268,8 +270,8 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               <DetailItem label="Norm" value={norms.find(n => n.id === test.normId)?.name || "-"} />
               <DetailItem label="Norm Ref" value={test.normRef || "-"} />
               <DetailItem label="SOP" value={sops.find(s => s.id === test.sopId) ? `${sops.find(s => s.id === test.sopId)?.docCode} - ${sops.find(s => s.id === test.sopId)?.title}` : "-"} />
-              <DetailItem label="Order" value={test.nrOrd} />
               <DetailItem label="Is Form Validated" value={test.isFormValidated ? "Yes" : "No"} />
+              <DetailItem label="Order" value={test.nrOrd} />
               <DetailItem label="Date Created" value={formatDate(test.dateCreated)} />
               <DetailItem label="Is Obsolete" value={test.isObsolete ? "Yes" : "No"} />
               {test.isObsolete && (

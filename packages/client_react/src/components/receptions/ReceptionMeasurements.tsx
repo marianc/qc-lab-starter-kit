@@ -120,7 +120,7 @@ const ReceptionMeasurements: React.FC<Props> = ({
     if (!currentUser) return;
     setErrorMessage(null);
     try {
-      await measurementsService.toggleReported(mid, currentUser.id);
+      await measurementsService.toggleReported(mid);
       await fetchMeasurements();
     } catch (err: any) {
       setErrorMessage(err.message);
@@ -218,7 +218,6 @@ const ReceptionMeasurements: React.FC<Props> = ({
     try {
       const res = await measurementsService.createMeasurement({
         receptionId: reception.id,
-        userUpdateId: currentUser.id,
         isReported: false,
         comments: null,
         formId: null

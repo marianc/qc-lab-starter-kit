@@ -911,7 +911,11 @@ public class ServerFormsService : IFormsService
             if (testIds.Count > 0)
             {
                 var tests = await _context.Tests.Where(t => testIds.Contains(t.Id)).ToListAsync();
-                foreach (var t in tests) t.IsFormValidated = true;
+                foreach (var t in tests)
+                {
+                    t.IsFormValidated = true;
+                    t.DateFormValidated = DateTime.UtcNow;
+                }
             }
 
             await SaveChangesWithDetailedException();

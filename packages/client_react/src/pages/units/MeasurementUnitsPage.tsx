@@ -85,6 +85,7 @@ const MeasurementUnitsPage: React.FC = () => {
           <tr>
             <th>ID</th>
             <th>Name</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -93,6 +94,7 @@ const MeasurementUnitsPage: React.FC = () => {
             <tr key={unit.id} className={unit.id === lastEditedUnitId ? "highlighted-row" : ""}>
               <td>{unit.id}</td>
               <td>{unit.name}</td>
+              <td>{unit.description || '-'}</td>
               <td>
                 <button onClick={() => openDetail(unit.id)} className="action-button edit-button small-button">Details</button>
               </td>

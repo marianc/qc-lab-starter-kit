@@ -16,6 +16,7 @@ export const testSchema = z.object({
   typeId: z.coerce.number().min(1, "Value Type is required."),
   isArray: z.boolean(),
   isParam: z.boolean(),
+  forEnvironmentalControl: z.boolean(),
   forCertification: z.boolean(),
   relativeUncertaintyPct: z.coerce.number().optional().nullable(),
   defaultCoverageFactorK: z.coerce.number().optional().nullable(),

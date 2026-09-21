@@ -83,6 +83,7 @@ export interface FormParamDto {
   name: string;
   typeId: number;
   isArray: boolean;
+  unitName?: string | null;
   dependencies: string;
   isFormSubmitted: boolean;
   hasCondition: boolean;

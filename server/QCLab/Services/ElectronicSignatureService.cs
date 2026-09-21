@@ -296,7 +296,7 @@ public class ElectronicSignatureService
                 if (form == null) throw new ArgumentException($"Form {entityId} not found.");
 
                 var formParams = form.FormParams?
-                    .Select(fp => new { fp.TestId, fp.IsCalculated, fp.Formula, fp.CodeRelatedArrays, fp.IsRequired, fp.DefaultValue, fp.NrOrd })
+                    .Select(fp => new { fp.TestId, fp.IsCalculated, fp.Formula, fp.CodeRelatedArrays, fp.IsRequired, fp.DefaultValue, fp.NrOrd, fp.NrOrdCalc, fp.HasCondition, fp.Condition, fp.ConditionNote })
                     .OrderBy(fp => fp.NrOrd)
                     .ToList() ?? new();
 

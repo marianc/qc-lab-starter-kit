@@ -75,7 +75,6 @@ public class CreateMeasurementDto
     public string? Comments { get; set; }
     public bool IsReported { get; set; }
     public long? FormId { get; set; }
-    public long UserUpdateId { get; set; }
 }
 
 public class UpdateMeasurementTestBulkDto
@@ -83,7 +82,6 @@ public class UpdateMeasurementTestBulkDto
     public string? Comments { get; set; }
     public bool UseDefaultEquipment { get; set; }
     public bool IsReported { get; set; }
-    public long UserUpdateId { get; set; }
     public List<MeasurementTestDto>? Tests { get; set; }
 }
 
@@ -92,7 +90,6 @@ public class UpdateMeasurementParamDto
     public string? Comments { get; set; }
     public bool UseDefaultEquipment { get; set; }
     public bool IsReported { get; set; }
-    public long UserUpdateId { get; set; }
     public Dictionary<string, object?> MeasurementData { get; set; } = new();
 }
 

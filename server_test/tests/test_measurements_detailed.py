@@ -14,8 +14,7 @@ def test_create_measurement_no_form(migrated_db, auth_session, base_url, db_sess
         "receptionId": 8,
         "comments": None,
         "isReported": False,
-        "formId": None,
-        "userUpdateId": 1
+        "formId": None
     }
     
     initial_count = db_session.query(Measurements).count()
@@ -33,6 +32,7 @@ def test_create_measurement_no_form(migrated_db, auth_session, base_url, db_sess
     assert db_m.is_reported is False
     assert db_m.form_id is None
     assert db_m.user_update_id == 1
+    assert db_m.user_created_id == 1
     assert db_m.date_update is not None
 
 def test_update_measurement_test_24_comments_only(migrated_db, auth_session, base_url, db_session):
@@ -45,7 +45,6 @@ def test_update_measurement_test_24_comments_only(migrated_db, auth_session, bas
     payload_baseline = {
         "comments": "original",
         "isReported": False,
-        "userUpdateId": 1,
         "tests": [{"testId": 1, "value": 54, "note": "*"}]
     }
     auth_session.put(url, json=payload_baseline)
@@ -53,7 +52,6 @@ def test_update_measurement_test_24_comments_only(migrated_db, auth_session, bas
     payload = {
         "comments": "- gf hdfgh dfgh dfgh dfg\n- cv bcvbn cvbn cvbncbn",
         "isReported": False,
-        "userUpdateId": 1,
         "tests": [
             {
                 "testId": 1,
@@ -69,6 +67,7 @@ def test_update_measurement_test_24_comments_only(migrated_db, auth_session, bas
     db_session.expire_all()
     db_m = db_session.query(Measurements).filter(Measurements.id == 24).first()
     assert db_m.comments == payload["comments"]
+    assert db_m.user_update_id == 1
     
     # Verify tests didn't change content-wise (though they might be replaced in DB)
     db_tests = db_session.query(MeasurementTests).filter(MeasurementTests.measurement_id == 24).all()
@@ -85,7 +84,6 @@ def test_update_measurement_test_24_multi(migrated_db, auth_session, base_url, d
     payload = {
         "comments": "gf hdfgh dfgh dfgh dfg\ncv bcvbn cvbn cvbncbn",
         "isReported": False,
-        "userUpdateId": 1,
         "tests": [
             {
                 "testId": 1,
@@ -197,7 +195,6 @@ def test_update_measurement_params_22(migrated_db, auth_session, base_url, db_se
     payload = {
         "comments": "sdfg sdfg sdfgs dfg",
         "isReported": False,
-        "userUpdateId": 1,
         "measurementData": {
             "param_aa": 345.34,
             "param_ab": 645.6,
@@ -233,8 +230,7 @@ def test_create_measurement_with_form(migrated_db, auth_session, base_url, db_se
         "receptionId": 8,
         "comments": None,
         "isReported": False,
-        "formId": 2,
-        "userUpdateId": 1
+        "formId": 2
     }
     
     response = auth_session.post(url, json=payload)

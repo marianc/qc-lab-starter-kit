@@ -55,6 +55,15 @@ const CertificationDialog: React.FC<Props> = ({
   const watchMaterialId = watch('materialId');
   const watchControlCodeId = watch('controlCodeId');
 
+  const selectedMaterial = materials.find(m => m.id === Number(watchMaterialId));
+  const isReagent = selectedMaterial?.isReagent ?? false;
+
+  useEffect(() => {
+    if (isReagent) {
+      setValue('controlCodeName', '');
+    }
+  }, [isReagent, setValue]);
+
   useEffect(() => {
     if (open) {
       setServerError(null);
@@ -238,26 +247,28 @@ const CertificationDialog: React.FC<Props> = ({
           <div className="form-group">
             <label>Control Code:</label>
             <div className={styles.ccSelectionRow}>
-              <input 
-                type="text"
-                placeholder="Enter new code"
-                className={`form-control ${styles.flex1} ${errors.controlCodeName ? 'invalid' : ''}`}
-                {...register('controlCodeName')}
-                onFocus={onCCInputFocus}
-              />
+              {!isReagent && (
+                <input 
+                  type="text"
+                  placeholder="Enter new code"
+                  className={`form-control ${styles.flex1} ${errors.controlCodeName ? 'invalid' : ''}`}
+                  {...register('controlCodeName')}
+                  onFocus={onCCInputFocus}
+                />
+              )}
               <select 
                 className={`form-control ${styles.flex1} ${errors.controlCodeId ? 'invalid' : ''}`}
                 value={watchControlCodeId || ''}
                 onChange={onCCSelectChange}
               >
-                <option value="">-- Or Select Code --</option>
+                <option value="">{isReagent ? '-- Select Existing Code --' : '-- Or Select Code --'}</option>
                 {filteredCCs.map(c => (
                   <option key={c.id} value={c.id}>{c.code}</option>
                 ))}
               </select>
             </div>
             {errors.controlCodeId && <div className="validation-message">{errors.controlCodeId.message}</div>}
-            {errors.controlCodeName && <div className="validation-message">{errors.controlCodeName.message}</div>}
+            {!isReagent && errors.controlCodeName && <div className="validation-message">{errors.controlCodeName.message}</div>}
           </div>
 
           <div className="form-group">
