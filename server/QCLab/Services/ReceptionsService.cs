@@ -7,14 +7,14 @@ using QCLab.Utils;
 
 namespace QCLab.Services;
 
-public class ServerReceptionsService : IReceptionsService
+public class ReceptionsService : IReceptionsService
 {
     private readonly QualityControlContext _context;
     private readonly IFormsService _formsService;
     private readonly ICertificatesService _certificatesService;
     private readonly ElectronicSignatureService _signatureService;
 
-    public ServerReceptionsService(QualityControlContext context, IFormsService formsService, ICertificatesService certificatesService, ElectronicSignatureService signatureService)
+    public ReceptionsService(QualityControlContext context, IFormsService formsService, ICertificatesService certificatesService, ElectronicSignatureService signatureService)
     {
         _context = context;
         _formsService = formsService;

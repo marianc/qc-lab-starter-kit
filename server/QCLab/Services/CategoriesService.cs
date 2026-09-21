@@ -5,11 +5,11 @@ using QCLab.Client.Services.Interfaces;
 
 namespace QCLab.Services;
 
-public class ServerCategoriesService : ICategoriesService
+public class CategoriesService : ICategoriesService
 {
     private readonly QualityControlContext _context;
 
-    public ServerCategoriesService(QualityControlContext context)
+    public CategoriesService(QualityControlContext context)
     {
         _context = context;
     }

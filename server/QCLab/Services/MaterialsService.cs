@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerMaterialsService : IMaterialsService
+public class MaterialsService : IMaterialsService
 {
     private readonly QualityControlContext _context;
 
-    public ServerMaterialsService(QualityControlContext context)
+    public MaterialsService(QualityControlContext context)
     {
         _context = context;
     }

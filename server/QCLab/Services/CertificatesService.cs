@@ -6,12 +6,12 @@ using QCFormula;
 
 namespace QCLab.Services;
 
-public class ServerCertificatesService : ICertificatesService
+public class CertificatesService : ICertificatesService
 {
     private readonly QualityControlContext _context;
     private readonly ElectronicSignatureService _signatureService;
 
-    public ServerCertificatesService(QualityControlContext context, ElectronicSignatureService signatureService)
+    public CertificatesService(QualityControlContext context, ElectronicSignatureService signatureService)
     {
         _context = context;
         _signatureService = signatureService;

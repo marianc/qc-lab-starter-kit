@@ -11,13 +11,13 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerAuthService : IAuthService
+public class AuthService : IAuthService
 {
     private readonly QualityControlContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IWebHostEnvironment _env;
 
-    public ServerAuthService(QualityControlContext context, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
+    public AuthService(QualityControlContext context, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;

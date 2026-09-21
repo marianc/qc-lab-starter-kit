@@ -7,12 +7,12 @@ using QCLab.Utils;
 
 namespace QCLab.Services;
 
-public class ServerFormEvalsService : IFormEvalsService
+public class FormEvalsService : IFormEvalsService
 {
     private readonly QualityControlContext _context;
     private readonly IServiceProvider _serviceProvider;
 
-    public ServerFormEvalsService(QualityControlContext context, IServiceProvider serviceProvider)
+    public FormEvalsService(QualityControlContext context, IServiceProvider serviceProvider)
     {
         _context = context;
         _serviceProvider = serviceProvider;

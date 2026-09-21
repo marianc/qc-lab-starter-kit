@@ -6,11 +6,11 @@ using QCLab.Utils;
 
 namespace QCLab.Services;
 
-public class ServerUsersService : IUsersService
+public class UsersService : IUsersService
 {
     private readonly QualityControlContext _context;
 
-    public ServerUsersService(QualityControlContext context)
+    public UsersService(QualityControlContext context)
     {
         _context = context;
     }

@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerFormGroupsService : IFormGroupsService
+public class FormGroupsService : IFormGroupsService
 {
     private readonly QualityControlContext _context;
 
-    public ServerFormGroupsService(QualityControlContext context)
+    public FormGroupsService(QualityControlContext context)
     {
         _context = context;
     }

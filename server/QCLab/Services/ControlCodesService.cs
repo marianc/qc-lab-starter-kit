@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerControlCodesService : IControlCodesService
+public class ControlCodesService : IControlCodesService
 {
     private readonly QualityControlContext _context;
 
-    public ServerControlCodesService(QualityControlContext context)
+    public ControlCodesService(QualityControlContext context)
     {
         _context = context;
     }

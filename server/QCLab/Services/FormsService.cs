@@ -6,13 +6,13 @@ using QCFormula;
 
 namespace QCLab.Services;
 
-public class ServerFormsService : IFormsService
+public class FormsService : IFormsService
 {
     private readonly QualityControlContext _context;
     private readonly ElectronicSignatureService _signatureService;
     private readonly IFormEvalsService _evalsService;
 
-    public ServerFormsService(QualityControlContext context, IFormEvalsService evalsService, ElectronicSignatureService signatureService)
+    public FormsService(QualityControlContext context, IFormEvalsService evalsService, ElectronicSignatureService signatureService)
     {
         _context = context;
         _evalsService = evalsService;

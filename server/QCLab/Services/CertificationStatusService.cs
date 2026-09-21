@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerCertificationStatusService : ICertificationStatusService
+public class CertificationStatusService : ICertificationStatusService
 {
     private readonly QualityControlContext _context;
 
-    public ServerCertificationStatusService(QualityControlContext context)
+    public CertificationStatusService(QualityControlContext context)
     {
         _context = context;
     }

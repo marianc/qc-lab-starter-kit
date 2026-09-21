@@ -9,12 +9,12 @@ using QCFormula;
 
 namespace QCLab.Services;
 
-public class ServerMeasurementsService : IMeasurementsService
+public class MeasurementsService : IMeasurementsService
 {
     private readonly QualityControlContext _context;
     private readonly IFormsService _formsService;
 
-    public ServerMeasurementsService(QualityControlContext context, IFormsService formsService)
+    public MeasurementsService(QualityControlContext context, IFormsService formsService)
     {
         _context = context;
         _formsService = formsService;

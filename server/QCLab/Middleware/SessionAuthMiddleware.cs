@@ -12,7 +12,7 @@ public class SessionAuthMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, ServerAuthService authService)
+    public async Task InvokeAsync(HttpContext context, AuthService authService)
     {
         var tenantTag = Environment.GetEnvironmentVariable("TENANT_TAG") ?? "Default";
         var cookieName = $"QCLabSession_{tenantTag}";

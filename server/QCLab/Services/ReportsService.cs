@@ -5,12 +5,12 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerReportsService : IReportsService
+public class ReportsService : IReportsService
 {
     private readonly QualityControlContext _context;
     private readonly ElectronicSignatureService _signatureService;
 
-    public ServerReportsService(QualityControlContext context, ElectronicSignatureService signatureService)
+    public ReportsService(QualityControlContext context, ElectronicSignatureService signatureService)
     {
         _context = context;
         _signatureService = signatureService;

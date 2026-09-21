@@ -3,11 +3,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerUniquenessChecker : IUniquenessChecker
+public class UniquenessChecker : IUniquenessChecker
 {
     private readonly QualityControlContext _context;
 
-    public ServerUniquenessChecker(QualityControlContext context)
+    public UniquenessChecker(QualityControlContext context)
     {
         _context = context;
     }

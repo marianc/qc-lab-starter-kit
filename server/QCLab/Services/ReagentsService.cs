@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerReagentsService : IReagentsService
+public class ReagentsService : IReagentsService
 {
     private readonly QualityControlContext _context;
 
-    public ServerReagentsService(QualityControlContext context)
+    public ReagentsService(QualityControlContext context)
     {
         _context = context;
     }

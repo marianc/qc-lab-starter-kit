@@ -40,12 +40,12 @@ namespace QCLab
             ServiceLifetime.Transient);
 
             builder.Services.AddHttpClient();
-            builder.Services.AddTransient<IUniquenessChecker, ServerUniquenessChecker>();
+            builder.Services.AddTransient<IUniquenessChecker, UniquenessChecker>();
             builder.Services.AddTransient<ElectronicSignatureService>();
 
             // Auth Services
-            builder.Services.AddTransient<ServerAuthService>();
-            builder.Services.AddTransient<IAuthService>(sp => sp.GetRequiredService<ServerAuthService>());
+            builder.Services.AddTransient<AuthService>();
+            builder.Services.AddTransient<IAuthService>(sp => sp.GetRequiredService<AuthService>());
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddAuthentication(options =>
                 {
@@ -63,27 +63,27 @@ namespace QCLab
             builder.Services.AddCascadingAuthenticationState();
 
             // Register application services
-            builder.Services.AddTransient<ICategoriesService, ServerCategoriesService>();
-            builder.Services.AddTransient<ICertificatesService, ServerCertificatesService>();
-            builder.Services.AddTransient<ICertificationStatusService, ServerCertificationStatusService>();
-            builder.Services.AddTransient<IControlCodesService, ServerControlCodesService>();
-            builder.Services.AddTransient<IFormGroupsService, ServerFormGroupsService>();
-            builder.Services.AddTransient<IFormsService, ServerFormsService>();
-            builder.Services.AddTransient<IMaterialsService, ServerMaterialsService>();
-            builder.Services.AddTransient<IEquipmentsService, ServerEquipmentsService>();
-            builder.Services.AddTransient<IMeasurementsService, ServerMeasurementsService>();
-            builder.Services.AddTransient<INormsService, ServerNormsService>();
-            builder.Services.AddTransient<ISopsService, ServerSopsService>();
-            builder.Services.AddTransient<IReceptionsService, ServerReceptionsService>();
-            builder.Services.AddTransient<IReceptionTypesService, ServerReceptionTypesService>();
-            builder.Services.AddTransient<IReportsService, ServerReportsService>();
-            builder.Services.AddTransient<ISpecsService, ServerSpecsService>();
-            builder.Services.AddTransient<ITestsService, ServerTestsService>();
-            builder.Services.AddTransient<IUnitsService, ServerUnitsService>();
-            builder.Services.AddTransient<IUsersService, ServerUsersService>();
-            builder.Services.AddTransient<IValueTypesService, ServerValueTypesService>();
-            builder.Services.AddTransient<IFormEvalsService, ServerFormEvalsService>();
-            builder.Services.AddTransient<IReagentsService, ServerReagentsService>();
+            builder.Services.AddTransient<ICategoriesService, CategoriesService>();
+            builder.Services.AddTransient<ICertificatesService, CertificatesService>();
+            builder.Services.AddTransient<ICertificationStatusService, CertificationStatusService>();
+            builder.Services.AddTransient<IControlCodesService, ControlCodesService>();
+            builder.Services.AddTransient<IFormGroupsService, FormGroupsService>();
+            builder.Services.AddTransient<IFormsService, FormsService>();
+            builder.Services.AddTransient<IMaterialsService, MaterialsService>();
+            builder.Services.AddTransient<IEquipmentsService, EquipmentsService>();
+            builder.Services.AddTransient<IMeasurementsService, MeasurementsService>();
+            builder.Services.AddTransient<INormsService, NormsService>();
+            builder.Services.AddTransient<ISopsService, SopsService>();
+            builder.Services.AddTransient<IReceptionsService, ReceptionsService>();
+            builder.Services.AddTransient<IReceptionTypesService, ReceptionTypesService>();
+            builder.Services.AddTransient<IReportsService, ReportsService>();
+            builder.Services.AddTransient<ISpecsService, SpecsService>();
+            builder.Services.AddTransient<ITestsService, TestsService>();
+            builder.Services.AddTransient<IUnitsService, UnitsService>();
+            builder.Services.AddTransient<IUsersService, UsersService>();
+            builder.Services.AddTransient<IValueTypesService, ValueTypesService>();
+            builder.Services.AddTransient<IFormEvalsService, FormEvalsService>();
+            builder.Services.AddTransient<IReagentsService, ReagentsService>();
 
             builder.Services.AddCors(options =>
             {

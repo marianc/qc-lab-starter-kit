@@ -5,11 +5,11 @@ using QCLab.Models;
 
 namespace QCLab.Services;
 
-public class ServerReceptionTypesService : IReceptionTypesService
+public class ReceptionTypesService : IReceptionTypesService
 {
     private readonly QualityControlContext _context;
 
-    public ServerReceptionTypesService(QualityControlContext context)
+    public ReceptionTypesService(QualityControlContext context)
     {
         _context = context;
     }
