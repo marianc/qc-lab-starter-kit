@@ -10,18 +10,7 @@ import {
 } from '@/components/common/ui';
 import type { EquipmentDto, CreateEquipmentDto } from '@/types/equipment';
 import equipmentsService from '@/services/equipmentsService';
-
-const equipmentSchema = z.object({
-  id: z.number().optional(),
-  equipmentCode: z.string().min(2, 'Code must be at least 2 characters').max(20, 'Code must be at most 20 characters'),
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters'),
-  manufacturer: z.string().max(100).nullable().optional(),
-  model: z.string().max(100).nullable().optional(),
-  serialNumber: z.string().min(1, 'Serial number is required').max(50),
-  location: z.string().max(100).nullable().optional(),
-  status: z.string().min(1, 'Status is required'),
-  calibrationIntervalDays: z.number().int().positive().nullable().optional()
-});
+import { equipmentSchema } from '@/lib/schemas/equipment';
 
 type FormData = z.infer<typeof equipmentSchema>;
 

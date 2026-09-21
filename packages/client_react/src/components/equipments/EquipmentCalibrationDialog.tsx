@@ -9,16 +9,7 @@ import {
   DialogFooter 
 } from '@/components/common/ui';
 import type { EquipmentCalibrationDto, CreateEquipmentCalibrationDto } from '@/types/equipment';
-
-const calibrationSchema = z.object({
-  calibrationDate: z.string().min(1, 'Calibration date is required'),
-  expirationDate: z.string().min(1, 'Expiration date is required'),
-  certificateNumber: z.string().min(1, 'Certificate number is required').max(50),
-  calibratedBy: z.string().min(1, 'Calibrated by is required').max(100),
-  resultStatus: z.string().min(1, 'Result status is required'),
-  referenceStandardsUsed: z.string().max(500).nullable().optional(),
-  expandedUncertainty: z.number().nullable().optional()
-});
+import { calibrationSchema } from '@/lib/schemas/equipment';
 
 type FormData = z.infer<typeof calibrationSchema>;
 
