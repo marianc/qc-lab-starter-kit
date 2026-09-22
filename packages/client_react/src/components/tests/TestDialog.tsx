@@ -92,6 +92,22 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   const watchIsParam = watch('isParam');
 
   useEffect(() => {
+    if (watchForEnvironmentalControl) {
+      if (getValues('forCertification')) {
+        setValue('forCertification', false);
+      }
+    }
+  }, [watchForEnvironmentalControl, setValue, getValues]);
+
+  useEffect(() => {
+    if (watchForCertification) {
+      if (getValues('forEnvironmentalControl')) {
+        setValue('forEnvironmentalControl', false);
+      }
+    }
+  }, [watchForCertification, setValue, getValues]);
+
+  useEffect(() => {
     if (open) {
       setIsInitializing(true);
       Promise.all([
@@ -334,14 +350,14 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             </div>
           )}
 
-          {!watchIsParam && (
+          {!watchIsParam && !watchForCertification && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="for_environmental_control" {...register('forEnvironmentalControl')} />
               <label htmlFor="for_environmental_control">For Environmental Control</label>
             </div>
           )}
 
-          {!watchIsParam && (
+          {!watchIsParam && !watchForEnvironmentalControl && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="for_certification" {...register('forCertification')} />
               <label htmlFor="for_certification">For Certification</label>

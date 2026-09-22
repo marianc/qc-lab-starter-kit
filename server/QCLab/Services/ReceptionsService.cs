@@ -802,6 +802,7 @@ public class ReceptionsService : IReceptionsService
             foreach (var m in measurements)
             {
                 m.IsReadonly = true;
+                m.DateReadonly = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
