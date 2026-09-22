@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from '@/components/common/ui';
-import styles from '@/components/common/SelectDialog.module.css';
+import baseStyles from '@/components/common/SelectDialog.module.css';
+import styles from './SelectSopVersionsDialog.module.css';
 
 export interface SopVersionSelectItem {
   id: number;
@@ -67,20 +68,20 @@ const SelectSopVersionsDialog: React.FC<Props> = ({
         <h3>{title}</h3>
       </DialogHeader>
       <DialogContent>
-        <div className={styles.formGroupList}>
+        <div className={baseStyles.formGroupList}>
           {Object.entries(groupedBySop).map(([sopIdStr, versions]) => {
             const sopId = Number(sopIdStr);
             const firstVersion = versions[0];
             const sopTitle = firstVersion ? firstVersion.title : '';
             return (
-              <div key={sopId} style={{ marginBottom: '1rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: '#333' }}>
+              <div key={sopId} className={styles.sopGroup}>
+                <h4 className={styles.sopTitle}>
                   SOP #{sopId} {sopTitle ? `- ${sopTitle}` : ''}
                 </h4>
                 {versions.map((version) => {
                   const isChecked = selectedIds.includes(version.id);
                   return (
-                    <div key={version.id} className={styles.checkboxItem} style={{ marginLeft: '1rem' }}>
+                    <div key={version.id} className={`${baseStyles.checkboxItem} ${styles.checkboxItemIndented}`}>
                       <input 
                         type="radio"
                         name={`sop-group-${sopId}`}

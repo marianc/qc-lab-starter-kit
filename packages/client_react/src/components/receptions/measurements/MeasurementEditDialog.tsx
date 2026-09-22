@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from '@/components/common/ui';
+import styles from './MeasurementEditDialog.module.css';
 
 interface Props {
   open: boolean;
@@ -38,7 +39,7 @@ const MeasurementEditDialog: React.FC<Props> = ({
         <h2>{title}</h2>
       </DialogHeader>
       <DialogContent>
-        <div className="form-group" style={{ marginBottom: '1rem' }}>
+        <div className={`form-group ${styles.formGroup}`}>
           <label className="form-label">Comments</label>
           <textarea 
             value={comment}
@@ -48,14 +49,14 @@ const MeasurementEditDialog: React.FC<Props> = ({
             className="form-control"
           />
         </div>
-        <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className={`form-group checkbox-group ${styles.checkboxGroup}`}>
           <input 
             type="checkbox"
             id="useDefaultEquipmentCheckbox"
             checked={useDefaultEquipment}
             onChange={(e) => setUseDefaultEquipment(e.target.checked)}
           />
-          <label htmlFor="useDefaultEquipmentCheckbox" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>
+          <label htmlFor="useDefaultEquipmentCheckbox" className={`form-label ${styles.checkboxLabel}`}>
             Use Default Equipment
           </label>
         </div>

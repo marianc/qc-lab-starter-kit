@@ -1,0 +1,14 @@
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkboxLabel {
+  margin-bottom: 0;
+  cursor: pointer;
+}

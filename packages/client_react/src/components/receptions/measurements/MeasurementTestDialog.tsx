@@ -307,10 +307,9 @@ const MeasurementTestDialog: React.FC<Props> = ({
                           Delete
                         </button>
                         <span 
-                          className="drag-handle" 
+                          className={`drag-handle ${styles.dragHandle}`}
                           onMouseDown={() => setIsDragHandleActive(true)}
                           onMouseUp={() => setIsDragHandleActive(false)}
-                          style={{cursor: 'grab'}}
                         >
                           ⠿
                         </span>

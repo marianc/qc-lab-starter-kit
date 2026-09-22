@@ -1,0 +1,15 @@
+.sopGroup {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.sopTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.checkboxItemIndented {
+  margin-left: 1rem;
+}

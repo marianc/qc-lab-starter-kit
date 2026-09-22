@@ -23,6 +23,7 @@ import type { MeasurementTestDetailDto, MeasurementTestDto, MeasurementReagentLo
 import measurementsService from '@/services/measurementsService';
 import equipmentsService from '@/services/equipmentsService';
 import { formatDate } from '@/lib/utils';
+import styles from './TestResultsDetailView.module.css';
 
 interface Props {
   measurementId: number;
@@ -339,12 +340,12 @@ const TestResultsDetailView: React.FC<Props> = ({
           )}
 
           {!measurement.isReadonly && (
-            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+            <div className={`manageTestsContainer ${styles.mt1}`}>
               <button onClick={() => setShowEquipmentDialog(true)} className="action-button secondary">Manage Equipments</button>
             </div>
           )}
 
-          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated SOP Versions</h3>
+          <h3 className={`section-title ${styles.mt15}`}>Associated SOP Versions</h3>
           {associatedSopVersions.length > 0 ? (
             <ul className="item-list">
               {associatedSopVersions.map(sop => (
@@ -358,12 +359,12 @@ const TestResultsDetailView: React.FC<Props> = ({
           )}
 
           {!measurement.isReadonly && (
-            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+            <div className={`manageTestsContainer ${styles.mt1}`}>
               <button onClick={() => setShowSopVersionsDialog(true)} className="action-button secondary">Manage SOP Versions</button>
             </div>
           )}
 
-          <h3 className="section-title" style={{ marginTop: '1.5rem' }}>Associated Reagent Lots</h3>
+          <h3 className={`section-title ${styles.mt15}`}>Associated Reagent Lots</h3>
           {associatedReagentLots.length > 0 ? (
             <ul className="item-list">
               {associatedReagentLots.map(lot => (
@@ -377,7 +378,7 @@ const TestResultsDetailView: React.FC<Props> = ({
           )}
 
           {!measurement.isReadonly && (
-            <div className="manageTestsContainer" style={{ marginTop: '1rem' }}>
+            <div className={`manageTestsContainer ${styles.mt1}`}>
               <button onClick={() => setShowReagentLotsDialog(true)} className="action-button secondary">Manage Reagent Lots</button>
             </div>
           )}
