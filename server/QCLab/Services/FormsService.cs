@@ -1009,6 +1009,7 @@ public class FormsService : IFormsService
                     TestId = p.TestId,
                     IsCalculated = p.IsCalculated,
                     Formula = p.Formula,
+                    FormulaDependencies = p.FormulaDependencies,
                     CodeRelatedArrays = p.CodeRelatedArrays,
                     HasCondition = p.HasCondition,
                     Condition = p.Condition,
