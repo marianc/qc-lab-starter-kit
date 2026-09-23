@@ -32,6 +32,7 @@ public class EquipmentDto
     [StringLength(100)]
     public string? Model { get; set; }
 
+    [Unique("Equipment", ErrorMessage = "Serial number is already in use.")]
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Serial number is required.")]
     public required string SerialNumber { get; set; }
 
@@ -63,6 +64,7 @@ public class CreateEquipmentDto
     [StringLength(100)]
     public string? Model { get; set; }
 
+    [Unique("Equipment", ErrorMessage = "Serial number is already in use.")]
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Serial number is required.")]
     public required string SerialNumber { get; set; }
 

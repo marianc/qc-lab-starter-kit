@@ -94,11 +94,32 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
     }
   };
 
+  const validateSerialNumberUniqueness = async (): Promise<boolean> => {
+    const serialNumber = getValues('serialNumber');
+    const id = getValues('id') || 0;
+    if (!serialNumber) return true;
+
+    try {
+      const isUnique = await equipmentsService.validateUniqueness('SerialNumber', serialNumber, id);
+      if (!isUnique) {
+        setFormFieldError('serialNumber', { type: 'manual', message: 'Serial number is already in use.' });
+        return false;
+      } else {
+        clearErrors('serialNumber');
+        return true;
+      }
+    } catch (err) {
+      console.error('Serial number uniqueness check failed:', err);
+      return true;
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setError(null);
     try {
-      const isUnique = await validateCodeUniqueness();
-      if (!isUnique) return;
+      const isCodeUnique = await validateCodeUniqueness();
+      const isSerialUnique = await validateSerialNumberUniqueness();
+      if (!isCodeUnique || !isSerialUnique) return;
 
       onSave({
         equipmentCode: data.equipmentCode,
@@ -175,7 +196,11 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
               id="serialNumber" 
               type="text" 
               className={`form-control ${errors.serialNumber ? 'invalid' : ''}`}
-              {...register('serialNumber')} 
+              {...register('serialNumber', {
+                onBlur: async () => {
+                  await validateSerialNumberUniqueness();
+                }
+              })} 
             />
             {errors.serialNumber && <div className="validation-message">{errors.serialNumber.message}</div>}
           </div>

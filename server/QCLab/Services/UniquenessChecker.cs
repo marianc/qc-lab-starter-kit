@@ -96,6 +96,10 @@ public class UniquenessChecker : IUniquenessChecker
             {
                 return !_context.Equipments.Any(e => e.EquipmentCode == strValue && e.Id != equipmentId);
             }
+            if (propertyName == "SerialNumber")
+            {
+                return !_context.Equipments.Any(e => e.SerialNumber == strValue && e.Id != equipmentId);
+            }
         }
         else if (entityName == "Norm")
         {
