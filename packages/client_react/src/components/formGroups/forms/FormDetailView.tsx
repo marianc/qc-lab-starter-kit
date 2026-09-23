@@ -177,6 +177,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
       await formsService.updateForm(updatedForm.id, {
         formGroupId: updatedForm.formGroupId > 0 ? updatedForm.formGroupId : form!.formGroupId,
         version: updatedForm.version || '',
+        daysActiveForEditing: updatedForm.daysActiveForEditing,
         customNav: updatedForm.customNav,
         isCustomized: updatedForm.isCustomized,
         userId: user.id
@@ -442,6 +443,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
           <DetailContainer>
             <DetailColumn title="Info">
               <DetailItem label="Version" value={form.version} />
+              <DetailItem label="Days Active for Editing" value={form.daysActiveForEditing} />
               <DetailItem label="Is Customized" value={form.isCustomized ? "Yes" : "No"} />
               <DetailItem label="Custom Nav" value={form.customNav || "-"} />
             </DetailColumn>

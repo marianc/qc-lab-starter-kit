@@ -32,6 +32,7 @@ public class FormDetailDto
     public long Id { get; set; }
     public long FormGroupId { get; set; }
     public string? Version { get; set; }
+    public int DaysActiveForEditing { get; set; }
     public string? CustomNav { get; set; }
     public bool IsCustomized { get; set; }
     public bool IsSubmitted { get; set; }
@@ -54,6 +55,7 @@ public class CreateFormDto
 {
     public long FormGroupId { get; set; }
     public string? Version { get; set; }
+    public int DaysActiveForEditing { get; set; } = 10;
     public string? CustomNav { get; set; }
     public bool IsCustomized { get; set; }
     public long SubmittedUserId { get; set; }
@@ -64,6 +66,7 @@ public class UpdateFormDto
 {
     public long FormGroupId { get; set; }
     public string? Version { get; set; }
+    public int DaysActiveForEditing { get; set; }
     public string? CustomNav { get; set; }
     public bool IsCustomized { get; set; }
     public long UserId { get; set; }

@@ -24,11 +24,12 @@ const FormDialog: React.FC<FormDialogProps> = ({ open, formData, onSave, onClose
     watch,
     formState: { errors }
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       id: 0,
       formGroupId: 0,
       version: '',
+      daysActiveForEditing: 10,
       customNav: '',
       isCustomized: false
     }
@@ -42,6 +43,7 @@ const FormDialog: React.FC<FormDialogProps> = ({ open, formData, onSave, onClose
         id: formData.id,
         formGroupId: formData.formGroupId,
         version: formData.version || '',
+        daysActiveForEditing: formData.daysActiveForEditing ?? 10,
         customNav: formData.customNav || '',
         isCustomized: formData.isCustomized
       });
@@ -63,6 +65,12 @@ const FormDialog: React.FC<FormDialogProps> = ({ open, formData, onSave, onClose
             <label>Version</label>
             <input {...register('version')} className="form-control" />
             {errors.version && <span className="text-danger">{errors.version.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label>Days Active for Editing</label>
+            <input type="number" {...register('daysActiveForEditing')} className="form-control" />
+            {errors.daysActiveForEditing && <span className="text-danger">{errors.daysActiveForEditing.message}</span>}
           </div>
 
           <div className={`form-group ${styles.checkboxGroup}`}>

@@ -67,6 +67,7 @@ public class FormsService : IFormsService
             Id = form.Id,
             FormGroupId = form.FormGroupId,
             Version = form.Version,
+            DaysActiveForEditing = form.DaysActiveForEditing,
             CustomNav = form.CustomNav,
             IsCustomized = form.IsCustomized,
             IsSubmitted = form.IsSubmitted,
@@ -93,6 +94,7 @@ public class FormsService : IFormsService
         {
             FormGroupId = dto.FormGroupId,
             Version = dto.Version,
+            DaysActiveForEditing = dto.DaysActiveForEditing,
             CustomNav = dto.CustomNav,
             IsCustomized = dto.IsCustomized,
             UserSubmittedId = dto.SubmittedUserId,
@@ -119,6 +121,7 @@ public class FormsService : IFormsService
         }
         
         form.Version = dto.Version;
+        form.DaysActiveForEditing = dto.DaysActiveForEditing;
         form.CustomNav = dto.CustomNav;
         form.IsCustomized = dto.IsCustomized;
         
@@ -983,6 +986,7 @@ public class FormsService : IFormsService
             {
                 FormGroupId = originalForm.FormGroupId,
                 Version = $"{originalForm.Version} Copy",
+                DaysActiveForEditing = originalForm.DaysActiveForEditing,
                 CustomNav = originalForm.CustomNav,
                 IsCustomized = originalForm.IsCustomized,
                 IsSubmitted = true, // Start in Submitted state

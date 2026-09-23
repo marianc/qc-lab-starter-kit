@@ -4,6 +4,7 @@ export const formSchema = z.object({
   id: z.number(),
   formGroupId: z.number(),
   version: z.string().min(1).max(50),
+  daysActiveForEditing: z.coerce.number().int().min(0),
   customNav: z.string().max(100).optional().nullable(),
   isCustomized: z.boolean(),
 }).refine((data) => {

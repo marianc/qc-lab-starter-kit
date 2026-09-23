@@ -23,6 +23,7 @@ export interface FormDetailDto {
   id: number;
   formGroupId: number;
   version: string | null;
+  daysActiveForEditing: number;
   customNav: string | null;
   isCustomized: boolean;
   isSubmitted: boolean;
@@ -44,6 +45,7 @@ export interface FormDetailDto {
 export interface CreateFormDto {
   formGroupId: number;
   version: string;
+  daysActiveForEditing?: number;
   customNav: string | null;
   isCustomized: boolean;
   submittedUserId: number;
@@ -53,6 +55,7 @@ export interface CreateFormDto {
 export interface UpdateFormDto {
   formGroupId: number;
   version: string;
+  daysActiveForEditing?: number;
   customNav: string | null;
   isCustomized: boolean;
   userId: number;

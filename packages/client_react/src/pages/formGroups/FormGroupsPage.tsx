@@ -86,6 +86,7 @@ const FormGroupsPage: React.FC = () => {
         await formsService.createForm({
           formGroupId: newId,
           version: "v0",
+          daysActiveForEditing: 10,
           customNav: null,
           isCustomized: false,
           submittedUserId: user.id,
