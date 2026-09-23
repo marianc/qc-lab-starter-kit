@@ -17,6 +17,7 @@ public class EquipmentsService : IEquipmentsService
     public async Task<List<EquipmentDto>> GetAllEquipments()
     {
         return await _context.Equipments
+            .Include(e => e.Status)
             .OrderBy(e => e.EquipmentCode)
             .Select(e => new EquipmentDto
             {
@@ -27,7 +28,8 @@ public class EquipmentsService : IEquipmentsService
                 Model = e.Model,
                 SerialNumber = e.SerialNumber,
                 Location = e.Location,
-                Status = e.Status,
+                StatusId = e.StatusId,
+                Status = e.Status != null ? e.Status.Name : string.Empty,
                 CalibrationIntervalDays = e.CalibrationIntervalDays,
                 NextCalibrationDue = e.NextCalibrationDue,
                 DateCreated = e.DateCreated
@@ -38,6 +40,7 @@ public class EquipmentsService : IEquipmentsService
     public async Task<EquipmentDto?> GetEquipment(long id)
     {
         return await _context.Equipments
+            .Include(e => e.Status)
             .Where(e => e.Id == id)
             .Select(e => new EquipmentDto
             {
@@ -48,7 +51,8 @@ public class EquipmentsService : IEquipmentsService
                 Model = e.Model,
                 SerialNumber = e.SerialNumber,
                 Location = e.Location,
-                Status = e.Status,
+                StatusId = e.StatusId,
+                Status = e.Status != null ? e.Status.Name : string.Empty,
                 CalibrationIntervalDays = e.CalibrationIntervalDays,
                 NextCalibrationDue = e.NextCalibrationDue,
                 DateCreated = e.DateCreated
@@ -66,7 +70,7 @@ public class EquipmentsService : IEquipmentsService
             Model = dto.Model,
             SerialNumber = dto.SerialNumber,
             Location = dto.Location,
-            Status = dto.Status,
+            StatusId = dto.StatusId,
             CalibrationIntervalDays = dto.CalibrationIntervalDays,
             DateCreated = DateTime.UtcNow
         };
@@ -88,7 +92,7 @@ public class EquipmentsService : IEquipmentsService
         equipment.Model = dto.Model;
         equipment.SerialNumber = dto.SerialNumber;
         equipment.Location = dto.Location;
-        equipment.Status = dto.Status;
+        equipment.StatusId = dto.StatusId;
         equipment.CalibrationIntervalDays = dto.CalibrationIntervalDays;
 
         await _context.SaveChangesAsync();
@@ -97,6 +101,7 @@ public class EquipmentsService : IEquipmentsService
     public async Task<List<EquipmentCalibrationDto>> GetEquipmentCalibrations(long equipmentId)
     {
         return await _context.EquipmentCalibrations
+            .Include(c => c.Status)
             .Where(c => c.EquipmentId == equipmentId)
             .OrderByDescending(c => c.CalibrationDate)
             .Select(c => new EquipmentCalibrationDto
@@ -107,7 +112,8 @@ public class EquipmentsService : IEquipmentsService
                 ExpirationDate = c.ExpirationDate,
                 CertificateNumber = c.CertificateNumber,
                 CalibratedBy = c.CalibratedBy,
-                ResultStatus = c.ResultStatus,
+                StatusId = c.StatusId,
+                ResultStatus = c.Status != null ? c.Status.Name : string.Empty,
                 ReferenceStandardsUsed = c.ReferenceStandardsUsed,
                 ExpandedUncertainty = c.ExpandedUncertainty,
                 DateCreated = c.DateCreated
@@ -127,7 +133,7 @@ public class EquipmentsService : IEquipmentsService
             ExpirationDate = dto.ExpirationDate,
             CertificateNumber = dto.CertificateNumber,
             CalibratedBy = dto.CalibratedBy,
-            ResultStatus = dto.ResultStatus,
+            StatusId = dto.StatusId,
             ReferenceStandardsUsed = dto.ReferenceStandardsUsed,
             ExpandedUncertainty = dto.ExpandedUncertainty,
             DateCreated = DateTime.UtcNow
@@ -136,7 +142,13 @@ public class EquipmentsService : IEquipmentsService
         _context.EquipmentCalibrations.Add(calibration);
 
         equipment.NextCalibrationDue = dto.ExpirationDate;
-        equipment.Status = "Active";
+        // Assuming status id 1 is 'Active' or similar, or leave status as is / set active if appropriate.
+        // Let's check if there's an 'Active' status in equipment_statuses.
+        var activeStatus = await _context.EquipmentStatuses.FirstOrDefaultAsync(s => s.Name == "Active");
+        if (activeStatus != null)
+        {
+            equipment.StatusId = activeStatus.Id;
+        }
 
         await _context.SaveChangesAsync();
 
@@ -155,16 +167,44 @@ public class EquipmentsService : IEquipmentsService
         calibration.ExpirationDate = dto.ExpirationDate;
         calibration.CertificateNumber = dto.CertificateNumber;
         calibration.CalibratedBy = dto.CalibratedBy;
-        calibration.ResultStatus = dto.ResultStatus;
+        calibration.StatusId = dto.StatusId;
         calibration.ReferenceStandardsUsed = dto.ReferenceStandardsUsed;
         calibration.ExpandedUncertainty = dto.ExpandedUncertainty;
 
         if (calibration.Equipment != null)
         {
             calibration.Equipment.NextCalibrationDue = dto.ExpirationDate;
-            calibration.Equipment.Status = "Active";
+            var activeStatus = await _context.EquipmentStatuses.FirstOrDefaultAsync(s => s.Name == "Active");
+            if (activeStatus != null)
+            {
+                calibration.Equipment.StatusId = activeStatus.Id;
+            }
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<EquipmentStatusDto>> GetEquipmentStatuses()
+    {
+        return await _context.EquipmentStatuses
+            .OrderBy(s => s.Id)
+            .Select(s => new EquipmentStatusDto
+            {
+                Id = s.Id,
+                Name = s.Name
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<EquipmentCalibrationStatusDto>> GetEquipmentCalibrationStatuses()
+    {
+        return await _context.EquipmentCalibrationStatuses
+            .OrderBy(s => s.Id)
+            .Select(s => new EquipmentCalibrationStatusDto
+            {
+                Id = s.Id,
+                Name = s.Name
+            })
+            .ToListAsync();
     }
 }

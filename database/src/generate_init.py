@@ -13,7 +13,7 @@ DB_PASS = os.getenv("DB_PASS", "Pass@word1")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 OUTPUT_FILE = "db_init/init_schema.sql"
-SEED_TABLES = ["reception_types", "value_types", "reagent_lot_statuses"]
+SEED_TABLES = ["reception_types", "value_types", "reagent_lot_statuses", "equipment_statuses", "equipment_calibration_statuses"]
 
 def run_command(cmd, append=False):
     env = os.environ.copy()

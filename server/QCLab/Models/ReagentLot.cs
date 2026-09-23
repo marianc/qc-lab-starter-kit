@@ -13,9 +13,9 @@ public partial class ReagentLot
 
     public long StatusId { get; set; }
 
-    public long? UnitId { get; set; }
-
     public decimal Quantity { get; set; }
+
+    public long? UnitId { get; set; }
 
     public DateOnly ExpirationDate { get; set; }
 

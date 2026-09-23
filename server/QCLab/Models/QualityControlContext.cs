@@ -31,6 +31,10 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<EquipmentCalibration> EquipmentCalibrations { get; set; }
 
+    public virtual DbSet<EquipmentCalibrationStatus> EquipmentCalibrationStatuses { get; set; }
+
+    public virtual DbSet<EquipmentStatus> EquipmentStatuses { get; set; }
+
     public virtual DbSet<Form> Forms { get; set; }
 
     public virtual DbSet<FormConditionEval> FormConditionEvals { get; set; }
@@ -283,6 +287,8 @@ public partial class QualityControlContext : DbContext
 
             entity.ToTable("control_codes");
 
+            entity.HasIndex(e => new { e.MaterialId, e.Code }, "control_codes_material_id_code_key").IsUnique();
+
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
@@ -346,6 +352,8 @@ public partial class QualityControlContext : DbContext
 
             entity.HasIndex(e => e.EquipmentCode, "equipment_equipment_code_key").IsUnique();
 
+            entity.HasIndex(e => e.SerialNumber, "equipments_serial_number_key").IsUnique();
+
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
@@ -374,10 +382,12 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.SerialNumber)
                 .HasMaxLength(100)
                 .HasColumnName("serial_number");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("'Active'::character varying")
-                .HasColumnName("status");
+            entity.Property(e => e.StatusId).HasColumnName("status_id");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.Equipment)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("equipments_status_id_fkey");
         });
 
         modelBuilder.Entity<EquipmentCalibration>(entity =>
@@ -403,13 +413,48 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.ExpandedUncertainty).HasColumnName("expanded_uncertainty");
             entity.Property(e => e.ExpirationDate).HasColumnName("expiration_date");
             entity.Property(e => e.ReferenceStandardsUsed).HasColumnName("reference_standards_used");
-            entity.Property(e => e.ResultStatus)
-                .HasMaxLength(20)
-                .HasColumnName("result_status");
+            entity.Property(e => e.StatusId).HasColumnName("status_id");
 
             entity.HasOne(d => d.Equipment).WithMany(p => p.EquipmentCalibrations)
                 .HasForeignKey(d => d.EquipmentId)
                 .HasConstraintName("equipment_calibrations_equipment_id_fkey");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.EquipmentCalibrations)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("equipment_calibrations_status_id_fkey");
+        });
+
+        modelBuilder.Entity<EquipmentCalibrationStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("equipment_calibration_statuses_pkey");
+
+            entity.ToTable("equipment_calibration_statuses");
+
+            entity.HasIndex(e => e.Name, "equipment_calibration_statuses_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<EquipmentStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("equipment_statuses_pkey");
+
+            entity.ToTable("equipment_statuses");
+
+            entity.HasIndex(e => e.Name, "equipment_statuses_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Form>(entity =>
@@ -428,6 +473,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.DateCancelled).HasColumnName("date_cancelled");
             entity.Property(e => e.DateSubmitted).HasColumnName("date_submitted");
             entity.Property(e => e.DateValidated).HasColumnName("date_validated");
+            entity.Property(e => e.DaysActiveForEditing)
+                .HasDefaultValue(10)
+                .HasColumnName("days_active_for_editing");
             entity.Property(e => e.FormGroupId).HasColumnName("form_group_id");
             entity.Property(e => e.IsCancelled).HasColumnName("is_cancelled");
             entity.Property(e => e.IsCustomized).HasColumnName("is_customized");
@@ -610,7 +658,7 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("cas_number");
             entity.Property(e => e.Code)
-                .HasMaxLength(5)
+                .HasMaxLength(10)
                 .HasColumnName("code");
             entity.Property(e => e.CommentsObsolete).HasColumnName("comments_obsolete");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
@@ -671,9 +719,7 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.UseDefaultEquipment)
                 .HasDefaultValue(true)
                 .HasColumnName("use_default_equipment");
-            entity.Property(e => e.UserCreatedId)
-                .HasDefaultValue(1L)
-                .HasColumnName("user_created_id");
+            entity.Property(e => e.UserCreatedId).HasColumnName("user_created_id");
             entity.Property(e => e.UserReportedId).HasColumnName("user_reported_id");
             entity.Property(e => e.UserUpdateId).HasColumnName("user_update_id");
 
@@ -956,7 +1002,7 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("certificate_of_analysis_ref");
             entity.Property(e => e.Comments)
-                .HasMaxLength(100)
+                .HasMaxLength(255)
                 .HasColumnName("comments");
             entity.Property(e => e.ManufacturerLotNumber)
                 .HasMaxLength(50)
@@ -1297,8 +1343,6 @@ public partial class QualityControlContext : DbContext
             entity.ToTable("tests");
 
             entity.HasIndex(e => e.Code, "tests_code_key").IsUnique();
-
-            entity.HasIndex(e => e.Name, "tests_name_key").IsUnique();
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()

@@ -31,28 +31,30 @@ class Categories(Base):
     receptions: Mapped[list['Receptions']] = relationship('Receptions', back_populates='category')
 
 
-class Equipments(Base):
-    __tablename__ = 'equipments'
+class EquipmentCalibrationStatuses(Base):
+    __tablename__ = 'equipment_calibration_statuses'
     __table_args__ = (
-        PrimaryKeyConstraint('id', name='equipment_pkey'),
-        UniqueConstraint('equipment_code', name='equipment_equipment_code_key')
+        PrimaryKeyConstraint('id', name='equipment_calibration_statuses_pkey'),
+        UniqueConstraint('name', name='equipment_calibration_statuses_name_key')
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    equipment_code: Mapped[str] = mapped_column(String(50), nullable=False)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    serial_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'Active'::character varying"))
-    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
-    manufacturer: Mapped[Optional[str]] = mapped_column(String(100))
-    model: Mapped[Optional[str]] = mapped_column(String(100))
-    location: Mapped[Optional[str]] = mapped_column(String(100))
-    calibration_interval_days: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('365'))
-    next_calibration_due: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    test: Mapped[list['Tests']] = relationship('Tests', secondary='test_equipments', back_populates='equipment')
-    measurement: Mapped[list['Measurements']] = relationship('Measurements', secondary='measurement_equipments', back_populates='equipment')
-    equipment_calibrations: Mapped[list['EquipmentCalibrations']] = relationship('EquipmentCalibrations', back_populates='equipment')
+    equipment_calibrations: Mapped[list['EquipmentCalibrations']] = relationship('EquipmentCalibrations', back_populates='status')
+
+
+class EquipmentStatuses(Base):
+    __tablename__ = 'equipment_statuses'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='equipment_statuses_pkey'),
+        UniqueConstraint('name', name='equipment_statuses_name_key')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    equipments: Mapped[list['Equipments']] = relationship('Equipments', back_populates='status')
 
 
 class FormGroups(Base):
@@ -254,25 +256,31 @@ class ElectronicSignatures(Base):
     signer_user: Mapped['Users'] = relationship('Users', back_populates='electronic_signatures')
 
 
-class EquipmentCalibrations(Base):
-    __tablename__ = 'equipment_calibrations'
+class Equipments(Base):
+    __tablename__ = 'equipments'
     __table_args__ = (
-        ForeignKeyConstraint(['equipment_id'], ['equipments.id'], ondelete='CASCADE', name='equipment_calibrations_equipment_id_fkey'),
-        PrimaryKeyConstraint('id', name='equipment_calibrations_pkey')
+        ForeignKeyConstraint(['status_id'], ['equipment_statuses.id'], name='equipments_status_id_fkey'),
+        PrimaryKeyConstraint('id', name='equipment_pkey'),
+        UniqueConstraint('equipment_code', name='equipment_equipment_code_key'),
+        UniqueConstraint('serial_number', name='equipments_serial_number_key')
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
-    equipment_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    calibration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
-    expiration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
-    certificate_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    calibrated_by: Mapped[str] = mapped_column(String(100), nullable=False)
-    result_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    equipment_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    serial_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    status_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
-    reference_standards_used: Mapped[Optional[str]] = mapped_column(Text)
-    expanded_uncertainty: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    manufacturer: Mapped[Optional[str]] = mapped_column(String(100))
+    model: Mapped[Optional[str]] = mapped_column(String(100))
+    location: Mapped[Optional[str]] = mapped_column(String(100))
+    calibration_interval_days: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('365'))
+    next_calibration_due: Mapped[Optional[datetime.date]] = mapped_column(Date)
 
-    equipment: Mapped['Equipments'] = relationship('Equipments', back_populates='equipment_calibrations')
+    status: Mapped['EquipmentStatuses'] = relationship('EquipmentStatuses', back_populates='equipments')
+    test: Mapped[list['Tests']] = relationship('Tests', secondary='test_equipments', back_populates='equipment')
+    measurement: Mapped[list['Measurements']] = relationship('Measurements', secondary='measurement_equipments', back_populates='equipment')
+    equipment_calibrations: Mapped[list['EquipmentCalibrations']] = relationship('EquipmentCalibrations', back_populates='equipment')
 
 
 class Forms(Base):
@@ -288,6 +296,7 @@ class Forms(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     form_group_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     version: Mapped[str] = mapped_column(String(50), nullable=False)
+    days_active_for_editing: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text('10'))
     is_customized: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_submitted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
@@ -326,7 +335,7 @@ class Materials(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    code: Mapped[str] = mapped_column(String(5), nullable=False)
+    code: Mapped[str] = mapped_column(String(10), nullable=False)
     is_product: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_raw_material: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_reagent: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
@@ -368,7 +377,8 @@ class ControlCodes(Base):
     __tablename__ = 'control_codes'
     __table_args__ = (
         ForeignKeyConstraint(['material_id'], ['materials.id'], name='control_codes_material_id_fkey'),
-        PrimaryKeyConstraint('id', name='control_codes_pkey')
+        PrimaryKeyConstraint('id', name='control_codes_pkey'),
+        UniqueConstraint('material_id', 'code', name='control_codes_material_id_code_key')
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
@@ -380,6 +390,29 @@ class ControlCodes(Base):
     material: Mapped['Materials'] = relationship('Materials', back_populates='control_codes')
     certificates: Mapped[list['Certificates']] = relationship('Certificates', back_populates='control_code')
     receptions: Mapped[list['Receptions']] = relationship('Receptions', back_populates='control_code')
+
+
+class EquipmentCalibrations(Base):
+    __tablename__ = 'equipment_calibrations'
+    __table_args__ = (
+        ForeignKeyConstraint(['equipment_id'], ['equipments.id'], ondelete='CASCADE', name='equipment_calibrations_equipment_id_fkey'),
+        ForeignKeyConstraint(['status_id'], ['equipment_calibration_statuses.id'], name='equipment_calibrations_status_id_fkey'),
+        PrimaryKeyConstraint('id', name='equipment_calibrations_pkey')
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
+    equipment_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    calibration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    expiration_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    certificate_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    calibrated_by: Mapped[str] = mapped_column(String(100), nullable=False)
+    status_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    reference_standards_used: Mapped[Optional[str]] = mapped_column(Text)
+    expanded_uncertainty: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+
+    equipment: Mapped['Equipments'] = relationship('Equipments', back_populates='equipment_calibrations')
+    status: Mapped['EquipmentCalibrationStatuses'] = relationship('EquipmentCalibrationStatuses', back_populates='equipment_calibrations')
 
 
 class FormEvals(Base):
@@ -458,8 +491,7 @@ class Tests(Base):
         ForeignKeyConstraint(['type_id'], ['value_types.id'], name='tests_value_type_id_fkey'),
         ForeignKeyConstraint(['unit_id'], ['units.id'], name='tests_unit_id_fkey'),
         PrimaryKeyConstraint('id', name='tests_pkey'),
-        UniqueConstraint('code', name='tests_code_key'),
-        UniqueConstraint('name', name='tests_name_key')
+        UniqueConstraint('code', name='tests_code_key')
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
@@ -470,17 +502,17 @@ class Tests(Base):
     is_param: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     for_environmental_control: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     for_certification: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     is_form_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     description: Mapped[Optional[str]] = mapped_column(Text)
+    relative_uncertainty_pct: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(5, 2))
+    default_coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(3, 1))
     unit_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     norm_ref: Mapped[Optional[str]] = mapped_column(String(50))
     sop_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    relative_uncertainty_pct: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(5, 2))
-    default_coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric(3, 1))
     date_form_validated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     date_obsolete: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     comments_obsolete: Mapped[Optional[str]] = mapped_column(Text)
@@ -824,7 +856,7 @@ class ReagentSupplierLots(ReagentLots):
     manufacturer_lot_number: Mapped[str] = mapped_column(String(50), nullable=False)
     catalog_number: Mapped[Optional[str]] = mapped_column(String(50))
     certificate_of_analysis_ref: Mapped[Optional[str]] = mapped_column(String(255))
-    comments: Mapped[Optional[str]] = mapped_column(String(100))
+    comments: Mapped[Optional[str]] = mapped_column(String(255))
 
     supplier: Mapped['ReagentSuppliers'] = relationship('ReagentSuppliers', back_populates='reagent_supplier_lots')
 

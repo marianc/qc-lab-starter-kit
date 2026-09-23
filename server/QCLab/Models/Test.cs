@@ -21,6 +21,12 @@ public partial class Test
 
     public bool ForEnvironmentalControl { get; set; }
 
+    public bool ForCertification { get; set; }
+
+    public decimal? RelativeUncertaintyPct { get; set; }
+
+    public decimal? DefaultCoverageFactorK { get; set; }
+
     public long? UnitId { get; set; }
 
     public long? NormId { get; set; }
@@ -29,17 +35,11 @@ public partial class Test
 
     public long? SopId { get; set; }
 
-    public bool ForCertification { get; set; }
-
-    public decimal? RelativeUncertaintyPct { get; set; }
-
-    public decimal? DefaultCoverageFactorK { get; set; }
-
-    public long NrOrd { get; set; }
-
     public bool IsFormValidated { get; set; }
 
     public DateTime? DateFormValidated { get; set; }
+
+    public long NrOrd { get; set; }
 
     public DateTime DateCreated { get; set; }
 

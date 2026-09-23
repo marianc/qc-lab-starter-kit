@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { 
   Dialog, 
   DialogHeader, 
   DialogContent, 
   DialogFooter 
 } from '@/components/common/ui';
-import type { EquipmentDto, CreateEquipmentDto } from '@/types/equipment';
+import type { EquipmentDto, CreateEquipmentDto, EquipmentStatusDto } from '@/types/equipment';
 import equipmentsService from '@/services/equipmentsService';
 import { equipmentSchema } from '@/lib/schemas/equipment';
 
@@ -23,6 +23,15 @@ interface Props {
 
 const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) => {
   const [error, setError] = useState<string | null>(null);
+  const [statuses, setStatuses] = useState<EquipmentStatusDto[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      equipmentsService.getEquipmentStatuses()
+        .then(setStatuses)
+        .catch(err => console.error('Failed to load equipment statuses', err));
+    }
+  }, [open]);
 
   const { 
     register, 
@@ -43,7 +52,7 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
       model: equipment?.model || '',
       serialNumber: equipment?.serialNumber || '',
       location: equipment?.location || '',
-      status: equipment?.status || 'Active',
+      statusId: equipment?.statusId || 1,
       calibrationIntervalDays: equipment?.calibrationIntervalDays || null
     }
   });
@@ -59,11 +68,11 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
         model: equipment?.model || '',
         serialNumber: equipment?.serialNumber || '',
         location: equipment?.location || '',
-        status: equipment?.status || 'Active',
+        statusId: equipment?.statusId || (statuses.length > 0 ? statuses[0].id : 1),
         calibrationIntervalDays: equipment?.calibrationIntervalDays || null
       });
     }
-  }, [open, equipment, reset]);
+  }, [open, equipment, statuses, reset]);
 
   const validateCodeUniqueness = async (): Promise<boolean> => {
     const code = getValues('equipmentCode');
@@ -98,7 +107,7 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
         model: data.model || null,
         serialNumber: data.serialNumber,
         location: data.location || null,
-        status: data.status,
+        statusId: Number(data.statusId),
         calibrationIntervalDays: data.calibrationIntervalDays ? Number(data.calibrationIntervalDays) : null
       });
     } catch (err: any) {
@@ -181,18 +190,17 @@ const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) 
             {errors.location && <div className="validation-message">{errors.location.message}</div>}
           </div>
           <div className="form-group">
-            <label htmlFor="status">Status</label>
+            <label htmlFor="statusId">Status</label>
             <select 
-              id="status" 
-              className={`form-control ${errors.status ? 'invalid' : ''}`}
-              {...register('status')}
+              id="statusId" 
+              className={`form-control ${errors.statusId ? 'invalid' : ''}`}
+              {...register('statusId', { valueAsNumber: true })}
             >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Calibration Due">Calibration Due</option>
-              <option value="Out of Service">Out of Service</option>
+              {statuses.map(st => (
+                <option key={st.id} value={st.id}>{st.name}</option>
+              ))}
             </select>
-            {errors.status && <div className="validation-message">{errors.status.message}</div>}
+            {errors.statusId && <div className="validation-message">{errors.statusId.message}</div>}
           </div>
           <div className="form-group">
             <label htmlFor="calibrationIntervalDays">Calibration Interval (Days)</label>

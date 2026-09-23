@@ -374,6 +374,8 @@ namespace QCLab
 
             // Equipments
             apiGroup.MapGet("/equipments", (IEquipmentsService s) => s.GetAllEquipments());
+            apiGroup.MapGet("/equipments/statuses", (IEquipmentsService s) => s.GetEquipmentStatuses());
+            apiGroup.MapGet("/equipment_calibration_statuses", (IEquipmentsService s) => s.GetEquipmentCalibrationStatuses());
             apiGroup.MapGet("/equipments/{id}", (long id, IEquipmentsService s) => s.GetEquipment(id));
             apiGroup.MapPost("/equipments", async ([FromBody] CreateEquipmentDto dto, IEquipmentsService s) =>
             {

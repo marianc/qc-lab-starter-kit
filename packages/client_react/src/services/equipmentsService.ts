@@ -4,13 +4,25 @@ import type {
   CreateEquipmentDto, 
   UpdateEquipmentDto, 
   EquipmentCalibrationDto, 
-  CreateEquipmentCalibrationDto 
+  CreateEquipmentCalibrationDto,
+  EquipmentStatusDto,
+  EquipmentCalibrationStatusDto
 } from '@/types/equipment';
 import type { IdDto } from '@/types/models';
 
 const equipmentsService = {
   async getAllEquipments(): Promise<EquipmentDto[]> {
     const response = await apiClient.get<EquipmentDto[]>('/api/equipments');
+    return response.data;
+  },
+
+  async getEquipmentStatuses(): Promise<EquipmentStatusDto[]> {
+    const response = await apiClient.get<EquipmentStatusDto[]>('/api/equipments/statuses');
+    return response.data;
+  },
+
+  async getEquipmentCalibrationStatuses(): Promise<EquipmentCalibrationStatusDto[]> {
+    const response = await apiClient.get<EquipmentCalibrationStatusDto[]>('/api/equipment_calibration_statuses');
     return response.data;
   },
 

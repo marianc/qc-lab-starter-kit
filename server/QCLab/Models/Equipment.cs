@@ -19,7 +19,7 @@ public partial class Equipment
 
     public string? Location { get; set; }
 
-    public string Status { get; set; } = null!;
+    public long StatusId { get; set; }
 
     public int? CalibrationIntervalDays { get; set; }
 
@@ -28,6 +28,8 @@ public partial class Equipment
     public DateTime DateCreated { get; set; }
 
     public virtual ICollection<EquipmentCalibration> EquipmentCalibrations { get; set; } = new List<EquipmentCalibration>();
+
+    public virtual EquipmentStatus Status { get; set; } = null!;
 
     public virtual ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 

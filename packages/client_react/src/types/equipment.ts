@@ -1,3 +1,13 @@
+export interface EquipmentStatusDto {
+  id: number;
+  name: string;
+}
+
+export interface EquipmentCalibrationStatusDto {
+  id: number;
+  name: string;
+}
+
 export interface EquipmentDto {
   id: number;
   equipmentCode: string;
@@ -6,6 +16,7 @@ export interface EquipmentDto {
   model?: string | null;
   serialNumber: string;
   location?: string | null;
+  statusId: number;
   status: string;
   calibrationIntervalDays?: number | null;
   nextCalibrationDue?: string | null;
@@ -19,7 +30,7 @@ export interface CreateEquipmentDto {
   model?: string | null;
   serialNumber: string;
   location?: string | null;
-  status: string;
+  statusId: number;
   calibrationIntervalDays?: number | null;
 }
 
@@ -32,6 +43,7 @@ export interface EquipmentCalibrationDto {
   expirationDate: string;
   certificateNumber: string;
   calibratedBy: string;
+  statusId: number;
   resultStatus: string;
   referenceStandardsUsed?: string | null;
   expandedUncertainty?: number | null;
@@ -43,7 +55,7 @@ export interface CreateEquipmentCalibrationDto {
   expirationDate: string;
   certificateNumber: string;
   calibratedBy: string;
-  resultStatus: string;
+  statusId: number;
   referenceStandardsUsed?: string | null;
   expandedUncertainty?: number | null;
 }

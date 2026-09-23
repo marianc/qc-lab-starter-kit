@@ -3,6 +3,18 @@ using QCLab.Client.Validation;
 
 namespace QCLab.Client.Dtos;
 
+public class EquipmentStatusDto
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class EquipmentCalibrationStatusDto
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
 public class EquipmentDto
 {
     public long Id { get; set; }
@@ -26,8 +38,8 @@ public class EquipmentDto
     [StringLength(100)]
     public string? Location { get; set; }
 
-    [StringLength(50)]
-    public required string Status { get; set; }
+    public long StatusId { get; set; }
+    public string Status { get; set; } = string.Empty;
 
     public int? CalibrationIntervalDays { get; set; }
 
@@ -57,8 +69,7 @@ public class CreateEquipmentDto
     [StringLength(100)]
     public string? Location { get; set; }
 
-    [StringLength(50)]
-    public required string Status { get; set; }
+    public long StatusId { get; set; }
 
     public int? CalibrationIntervalDays { get; set; }
 }
@@ -75,8 +86,8 @@ public class EquipmentCalibrationDto
     public required string CertificateNumber { get; set; }
     [StringLength(100, MinimumLength = 1, ErrorMessage = "Calibrated by is required.")]
     public required string CalibratedBy { get; set; }
-    [StringLength(50)]
-    public required string ResultStatus { get; set; }
+    public long StatusId { get; set; }
+    public string ResultStatus { get; set; } = string.Empty;
     public string? ReferenceStandardsUsed { get; set; }
     public decimal? ExpandedUncertainty { get; set; }
     public DateTime DateCreated { get; set; }
@@ -90,8 +101,7 @@ public class CreateEquipmentCalibrationDto
     public required string CertificateNumber { get; set; }
     [StringLength(100, MinimumLength = 1, ErrorMessage = "Calibrated by is required.")]
     public required string CalibratedBy { get; set; }
-    [StringLength(50)]
-    public required string ResultStatus { get; set; }
+    public long StatusId { get; set; }
     public string? ReferenceStandardsUsed { get; set; }
     public decimal? ExpandedUncertainty { get; set; }
 }

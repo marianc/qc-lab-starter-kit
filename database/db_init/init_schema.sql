@@ -326,6 +326,18 @@ ALTER TABLE public.electronic_signatures ALTER COLUMN id ADD GENERATED ALWAYS AS
 
 
 --
+-- Name: equipment_calibration_statuses; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.equipment_calibration_statuses (
+    id bigint NOT NULL,
+    name character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.equipment_calibration_statuses OWNER TO postgres;
+
+--
 -- Name: equipment_calibrations; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -336,7 +348,7 @@ CREATE TABLE public.equipment_calibrations (
     expiration_date date NOT NULL,
     certificate_number character varying(100) NOT NULL,
     calibrated_by character varying(100) NOT NULL,
-    result_status character varying(20) NOT NULL,
+    status_id bigint NOT NULL,
     reference_standards_used text,
     expanded_uncertainty numeric,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
@@ -371,7 +383,7 @@ CREATE TABLE public.equipments (
     model character varying(100),
     serial_number character varying(100) NOT NULL,
     location character varying(100),
-    status character varying(20) DEFAULT 'Active'::character varying NOT NULL,
+    status_id bigint NOT NULL,
     calibration_interval_days integer DEFAULT 365,
     next_calibration_due date,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
@@ -393,6 +405,18 @@ ALTER TABLE public.equipments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     CACHE 1
 );
 
+
+--
+-- Name: equipment_statuses; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.equipment_statuses (
+    id bigint NOT NULL,
+    name character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.equipment_statuses OWNER TO postgres;
 
 --
 -- Name: form_condition_evals; Type: TABLE; Schema: public; Owner: postgres
@@ -530,6 +554,7 @@ CREATE TABLE public.forms (
     id bigint NOT NULL,
     form_group_id bigint NOT NULL,
     version character varying(50) NOT NULL,
+    days_active_for_editing integer DEFAULT 10 NOT NULL,
     is_customized boolean DEFAULT false NOT NULL,
     custom_nav text,
     is_submitted boolean DEFAULT false NOT NULL,
@@ -582,7 +607,7 @@ ALTER TABLE public.material_tests OWNER TO postgres;
 CREATE TABLE public.materials (
     id bigint NOT NULL,
     name character varying(50) NOT NULL,
-    code character varying(5) NOT NULL,
+    code character varying(10) NOT NULL,
     description text,
     norm_id bigint,
     is_product boolean DEFAULT false NOT NULL,
@@ -769,8 +794,8 @@ CREATE TABLE public.reagent_lots (
     is_produced boolean DEFAULT false NOT NULL,
     produced_by_user_id bigint,
     status_id bigint DEFAULT 1 NOT NULL,
-    unit_id bigint,
     quantity numeric NOT NULL,
+    unit_id bigint,
     expiration_date date NOT NULL
 );
 
@@ -799,7 +824,7 @@ CREATE TABLE public.reagent_supplier_lots (
     catalog_number character varying(50),
     manufacturer_lot_number character varying(50) NOT NULL,
     certificate_of_analysis_ref character varying(255),
-    comments character varying(100)
+    comments character varying(255)
 );
 
 
@@ -1157,16 +1182,16 @@ CREATE TABLE public.tests (
     is_array boolean DEFAULT false NOT NULL,
     is_param boolean DEFAULT false NOT NULL,
     for_environmental_control boolean DEFAULT false NOT NULL,
+    for_certification boolean DEFAULT false NOT NULL,
+    relative_uncertainty_pct numeric(5,2),
+    default_coverage_factor_k numeric(3,1),
     unit_id bigint,
     norm_id bigint,
     norm_ref character varying(50),
     sop_id bigint,
-    for_certification boolean DEFAULT false NOT NULL,
-    relative_uncertainty_pct numeric(5,2),
-    default_coverage_factor_k numeric(3,1),
-    nr_ord bigint DEFAULT 0 NOT NULL,
     is_form_validated boolean DEFAULT false NOT NULL,
     date_form_validated timestamp with time zone,
+    nr_ord bigint DEFAULT 0 NOT NULL,
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
     date_obsolete timestamp with time zone,
@@ -1349,6 +1374,14 @@ ALTER TABLE ONLY public.certificates
 
 
 --
+-- Name: control_codes control_codes_material_id_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.control_codes
+    ADD CONSTRAINT control_codes_material_id_code_key UNIQUE (material_id, code);
+
+
+--
 -- Name: control_codes control_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1362,6 +1395,22 @@ ALTER TABLE ONLY public.control_codes
 
 ALTER TABLE ONLY public.electronic_signatures
     ADD CONSTRAINT electronic_signatures_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: equipment_calibration_statuses equipment_calibration_statuses_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_calibration_statuses
+    ADD CONSTRAINT equipment_calibration_statuses_name_key UNIQUE (name);
+
+
+--
+-- Name: equipment_calibration_statuses equipment_calibration_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_calibration_statuses
+    ADD CONSTRAINT equipment_calibration_statuses_pkey PRIMARY KEY (id);
 
 
 --
@@ -1386,6 +1435,30 @@ ALTER TABLE ONLY public.equipments
 
 ALTER TABLE ONLY public.equipments
     ADD CONSTRAINT equipment_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: equipment_statuses equipment_statuses_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_statuses
+    ADD CONSTRAINT equipment_statuses_name_key UNIQUE (name);
+
+
+--
+-- Name: equipment_statuses equipment_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_statuses
+    ADD CONSTRAINT equipment_statuses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: equipments equipments_serial_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipments_serial_number_key UNIQUE (serial_number);
 
 
 --
@@ -1717,14 +1790,6 @@ ALTER TABLE ONLY public.tests
 
 
 --
--- Name: tests tests_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.tests
-    ADD CONSTRAINT tests_name_key UNIQUE (name);
-
-
---
 -- Name: tests tests_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1958,6 +2023,22 @@ ALTER TABLE ONLY public.electronic_signatures
 
 ALTER TABLE ONLY public.equipment_calibrations
     ADD CONSTRAINT equipment_calibrations_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id) ON DELETE CASCADE;
+
+
+--
+-- Name: equipment_calibrations equipment_calibrations_status_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipment_calibrations
+    ADD CONSTRAINT equipment_calibrations_status_id_fkey FOREIGN KEY (status_id) REFERENCES public.equipment_calibration_statuses(id);
+
+
+--
+-- Name: equipments equipments_status_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.equipments
+    ADD CONSTRAINT equipments_status_id_fkey FOREIGN KEY (status_id) REFERENCES public.equipment_statuses(id);
 
 
 --
@@ -2597,6 +2678,25 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Data for Name: equipment_calibration_statuses; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.equipment_calibration_statuses VALUES (1, 'Pass');
+INSERT INTO public.equipment_calibration_statuses VALUES (2, 'Fail');
+INSERT INTO public.equipment_calibration_statuses VALUES (3, 'Limited Use');
+
+
+--
+-- Data for Name: equipment_statuses; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.equipment_statuses VALUES (1, 'Active');
+INSERT INTO public.equipment_statuses VALUES (2, 'Inactive');
+INSERT INTO public.equipment_statuses VALUES (3, 'Calibration Due');
+INSERT INTO public.equipment_statuses VALUES (4, 'Out of Service');
+
 
 --
 -- Data for Name: reagent_lot_statuses; Type: TABLE DATA; Schema: public; Owner: postgres

@@ -11,6 +11,8 @@ public partial class Form
 
     public string Version { get; set; } = null!;
 
+    public int DaysActiveForEditing { get; set; }
+
     public bool IsCustomized { get; set; }
 
     public string? CustomNav { get; set; }

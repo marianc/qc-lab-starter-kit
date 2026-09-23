@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import EquipmentDetailView from '@/components/equipments/EquipmentDetailView';
 import EquipmentDialog from '@/components/equipments/EquipmentDialog';
 import styles from './EquipmentsPage.module.css';
-import type { EquipmentDto, CreateEquipmentDto } from '@/types/equipment';
+import type { EquipmentDto, CreateEquipmentDto, EquipmentStatusDto } from '@/types/equipment';
 import type { UserSessionDto } from '@/types/auth';
 import authService from '@/services/authService';
 import equipmentsService from '@/services/equipmentsService';
@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils';
 
 const EquipmentsPage: React.FC = () => {
   const [equipments, setEquipments] = useState<EquipmentDto[]>([]);
+  const [statuses, setStatuses] = useState<EquipmentStatusDto[]>([]);
   const [currentUser, setCurrentUser] = useState<UserSessionDto | null>(null);
   const [isQCPersonnel, setIsQCPersonnel] = useState(false);
   
@@ -29,8 +30,12 @@ const EquipmentsPage: React.FC = () => {
       setCurrentUser(user);
       if (user) {
         setIsQCPersonnel(user.roles.includes('QcPers'));
-        const data = await equipmentsService.getAllEquipments();
+        const [data, statusList] = await Promise.all([
+          equipmentsService.getAllEquipments(),
+          equipmentsService.getEquipmentStatuses()
+        ]);
         setEquipments(data);
+        setStatuses(statusList);
       }
     };
     init();
@@ -128,10 +133,9 @@ const EquipmentsPage: React.FC = () => {
             onChange={e => setStatusFilter(e.target.value)}
           >
             <option value="">All</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Calibration Due">Calibration Due</option>
-            <option value="Out of Service">Out of Service</option>
+            {statuses.map(st => (
+              <option key={st.id} value={st.name}>{st.name}</option>
+            ))}
           </select>
         </div>
         <button onClick={fetchEquipments} className="action-button primary filter-apply-button">Refresh</button>

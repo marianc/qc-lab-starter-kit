@@ -17,7 +17,7 @@ public partial class EquipmentCalibration
 
     public string CalibratedBy { get; set; } = null!;
 
-    public string ResultStatus { get; set; } = null!;
+    public long StatusId { get; set; }
 
     public string? ReferenceStandardsUsed { get; set; }
 
@@ -26,4 +26,6 @@ public partial class EquipmentCalibration
     public DateTime DateCreated { get; set; }
 
     public virtual Equipment Equipment { get; set; } = null!;
+
+    public virtual EquipmentCalibrationStatus Status { get; set; } = null!;
 }

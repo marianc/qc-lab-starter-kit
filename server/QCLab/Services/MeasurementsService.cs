@@ -602,7 +602,7 @@ public class MeasurementsService : IMeasurementsService
                 EquipmentCode = e.EquipmentCode,
                 Name = e.Name,
                 SerialNumber = e.SerialNumber,
-                Status = e.Status
+                Status = e.Status != null ? e.Status.Name : string.Empty
             })
             .ToListAsync();
 

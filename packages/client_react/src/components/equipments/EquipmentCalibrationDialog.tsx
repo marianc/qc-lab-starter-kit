@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { 
   Dialog, 
   DialogHeader, 
   DialogContent, 
   DialogFooter 
 } from '@/components/common/ui';
-import type { EquipmentCalibrationDto, CreateEquipmentCalibrationDto } from '@/types/equipment';
+import type { EquipmentCalibrationDto, CreateEquipmentCalibrationDto, EquipmentCalibrationStatusDto } from '@/types/equipment';
+import equipmentsService from '@/services/equipmentsService';
 import { calibrationSchema } from '@/lib/schemas/equipment';
 
 type FormData = z.infer<typeof calibrationSchema>;
@@ -21,6 +22,16 @@ interface Props {
 }
 
 const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave, onClose }) => {
+  const [statuses, setStatuses] = useState<EquipmentCalibrationStatusDto[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      equipmentsService.getEquipmentCalibrationStatuses()
+        .then(setStatuses)
+        .catch(err => console.error('Failed to load equipment calibration statuses', err));
+    }
+  }, [open]);
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(calibrationSchema),
     defaultValues: {
@@ -28,7 +39,7 @@ const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave
       expirationDate: calibration?.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       certificateNumber: calibration?.certificateNumber || '',
       calibratedBy: calibration?.calibratedBy || '',
-      resultStatus: calibration?.resultStatus || 'Pass',
+      statusId: calibration?.statusId || 1,
       referenceStandardsUsed: calibration?.referenceStandardsUsed || '',
       expandedUncertainty: calibration?.expandedUncertainty !== null && calibration?.expandedUncertainty !== undefined ? calibration.expandedUncertainty : null
     }
@@ -41,12 +52,12 @@ const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave
         expirationDate: calibration?.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         certificateNumber: calibration?.certificateNumber || '',
         calibratedBy: calibration?.calibratedBy || '',
-        resultStatus: calibration?.resultStatus || 'Pass',
+        statusId: calibration?.statusId || (statuses.length > 0 ? statuses[0].id : 1),
         referenceStandardsUsed: calibration?.referenceStandardsUsed || '',
         expandedUncertainty: calibration?.expandedUncertainty !== null && calibration?.expandedUncertainty !== undefined ? calibration.expandedUncertainty : null
       });
     }
-  }, [open, calibration, reset]);
+  }, [open, calibration, statuses, reset]);
 
   const onSubmit = (data: FormData) => {
     onSave({
@@ -54,7 +65,7 @@ const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave
       expirationDate: data.expirationDate,
       certificateNumber: data.certificateNumber,
       calibratedBy: data.calibratedBy,
-      resultStatus: data.resultStatus,
+      statusId: Number(data.statusId),
       referenceStandardsUsed: data.referenceStandardsUsed || null,
       expandedUncertainty: data.expandedUncertainty !== null && !isNaN(data.expandedUncertainty as any) ? Number(data.expandedUncertainty) : null
     });
@@ -108,17 +119,17 @@ const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave
             {errors.calibratedBy && <div className="validation-message">{errors.calibratedBy.message}</div>}
           </div>
           <div className="form-group">
-            <label htmlFor="resultStatus">Result Status</label>
+            <label htmlFor="statusId">Result Status</label>
             <select 
-              id="resultStatus" 
-              className={`form-control ${errors.resultStatus ? 'invalid' : ''}`}
-              {...register('resultStatus')}
+              id="statusId" 
+              className={`form-control ${errors.statusId ? 'invalid' : ''}`}
+              {...register('statusId', { valueAsNumber: true })}
             >
-              <option value="Pass">Pass</option>
-              <option value="Fail">Fail</option>
-              <option value="Limited Use">Limited Use</option>
+              {statuses.map(st => (
+                <option key={st.id} value={st.id}>{st.name}</option>
+              ))}
             </select>
-            {errors.resultStatus && <div className="validation-message">{errors.resultStatus.message}</div>}
+            {errors.statusId && <div className="validation-message">{errors.statusId.message}</div>}
           </div>
           <div className="form-group">
             <label htmlFor="referenceStandardsUsed">Reference Standards Used</label>
