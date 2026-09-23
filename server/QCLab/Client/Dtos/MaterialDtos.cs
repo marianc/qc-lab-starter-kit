@@ -12,7 +12,7 @@ public class MaterialDto
     public required string Name { get; set; }
 
     [Unique("Material", ErrorMessage = "Material code is already in use.")]
-    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
+    [StringLength(10, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 10 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 
@@ -35,7 +35,7 @@ public class CreateMaterialDto
     public required string Name { get; set; }
 
     [Unique("Material", ErrorMessage = "Material code is already in use.")]
-    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
+    [StringLength(10, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 10 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 

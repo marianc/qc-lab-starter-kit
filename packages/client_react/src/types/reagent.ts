@@ -43,9 +43,9 @@ export interface ReagentLotDto {
   producedByUserTag?: string | null;
   statusId: number;
   statusName: string;
+  quantity: number;
   unitId?: number | null;
   unitName?: string | null;
-  quantity: number;
   expirationDate: string;
   dateCreated: string;
 
@@ -67,8 +67,8 @@ export interface CreateSupplierLotDto {
   materialId: number;
   controlCode: string;
   statusId: number;
-  unitId?: number | null;
   quantity: number;
+  unitId?: number | null;
   expirationDate: string;
   supplierId: number;
   catalogNumber?: string | null;
@@ -79,8 +79,8 @@ export interface CreateSupplierLotDto {
 
 export interface UpdateSupplierLotDto {
   statusId: number;
-  unitId?: number | null;
   quantity: number;
+  unitId?: number | null;
   expirationDate: string;
   supplierId: number;
   catalogNumber?: string | null;
@@ -93,8 +93,8 @@ export interface CreateProductionLotDto {
   materialId: number;
   controlCode: string;
   statusId: number;
-  unitId?: number | null;
   quantity: number;
+  unitId?: number | null;
   expirationDate: string;
   producedByUserId?: number | null;
   ingredientControlCodeIds: number[];
@@ -102,8 +102,8 @@ export interface CreateProductionLotDto {
 
 export interface UpdateProductionLotDto {
   statusId: number;
-  unitId?: number | null;
   quantity: number;
+  unitId?: number | null;
   expirationDate: string;
   producedByUserId?: number | null;
   ingredientControlCodeIds: number[];

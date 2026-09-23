@@ -12,7 +12,7 @@ public class ReagentDto
     public required string Name { get; set; }
 
     [Unique("Material", ErrorMessage = "Reagent code is already in use.")]
-    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
+    [StringLength(10, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 10 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 
@@ -33,7 +33,7 @@ public class CreateReagentDto
     public required string Name { get; set; }
 
     [Unique("Material", ErrorMessage = "Reagent code is already in use.")]
-    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
+    [StringLength(10, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 10 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 
@@ -75,9 +75,9 @@ public class ReagentLotDto
     public string? ProducedByUserTag { get; set; }
     public long StatusId { get; set; }
     public string StatusName { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
     public long? UnitId { get; set; }
     public string? UnitName { get; set; }
-    public decimal Quantity { get; set; }
     public DateOnly ExpirationDate { get; set; }
     public DateTime DateCreated { get; set; }
 
@@ -101,8 +101,8 @@ public class CreateSupplierLotDto
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Control code is required.")]
     public required string ControlCode { get; set; }
     public long StatusId { get; set; }
-    public long? UnitId { get; set; }
     public decimal Quantity { get; set; }
+    public long? UnitId { get; set; }
     public DateOnly ExpirationDate { get; set; }
 
     public long SupplierId { get; set; }
@@ -112,15 +112,15 @@ public class CreateSupplierLotDto
     public required string ManufacturerLotNumber { get; set; }
     [StringLength(255)]
     public string? CertificateOfAnalysisRef { get; set; }
-    [StringLength(100)]
+    [StringLength(255)]
     public string? Comments { get; set; }
 }
 
 public class UpdateSupplierLotDto
 {
     public long StatusId { get; set; }
-    public long? UnitId { get; set; }
     public decimal Quantity { get; set; }
+    public long? UnitId { get; set; }
     public DateOnly ExpirationDate { get; set; }
 
     public long SupplierId { get; set; }
@@ -130,7 +130,7 @@ public class UpdateSupplierLotDto
     public required string ManufacturerLotNumber { get; set; }
     [StringLength(255)]
     public string? CertificateOfAnalysisRef { get; set; }
-    [StringLength(100)]
+    [StringLength(255)]
     public string? Comments { get; set; }
 }
 
@@ -140,8 +140,8 @@ public class CreateProductionLotDto
     [StringLength(50, MinimumLength = 1, ErrorMessage = "Control code is required.")]
     public required string ControlCode { get; set; }
     public long StatusId { get; set; }
-    public long? UnitId { get; set; }
     public decimal Quantity { get; set; }
+    public long? UnitId { get; set; }
     public DateOnly ExpirationDate { get; set; }
     public long? ProducedByUserId { get; set; }
     public List<long> IngredientControlCodeIds { get; set; } = new();
@@ -150,8 +150,8 @@ public class CreateProductionLotDto
 public class UpdateProductionLotDto
 {
     public long StatusId { get; set; }
-    public long? UnitId { get; set; }
     public decimal Quantity { get; set; }
+    public long? UnitId { get; set; }
     public DateOnly ExpirationDate { get; set; }
     public long? ProducedByUserId { get; set; }
     public List<long> IngredientControlCodeIds { get; set; } = new();

@@ -26,8 +26,8 @@ type SupplierLotFormValues = {
   certificateOfAnalysisRef?: string | null;
   comments?: string | null;
   statusId: number;
-  unitId: any;
   quantity: number;
+  unitId: any;
   expirationDate: string;
 };
 
@@ -57,8 +57,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       certificateOfAnalysisRef: '',
       comments: '',
       statusId: 1,
-      unitId: null,
       quantity: 0,
+      unitId: null,
       expirationDate: ''
     }
   });
@@ -86,8 +86,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
             certificateOfAnalysisRef: lot.certificateOfAnalysisRef || '',
             comments: lot.comments || '',
             statusId: lot.statusId,
-            unitId: lot.unitId || null,
             quantity: lot.quantity,
+            unitId: lot.unitId || null,
             expirationDate: lot.expirationDate
           });
         } else {
@@ -100,8 +100,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
             certificateOfAnalysisRef: '',
             comments: '',
             statusId: 1,
-            unitId: null,
             quantity: 0,
+            unitId: null,
             expirationDate: ''
           });
         }
@@ -172,8 +172,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       if (isEdit && lot) {
         await reagentsService.updateSupplierLot(lot.controlCodeId, {
           statusId: parsedStatusId,
-          unitId: parsedUnitId,
           quantity: parsedQuantity,
+          unitId: parsedUnitId,
           expirationDate: values.expirationDate,
           supplierId: finalSupplierId!,
           catalogNumber: values.catalogNumber || null,
@@ -186,8 +186,8 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           materialId: reagentId,
           controlCode: values.controlCode,
           statusId: parsedStatusId,
-          unitId: parsedUnitId,
           quantity: parsedQuantity,
+          unitId: parsedUnitId,
           expirationDate: values.expirationDate,
           supplierId: finalSupplierId!,
           catalogNumber: values.catalogNumber || null,

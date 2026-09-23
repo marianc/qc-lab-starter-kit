@@ -22,8 +22,8 @@ type ProductionLotFormValues = {
   controlCode: string;
   producedByUserId: any;
   statusId: number;
-  unitId: any;
   quantity: number;
+  unitId: any;
   expirationDate: string;
   ingredientControlCodeIds: number[];
 };
@@ -49,8 +49,8 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
       controlCode: '',
       producedByUserId: null,
       statusId: 1,
-      unitId: null,
       quantity: 0,
+      unitId: null,
       expirationDate: '',
       ingredientControlCodeIds: []
     }
@@ -74,29 +74,29 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
           ? activeLotsData.filter(l => l.controlCodeId !== lot.controlCodeId) 
           : activeLotsData;
         setAvailableLots(filtered);
-      });
 
-      if (lot) {
-        reset({
-          controlCode: lot.controlCode,
-          producedByUserId: lot.producedByUserId || null,
-          statusId: lot.statusId,
-          unitId: lot.unitId || null,
-          quantity: lot.quantity,
-          expirationDate: lot.expirationDate,
-          ingredientControlCodeIds: lot.ingredientControlCodeIds || []
-        });
-      } else {
-        reset({
-          controlCode: '',
-          producedByUserId: null,
-          statusId: 1,
-          unitId: null,
-          quantity: 0,
-          expirationDate: '',
-          ingredientControlCodeIds: []
-        });
-      }
+        if (lot) {
+          reset({
+            controlCode: lot.controlCode,
+            producedByUserId: lot.producedByUserId !== undefined && lot.producedByUserId !== null ? String(lot.producedByUserId) : '',
+            statusId: lot.statusId,
+            quantity: lot.quantity,
+            unitId: lot.unitId !== undefined && lot.unitId !== null ? String(lot.unitId) : '',
+            expirationDate: lot.expirationDate ? lot.expirationDate.split('T')[0] : '',
+            ingredientControlCodeIds: lot.ingredientControlCodeIds || []
+          });
+        } else {
+          reset({
+            controlCode: '',
+            producedByUserId: '',
+            statusId: 1,
+            quantity: 0,
+            unitId: '',
+            expirationDate: '',
+            ingredientControlCodeIds: []
+          });
+        }
+      });
     }
   }, [open, lot, reset]);
 
@@ -121,8 +121,8 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
       if (isEdit && lot) {
         await reagentsService.updateProductionLot(lot.controlCodeId, {
           statusId: parsedStatusId,
-          unitId: parsedUnitId,
           quantity: parsedQuantity,
+          unitId: parsedUnitId,
           expirationDate: values.expirationDate,
           producedByUserId: parsedUserId,
           ingredientControlCodeIds: values.ingredientControlCodeIds
@@ -132,8 +132,8 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
           materialId: reagentId,
           controlCode: values.controlCode,
           statusId: parsedStatusId,
-          unitId: parsedUnitId,
           quantity: parsedQuantity,
+          unitId: parsedUnitId,
           expirationDate: values.expirationDate,
           producedByUserId: parsedUserId,
           ingredientControlCodeIds: values.ingredientControlCodeIds

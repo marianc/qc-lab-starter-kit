@@ -101,7 +101,7 @@ const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, br
 
         <div className={styles.actionSection}>
           <button onClick={() => onEdit(equipment)} className="action-button primary">
-            Edit Equipment
+            Edit
           </button>
         </div>
 
