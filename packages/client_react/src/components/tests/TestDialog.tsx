@@ -229,7 +229,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
     }
   }, [watchIsParam, watchForCertification, watchForEnvironmentalControl, setValue]);
 
-  const validateUniqueness = async (property: "Name" | "Code"): Promise<boolean> => {
+  const validateUniqueness = async (property: "Code"): Promise<boolean> => {
     const value = getValues(property.toLowerCase() as any);
     if (!value) return true;
 
@@ -256,10 +256,9 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   };
 
   const onSubmit = async (values: TestFormValues) => {
-    const isNameUnique = await validateUniqueness('Name');
     const isCodeUnique = await validateUniqueness('Code');
 
-    if (isNameUnique && isCodeUnique) {
+    if (isCodeUnique) {
       let enums: any[] | null = null;
       if (values.id === 0 && Number(values.typeId) === 4 && values.enumListString) {
         const items = values.enumListString.split(/[\n\r,;]+/).map(s => s.trim()).filter(s => s !== '');
@@ -287,7 +286,6 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
               {...register('name')} 
               className="form-control" 
               disabled={Boolean(testData?.isFormValidated)}
-              onBlur={() => validateUniqueness('Name')}
             />
             {errors.name && <span className="text-danger">{errors.name.message}</span>}
           </div>

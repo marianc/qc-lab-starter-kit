@@ -151,10 +151,6 @@ public class UniquenessChecker : IUniquenessChecker
             string? strValue = value as string;
             if (string.IsNullOrEmpty(strValue)) return true;
 
-            if (propertyName == "Name")
-            {
-                return !_context.Tests.Any(t => t.Name == strValue && t.Id != testId);
-            }
             if (propertyName == "Code")
             {
                 return !_context.Tests.Any(t => t.Code == strValue && t.Id != testId);

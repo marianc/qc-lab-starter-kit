@@ -26,7 +26,6 @@ public class TestDto
     public long Id { get; set; }
 
     [Required(ErrorMessage = "Name is required.")]
-    [Unique("Test", ErrorMessage = "Test name is already in use.")]
     [StringLength(50, MinimumLength = 3, ErrorMessage = "Name must be between 3 and 50 characters.")]
     public required string Name { get; set; }
 
@@ -79,7 +78,6 @@ public class CreateTestEnumDto
 public class CreateTestDto
 {
     [Required(ErrorMessage = "Name is required.")]
-    [Unique("Test", ErrorMessage = "Test name is already in use.")]
     [StringLength(50, MinimumLength = 3, ErrorMessage = "Name must be between 3 and 50 characters.")]
     public required string Name { get; set; }
 
