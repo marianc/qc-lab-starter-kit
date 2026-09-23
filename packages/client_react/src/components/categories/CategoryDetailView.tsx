@@ -192,7 +192,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
 
   const selectableTests: SelectableItem[] = allTests
     .filter(t => !t.isParam)
-    .map(t => ({ id: t.id, name: t.name }));
+    .map(t => ({ id: t.id, name: `${t.name} (${t.code})` }));
 
   const validForms: SelectableItem[] = allForms
     .filter(f => f.isValidated && !f.isCancelled)
@@ -236,9 +236,13 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
           <h3 className="section-title">Associated Tests</h3>
           {associatedTests.length > 0 ? (
             <ul className="item-list">
-              {associatedTests.map(test => (
-                <li key={test.id}>{test.name}</li>
-              ))}
+              {associatedTests.map(test => {
+                const fullTest = allTests.find(t => t.id === test.id);
+                const displayName = fullTest ? `${test.name} (${fullTest.code})` : test.name;
+                return (
+                  <li key={test.id}>{displayName}</li>
+                );
+              })}
             </ul>
           ) : (
             <p>No associated tests</p>

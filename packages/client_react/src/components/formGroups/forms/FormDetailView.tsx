@@ -567,7 +567,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
                     <React.Fragment key={param.testId}>
                       {param.evals?.map((evalItem, i) => (
                         <tr key={`${param.testId}-${i}`}>
-                          {i === 0 && <td rowSpan={param.evals.length}>{param.name}</td>}
+                          {i === 0 && <td rowSpan={param.evals.length}>{getTestName(param.testId)}</td>}
                           <td>{evalItem.value}</td>
                           <td>{formatBoolean(evalItem.result)}</td>
                           <td>{formatBoolean(evalItem.expectedResult)}</td>

@@ -137,10 +137,10 @@ const TestsPage: React.FC = () => {
           <tr>
             <th>ID</th>
             <th>Name</th>
+            <th>Code</th>
             <th>Value Type</th>
             <th>Unit</th>
             <th>Norm</th>
-            <th>Norm Ref</th>
             <th>Is Param</th>
             <th>For Certification</th>
             <th>Is Form Validated</th>
@@ -163,10 +163,10 @@ const TestsPage: React.FC = () => {
             >
               <td>{test.id}</td>
               <td>{test.name}</td>
+              <td>{test.code}</td>
               <td>{getValueTypeName(test)}</td>
               <td>{test.unitName}</td>
               <td>{getNormName(test.normId)}</td>
-              <td>{test.normRef}</td>
               <td>{test.isParam ? "Yes" : "No"}</td>
               <td>{test.forCertification ? "Yes" : "No"}</td>
               <td>{test.isFormValidated ? "Yes" : "No"}</td>
