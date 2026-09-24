@@ -42,6 +42,19 @@ public class UsersService : IUsersService
         return users;
     }
 
+    // GET /users-info
+    public async Task<List<UserInfoDto>> GetUsersInfo()
+    {
+        return await _context.Users
+            .OrderBy(u => u.Tag)
+            .Select(u => new UserInfoDto
+            {
+                Id = u.Id,
+                Tag = u.Tag
+            })
+            .ToListAsync();
+    }
+
     // GET /users/{id}
     public async Task<UserDto?> GetUser(long id)
     {

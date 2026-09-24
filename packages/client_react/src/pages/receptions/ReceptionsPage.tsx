@@ -9,7 +9,7 @@ import CategoryVerificationDetailView from '@/components/receptions/CategoryVeri
 import styles from './ReceptionsPage.module.css';
 import type { ReceptionDto } from '@/types/reception';
 import type { ReceptionTypeDto } from '@/types/receptionType';
-import type { UserDto } from '@/types/user';
+import type { UserInfoDto } from '@/types/user';
 import type { MaterialDto } from '@/types/material';
 import type { TestDto } from '@/types/test';
 import type { FormDto } from '@/types/form';
@@ -25,7 +25,7 @@ const ReceptionsPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
   const [receptions, setReceptions] = useState<ReceptionDto[]>([]);
   const [receptionTypes, setReceptionTypes] = useState<ReceptionTypeDto[]>([]);
-  const [submittedUsers, setSubmittedUsers] = useState<UserDto[]>([]);
+  const [submittedUsers, setSubmittedUsers] = useState<UserInfoDto[]>([]);
   const [materials, setMaterials] = useState<MaterialDto[]>([]);
   const [allTests, setAllTests] = useState<TestDto[]>([]);
   const [allForms, setAllForms] = useState<FormDto[]>([]);
@@ -70,7 +70,7 @@ const ReceptionsPage: React.FC = () => {
     try {
       const [types, users, mats, tests, forms] = await Promise.all([
         receptionTypesService.getAllReceptionTypes(),
-        usersService.getAllUsers(),
+        usersService.getUsersInfo(),
         materialsService.getAllMaterials(),
         testsService.getAllTests(),
         formsService.getAllForms()

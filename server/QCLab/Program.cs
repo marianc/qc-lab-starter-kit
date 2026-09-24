@@ -772,6 +772,7 @@ namespace QCLab
 
             // Users
             apiGroup.MapGet("/users", (IUsersService s) => s.GetAllUsers());
+            apiGroup.MapGet("/users-info", (IUsersService s) => s.GetUsersInfo());
             apiGroup.MapGet("/users/{id}", (long id, IUsersService s) => s.GetUser(id));
             apiGroup.MapPost("/users", async ([FromBody] CreateUserDto dto, IUsersService s) =>
             {

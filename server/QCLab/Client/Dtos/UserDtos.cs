@@ -67,3 +67,9 @@ public class ResetPasswordDto
     public required string NewPassword { get; set; }
     public required string ConfirmPassword { get; set; }
 }
+
+public class UserInfoDto
+{
+    public long Id { get; set; }
+    public required string Tag { get; set; }
+}

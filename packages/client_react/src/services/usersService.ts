@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import type { UserDto } from '../types/user';
+import type { UserDto, UserInfoDto } from '../types/user';
 import type { 
   CreateUserDto, 
   UpdateUserDto, 
@@ -10,6 +10,11 @@ import type { IdDto, ToggleObsoleteDto } from '../types/models';
 const usersService = {
   async getAllUsers(): Promise<UserDto[]> {
     const response = await apiClient.get<UserDto[]>('api/users');
+    return response.data;
+  },
+
+  async getUsersInfo(): Promise<UserInfoDto[]> {
+    const response = await apiClient.get<UserInfoDto[]>('api/users-info');
     return response.data;
   },
 

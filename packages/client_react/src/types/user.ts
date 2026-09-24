@@ -17,3 +17,8 @@ export interface UserDto {
   password?: string | null;
   confirmPassword?: string | null;
 }
+
+export interface UserInfoDto {
+  id: number;
+  tag: string;
+}
