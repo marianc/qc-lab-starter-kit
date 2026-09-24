@@ -9,6 +9,7 @@ using QCLab.Middleware;
 using QCLab.Models;
 using QCLab.Services;
 using QCLab.Interceptors;
+using QCLab.Utils;
 
 namespace QCLab
 {
@@ -59,7 +60,14 @@ namespace QCLab
                     options.ExpireTimeSpan = TimeSpan.FromHours(12);
                     options.Cookie.Name = $"QCLabSession_{tenantTag}";
                 });
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("QcPersOnly", policy => policy.RequireRole("QcPers"));
+                options.AddPolicy("LabPersOnly", policy => policy.RequireRole("LabPers"));
+                options.AddPolicy("LabOrQcPersOnly", policy => policy.RequireAssertion(ctx => 
+                    ctx.User.IsInRole("LabPers") || ctx.User.IsInRole("QcPers")));
+            });
             builder.Services.AddCascadingAuthenticationState();
 
             // Register application services
@@ -211,28 +219,29 @@ namespace QCLab
             {
                 try { return Results.Ok(await categoriesService.CreateCategory(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/categories/{id}", async (long id, [FromBody] UpdateCategoryDto dto, ICategoriesService categoriesService) =>
             {
                 try { await categoriesService.UpdateCategory(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapGet("/categories/{id}/tests", (long id, ICategoriesService categoriesService) => categoriesService.GetCategoryTests(id));
-            apiGroup.MapPut("/categories/{id}/tests", (long id, [FromBody] UpdateCategoryTestsDto dto, ICategoriesService categoriesService) => categoriesService.UpdateCategoryTests(id, dto));
-            apiGroup.MapPut("/categories/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ICategoriesService categoriesService) => categoriesService.ToggleObsolete(id, dto));
+            apiGroup.MapPut("/categories/{id}/tests", (long id, [FromBody] UpdateCategoryTestsDto dto, ICategoriesService categoriesService) => categoriesService.UpdateCategoryTests(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/categories/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ICategoriesService categoriesService) => categoriesService.ToggleObsolete(id, dto)).RequireQcPers();
 
             // Certificates
             apiGroup.MapGet("/certificates", async (
                 [FromQuery] int page,
                 [FromQuery] int pageSize,
-                bool isQCPersonnel,
                 [FromQuery] long? materialId,
                 [FromQuery] int? submissionYear,
                 [FromQuery] int? submissionMonth,
+                HttpContext httpContext,
                 ICertificatesService s) =>
             {
                 try
                 {
+                    bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
                     return Results.Ok(await s.GetAllCertificates(page, pageSize, isQCPersonnel, materialId, submissionYear, submissionMonth));
                 }
                 catch (Exception ex)
@@ -244,15 +253,16 @@ namespace QCLab
 
             apiGroup.MapGet("/certificates/export-excel", async (
                 ICertificatesService s,
-                bool isQCPersonnel,
                 [FromQuery] long? materialId,
                 [FromQuery] int? submissionYear,
                 [FromQuery] int? submissionMonth,
                 [FromQuery] int? loadedPages,
+                HttpContext httpContext,
                 [FromServices] IHttpClientFactory clientFactory) =>
             {
                 try
                 {
+                    bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
                     var excelBytes = await s.ExportCertificatesExcel(isQCPersonnel, materialId, submissionYear, submissionMonth, loadedPages, 15, clientFactory);
                     if (excelBytes == null) return Results.NotFound();
                     return Results.File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "quality_certificates.xlsx");
@@ -264,12 +274,12 @@ namespace QCLab
             });
             apiGroup.MapGet("/certificates/{id}", (long id, ICertificatesService s) => s.GetCertificate(id));
             apiGroup.MapGet("/certificates/{id}/has_existing", async (long id, ICertificatesService s) => new { hasExisting = await s.HasExistingValidCertificates(id) });
-            apiGroup.MapPost("/certificates/generate", ([FromBody] GenerateCertificateDto dto, ICertificatesService s) => s.GenerateCertificate(dto));
-            apiGroup.MapPut("/certificates/{id}", (long id, [FromBody] UpdateCertificateDto dto, ICertificatesService s) => s.UpdateCertificate(id, dto));
-            apiGroup.MapPut("/certificates/{id}/refresh_tests", (long id, ICertificatesService s) => s.RefreshTests(id));
+            apiGroup.MapPost("/certificates/generate", ([FromBody] GenerateCertificateDto dto, ICertificatesService s) => s.GenerateCertificate(dto)).RequireQcPers();
+            apiGroup.MapPut("/certificates/{id}", (long id, [FromBody] UpdateCertificateDto dto, ICertificatesService s) => s.UpdateCertificate(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/certificates/{id}/refresh_tests", (long id, ICertificatesService s) => s.RefreshTests(id)).RequireQcPers();
             apiGroup.MapGet("/certificates/{id}/analyze_results", (long id, ICertificatesService s) => s.AnalyzeResults(id));
-            apiGroup.MapPut("/certificates/{id}/submit", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.SubmitCertificate(id, dto));
-            apiGroup.MapPut("/certificates/{id}/cancel", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.CancelCertificate(id, dto));
+            apiGroup.MapPut("/certificates/{id}/submit", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.SubmitCertificate(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/certificates/{id}/cancel", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.CancelCertificate(id, dto)).RequireQcPers();
             apiGroup.MapDelete("/certificates/{id}", async (long id, HttpContext httpContext, ICertificatesService s) =>
             {
                 try
@@ -290,7 +300,7 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
+            }).RequireQcPers();
             apiGroup.MapGet("/certificates/{id}/pdf", async (long id, ICertificatesService s) =>
             {
                 var pdfBytes = await s.GetCertificatePdf(id);
@@ -309,68 +319,68 @@ namespace QCLab
             // Form Groups
             apiGroup.MapGet("/form_groups", (IFormGroupsService s) => s.GetAllFormGroups());
             apiGroup.MapGet("/form_groups/{id}", (long id, IFormGroupsService s) => s.GetFormGroup(id));
-            apiGroup.MapPost("/form_groups", ([FromBody] CreateFormGroupDto dto, IFormGroupsService s) => s.CreateFormGroup(dto));
-            apiGroup.MapPut("/form_groups/{id}", (long id, [FromBody] UpdateFormGroupDto dto, IFormGroupsService s) => s.UpdateFormGroup(id, dto));
-            apiGroup.MapPut("/form_groups", ([FromBody] List<UpdateFormGroupDto> dtos, IFormGroupsService s) => s.BulkUpdateFormGroups(dtos));
-            apiGroup.MapDelete("/form_groups/{id}", (long id, IFormGroupsService s) => s.DeleteFormGroup(id));
+            apiGroup.MapPost("/form_groups", ([FromBody] CreateFormGroupDto dto, IFormGroupsService s) => s.CreateFormGroup(dto)).RequireQcPers();
+            apiGroup.MapPut("/form_groups/{id}", (long id, [FromBody] UpdateFormGroupDto dto, IFormGroupsService s) => s.UpdateFormGroup(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/form_groups", ([FromBody] List<UpdateFormGroupDto> dtos, IFormGroupsService s) => s.BulkUpdateFormGroups(dtos)).RequireQcPers();
+            apiGroup.MapDelete("/form_groups/{id}", (long id, IFormGroupsService s) => s.DeleteFormGroup(id)).RequireQcPers();
             apiGroup.MapGet("/form_groups/{id}/forms", (long id, IFormGroupsService s) => s.GetFormsByGroup(id));
 
             // Forms
             apiGroup.MapGet("/forms", (IFormsService s) => s.GetAllForms());
             apiGroup.MapGet("/forms/{id}", (long id, IFormsService s) => s.GetForm(id));
-            apiGroup.MapPost("/forms", ([FromBody] CreateFormDto dto, IFormsService s) => s.CreateForm(dto));
-            apiGroup.MapPut("/forms/{id}", (long id, [FromBody] UpdateFormDto dto, IFormsService s) => s.UpdateForm(id, dto));
+            apiGroup.MapPost("/forms", ([FromBody] CreateFormDto dto, IFormsService s) => s.CreateForm(dto)).RequireQcPers();
+            apiGroup.MapPut("/forms/{id}", (long id, [FromBody] UpdateFormDto dto, IFormsService s) => s.UpdateForm(id, dto)).RequireQcPers();
             apiGroup.MapGet("/forms/{id}/params", (long id, IFormsService s) => s.GetFormParams(id));
-            apiGroup.MapPut("/forms/{id}/params/reorder", (long id, [FromBody] List<ReorderFormParamDto> dtos, IFormsService s) => s.ReorderFormParams(id, dtos));
-            apiGroup.MapPut("/forms/{id}/params/batch-update", (long id, [FromBody] List<BatchUpdateFormParamDto> dtos, IFormsService s) => s.BatchUpdateFormParams(id, dtos));
+            apiGroup.MapPut("/forms/{id}/params/reorder", (long id, [FromBody] List<ReorderFormParamDto> dtos, IFormsService s) => s.ReorderFormParams(id, dtos)).RequireQcPers();
+            apiGroup.MapPut("/forms/{id}/params/batch-update", (long id, [FromBody] List<BatchUpdateFormParamDto> dtos, IFormsService s) => s.BatchUpdateFormParams(id, dtos)).RequireQcPers();
             apiGroup.MapPost("/forms/{id}/params", async (long id, [FromBody] CreateFormParamDto dto, IFormsService s) =>
             {
                 try { return Results.Ok(await s.AddFormParam(id, dto)); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/params/{testId}", async (long id, long testId, [FromBody] UpdateFormParamDto dto, IFormsService s) =>
             {
                 try { await s.UpdateFormParam(id, testId, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapDelete("/forms/{id}/params/{testId}", async (long id, long testId, IFormsService s) =>
             {
                 try { await s.DeleteFormParam(id, testId); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/submit", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
             {
                 try { await s.SubmitForm(id, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/validate", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
             {
                 try { await s.ValidateForm(id, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/cancel", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
             {
                 try { await s.CancelForm(id, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/reactivate", async (long id, IFormsService s) =>
             {
                 try { await s.ReactivateForm(id); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPost("/forms/{id}/duplicate", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
             {
                 try { return Results.Ok(await s.DuplicateForm(id, dto)); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
 
             // Form Evals
             apiGroup.MapGet("/forms/{id}/evals", (long id, IFormEvalsService s) => s.GetFormEvals(id));
             apiGroup.MapGet("/form-evals/{id}", (long id, IFormEvalsService s) => s.GetFormEval(id));
-            apiGroup.MapPost("/form-evals", ([FromBody] CreateFormEvalDto dto, IFormEvalsService s) => s.CreateFormEval(dto));
-            apiGroup.MapPut("/form-evals/{id}", (long id, [FromBody] UpdateFormEvalDto dto, IFormEvalsService s) => s.UpdateFormEval(id, dto));
-            apiGroup.MapDelete("/form-evals/{id}", (long id, IFormEvalsService s) => s.DeleteFormEval(id));
-            apiGroup.MapPost("/form-evals/{id}/calculate", (long id, IFormEvalsService s) => s.CalculateFormEval(id));
+            apiGroup.MapPost("/form-evals", ([FromBody] CreateFormEvalDto dto, IFormEvalsService s) => s.CreateFormEval(dto)).RequireQcPers();
+            apiGroup.MapPut("/form-evals/{id}", (long id, [FromBody] UpdateFormEvalDto dto, IFormEvalsService s) => s.UpdateFormEval(id, dto)).RequireQcPers();
+            apiGroup.MapDelete("/form-evals/{id}", (long id, IFormEvalsService s) => s.DeleteFormEval(id)).RequireQcPers();
+            apiGroup.MapPost("/form-evals/{id}/calculate", (long id, IFormEvalsService s) => s.CalculateFormEval(id)).RequireQcPers();
 
             // Equipments
             apiGroup.MapGet("/equipments", (IEquipmentsService s) => s.GetAllEquipments());
@@ -381,23 +391,23 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateEquipment(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/equipments/{id}", async (long id, [FromBody] UpdateEquipmentDto dto, IEquipmentsService s) =>
             {
                 try { await s.UpdateEquipment(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapGet("/equipments/{id}/calibrations", (long id, IEquipmentsService s) => s.GetEquipmentCalibrations(id));
             apiGroup.MapPost("/equipments/{id}/calibrations", async (long id, [FromBody] CreateEquipmentCalibrationDto dto, IEquipmentsService s) =>
             {
                 try { return Results.Ok(await s.AddEquipmentCalibration(id, dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/equipment-calibrations/{calibrationId}", async (long calibrationId, [FromBody] CreateEquipmentCalibrationDto dto, IEquipmentsService s) =>
             {
                 try { await s.UpdateEquipmentCalibration(calibrationId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
 
             // Reagents & Lots
             apiGroup.MapGet("/reagents", (IReagentsService s) => s.GetAllReagents());
@@ -407,19 +417,19 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateSupplier(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
             apiGroup.MapGet("/reagents/{id}", (long id, IReagentsService s) => s.GetReagent(id));
             apiGroup.MapPost("/reagents", async ([FromBody] CreateReagentDto dto, IReagentsService s) =>
             {
                 try { return Results.Ok(await s.CreateReagent(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
             apiGroup.MapPut("/reagents/{id}", async (long id, [FromBody] UpdateReagentDto dto, IReagentsService s) =>
             {
                 try { await s.UpdateReagent(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
-            apiGroup.MapPut("/reagents/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IReagentsService s) => s.ToggleObsolete(id, dto));
+            }).RequireLabOrQcPers();
+            apiGroup.MapPut("/reagents/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IReagentsService s) => s.ToggleObsolete(id, dto)).RequireLabOrQcPers();
             apiGroup.MapGet("/reagents/{id}/lots", (long id, IReagentsService s) => s.GetReagentLots(id));
             apiGroup.MapGet("/reagent_lots/active", (IReagentsService s) => s.GetAllActiveReagentLots());
             apiGroup.MapGet("/reagent_lots/{controlCodeId}", (long controlCodeId, IReagentsService s) => s.GetReagentLot(controlCodeId));
@@ -427,22 +437,22 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateSupplierLot(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
             apiGroup.MapPut("/reagents/supplier_lots/{controlCodeId}", async (long controlCodeId, [FromBody] UpdateSupplierLotDto dto, IReagentsService s) =>
             {
                 try { await s.UpdateSupplierLot(controlCodeId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
             apiGroup.MapPost("/reagents/production_lots", async ([FromBody] CreateProductionLotDto dto, IReagentsService s) =>
             {
                 try { return Results.Ok(await s.CreateProductionLot(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
             apiGroup.MapPut("/reagents/production_lots/{controlCodeId}", async (long controlCodeId, [FromBody] UpdateProductionLotDto dto, IReagentsService s) =>
             {
                 try { await s.UpdateProductionLot(controlCodeId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireLabOrQcPers();
 
             // Materials
             apiGroup.MapGet("/materials", (IMaterialsService s) => s.GetAllMaterials());
@@ -452,15 +462,15 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateMaterial(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/materials/{id}", async (long id, [FromBody] UpdateMaterialDto dto, IMaterialsService s) =>
             {
                 try { await s.UpdateMaterial(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapGet("/materials/{id}/tests", (long id, IMaterialsService s) => s.GetMaterialTests(id));
-            apiGroup.MapPut("/materials/{id}/tests", (long id, [FromBody] UpdateMaterialTestsDto dto, IMaterialsService s) => s.UpdateMaterialTests(id, dto));
-            apiGroup.MapPut("/materials/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IMaterialsService s) => s.ToggleObsolete(id, dto));
+            apiGroup.MapPut("/materials/{id}/tests", (long id, [FromBody] UpdateMaterialTestsDto dto, IMaterialsService s) => s.UpdateMaterialTests(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/materials/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IMaterialsService s) => s.ToggleObsolete(id, dto)).RequireQcPers();
             apiGroup.MapGet("/materials/{id}/control_codes", (long id, IMaterialsService s) => s.GetControlCodes(id));
             apiGroup.MapGet("/materials/{id}/control_codes_for_certificate", (long id, IMaterialsService s) => s.GetControlCodesForCertificate(id));
 
@@ -471,17 +481,17 @@ namespace QCLab
             apiGroup.MapGet("/measurements/{id}/reagent_lots", (long id, IMeasurementsService s) => s.GetMeasurementReagentLots(id));
             apiGroup.MapGet("/measurements/{id}/applicable_reagent_lots", (long id, IMeasurementsService s) => s.GetMeasurementApplicableReagentLots(id));
             apiGroup.MapGet("/measurements/{id}/applicable_sop_versions", (long id, IMeasurementsService s) => s.GetMeasurementApplicableSopVersions(id));
-            apiGroup.MapPut("/measurements/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, IMeasurementsService s) => s.UpdateMeasurementEquipments(id, dto));
+            apiGroup.MapPut("/measurements/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, IMeasurementsService s) => s.UpdateMeasurementEquipments(id, dto)).RequireLabPers();
             apiGroup.MapPut("/measurements/{id}/sop_versions", async (long id, [FromBody] UpdateMeasurementSopVersionsDto dto, IMeasurementsService s) => 
             {
                 await s.UpdateMeasurementSopVersions(id, dto);
                 return Results.Ok();
-            });
+            }).RequireLabPers();
             apiGroup.MapPut("/measurements/{id}/reagent_lots", async (long id, [FromBody] UpdateMeasurementReagentLotsDto dto, IMeasurementsService s) => 
             {
                 await s.UpdateMeasurementReagentLots(id, dto);
                 return Results.Ok();
-            });
+            }).RequireLabPers();
             apiGroup.MapPut("/measurement_tests/{id}", async (long id, [FromBody] UpdateMeasurementTestBulkDto dto, HttpContext httpContext, IMeasurementsService s) => 
             {
                 try
@@ -494,7 +504,7 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
+            }).RequireLabPers();
             apiGroup.MapGet("/measurement_params/{id}", (long id, IMeasurementsService s) => s.GetMeasurementParam(id));
             apiGroup.MapPut("/measurement_params/{id}", async (long id, [FromBody] UpdateMeasurementParamDto dto, HttpContext httpContext, IMeasurementsService s) => 
             {
@@ -508,7 +518,7 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
+            }).RequireLabPers();
             apiGroup.MapPost("/measurements", async ([FromBody] CreateMeasurementDto dto, HttpContext httpContext, IMeasurementsService s) => 
             {
                 try
@@ -521,8 +531,8 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
-            apiGroup.MapDelete("/measurements/{id}", (long id, IMeasurementsService s) => s.DeleteMeasurement(id));
+            }).RequireLabPers();
+            apiGroup.MapDelete("/measurements/{id}", (long id, IMeasurementsService s) => s.DeleteMeasurement(id)).RequireLabPers();
             apiGroup.MapPut("/measurements/{id}/toggle_reported", async (long id, HttpContext httpContext, IMeasurementsService s) => 
             {
                 try
@@ -535,8 +545,8 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
-            apiGroup.MapPost("/measurements/{id}/tests", (long id, [FromBody] AddMeasurementTestDto dto, IMeasurementsService s) => s.AddMeasurementTest(id, dto));
+            }).RequireLabPers();
+            apiGroup.MapPost("/measurements/{id}/tests", (long id, [FromBody] AddMeasurementTestDto dto, IMeasurementsService s) => s.AddMeasurementTest(id, dto)).RequireLabPers();
 
             // Norms
             apiGroup.MapGet("/norms", (INormsService s) => s.GetAllNorms());
@@ -545,13 +555,13 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateNorm(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/norms/{id}", async (long id, [FromBody] UpdateNormDto dto, INormsService s) =>
             {
                 try { await s.UpdateNorm(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
-            apiGroup.MapPut("/norms/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, INormsService s) => s.ToggleObsolete(id, dto));
+            }).RequireQcPers();
+            apiGroup.MapPut("/norms/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, INormsService s) => s.ToggleObsolete(id, dto)).RequireQcPers();
             apiGroup.MapGet("/norms/{normId}/sops", (long normId, ISopsService s) => s.GetSopsByNorm(normId));
 
             // SOPs
@@ -561,22 +571,22 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateSop(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPost("/sops/{sopId}/versions", async (long sopId, [FromBody] UpdateSopVersionDto dto, ISopsService s) =>
             {
                 try { return Results.Ok(await s.CreateSopVersion(sopId, dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/sop-versions/{versionId}", async (long versionId, [FromBody] UpdateSopVersionDto dto, ISopsService s) =>
             {
                 try { await s.UpdateSopVersion(versionId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/sop-versions/{versionId}/activate", async (long versionId, ISopsService s) =>
             {
                 try { await s.ActivateSopVersion(versionId); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
 
             // Receptions
             apiGroup.MapGet("/receptions", (
@@ -604,12 +614,12 @@ namespace QCLab
             apiGroup.MapPut("/receptions/{id}/receive", (long id, [FromBody] ReceiveReceptionDto dto, IReceptionsService s) => s.ReceiveReception(id, dto));
             apiGroup.MapPut("/receptions/{id}/reject", (long id, [FromBody] RejectReceptionDto dto, IReceptionsService s) => s.RejectReception(id, dto));
             apiGroup.MapGet("/receptions/{id}/reports", (long id, IReceptionsService s) => s.GetReceptionReports(id));
-            apiGroup.MapPost("/receptions/{id}/create_report", (long id, [FromBody] CreateReportDto dto, IReceptionsService s) => s.CreateReport(id, dto));
+            apiGroup.MapPost("/receptions/{id}/create_report", (long id, [FromBody] CreateReportDto dto, IReceptionsService s) => s.CreateReport(id, dto)).RequireLabPers();
             apiGroup.MapGet("/receptions/{id}/check_report_conflict", (long id, IReceptionsService s) => s.CheckReportConflict(id).ContinueWith(t => new { conflict = t.Result }));
             apiGroup.MapGet("/receptions/{id}/measurement_tests", (long id, IReceptionsService s) => s.GetReceptionMeasurementTests(id));
             apiGroup.MapGet("/receptions/{id}/measurement_params", (long id, IReceptionsService s) => s.GetReceptionMeasurementParams(id));
             apiGroup.MapGet("/receptions/{id}/preview", (long id, IReceptionsService s) => s.GetPreviewReport(id));
-            apiGroup.MapPost("/receptions/{id}/submit_express_certificate", (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s) => s.SubmitExpressCertificate(id, dto));
+            apiGroup.MapPost("/receptions/{id}/submit_express_certificate", (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s) => s.SubmitExpressCertificate(id, dto)).RequireQcPers();
 
             // Reception Types
             apiGroup.MapGet("/reception_types", (IReceptionTypesService s) => s.GetAllReceptionTypes());
@@ -619,12 +629,15 @@ namespace QCLab
                 IReportsService s,
                 [FromQuery] int page,
                 [FromQuery] int pageSize,
-                [FromQuery] long userId,
                 [FromQuery] long? receptionTypeId,
                 [FromQuery] long? materialId,
                 [FromQuery] int? submissionYear,
-                [FromQuery] int? submissionMonth) =>
-                    s.GetAllReports(page, pageSize, userId, receptionTypeId, materialId, submissionYear, submissionMonth));
+                [FromQuery] int? submissionMonth,
+                HttpContext httpContext) =>
+            {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                return s.GetAllReports(page, pageSize, userId, receptionTypeId, materialId, submissionYear, submissionMonth);
+            });
 
             apiGroup.MapGet("/reports/export-excel", async (
                 IReportsService s,
@@ -680,32 +693,37 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
+            }).RequireLabPers();
 
             // Specs
-            apiGroup.MapGet("/specs", (ISpecsService s, long? userId, bool isQCPersonnel) => s.GetAllSpecs(userId, isQCPersonnel));
+            apiGroup.MapGet("/specs", (ISpecsService s, HttpContext httpContext) => 
+            {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
+                return s.GetAllSpecs(userId, isQCPersonnel);
+            });
             apiGroup.MapGet("/specs/{id}", (long id, ISpecsService s) => s.GetSpec(id));
-            apiGroup.MapPost("/specs", ([FromBody] CreateSpecDto dto, ISpecsService s) => s.CreateSpec(dto));
-            apiGroup.MapPut("/specs/{id}", (long id, [FromBody] UpdateSpecDto dto, ISpecsService s) => s.UpdateSpec(id, dto));
-            apiGroup.MapPost("/specs/{id}/tests", (long id, [FromBody] CreateSpecTestDto dto, ISpecsService s) => s.AddSpecTest(id, dto));
-            apiGroup.MapPut("/specs/{id}/tests/{testId}", (long id, long testId, [FromBody] UpdateSpecTestDto dto, ISpecsService s) => s.UpdateSpecTest(id, testId, dto));
-            apiGroup.MapDelete("/specs/{id}/tests/{testId}", (long id, long testId, ISpecsService s) => s.DeleteSpecTest(id, testId));
-            apiGroup.MapDelete("/specs/{id}", (long id, ISpecsService s) => s.DeleteSpec(id));
+            apiGroup.MapPost("/specs", ([FromBody] CreateSpecDto dto, ISpecsService s) => s.CreateSpec(dto)).RequireQcPers();
+            apiGroup.MapPut("/specs/{id}", (long id, [FromBody] UpdateSpecDto dto, ISpecsService s) => s.UpdateSpec(id, dto)).RequireQcPers();
+            apiGroup.MapPost("/specs/{id}/tests", (long id, [FromBody] CreateSpecTestDto dto, ISpecsService s) => s.AddSpecTest(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/specs/{id}/tests/{testId}", (long id, long testId, [FromBody] UpdateSpecTestDto dto, ISpecsService s) => s.UpdateSpecTest(id, testId, dto)).RequireQcPers();
+            apiGroup.MapDelete("/specs/{id}/tests/{testId}", (long id, long testId, ISpecsService s) => s.DeleteSpecTest(id, testId)).RequireQcPers();
+            apiGroup.MapDelete("/specs/{id}", (long id, ISpecsService s) => s.DeleteSpec(id)).RequireQcPers();
             apiGroup.MapPut("/specs/{id}/submit", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
             {
                 try { return Results.Ok(await s.SubmitSpec(id, dto)); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/specs/{id}/cancel", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
             {
                 try { await s.CancelSpec(id, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPost("/specs/{id}/duplicate", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
             {
                 try { return Results.Ok(await s.DuplicateSpec(id, dto)); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPost("/specs/validate-condition", async ([FromBody] string condition, ISpecsService s) =>
             {
                 try
@@ -717,7 +735,7 @@ namespace QCLab
                 {
                     return Results.BadRequest(new { msg = ex.Message });
                 }
-            });
+            }).RequireQcPers();
             apiGroup.MapGet("/specs/{id}/pdf", async (long id, ISpecsService s) =>
             {
                 var pdfBytes = await s.GetSpecPdf(id);
@@ -743,18 +761,18 @@ namespace QCLab
             apiGroup.MapGet("/tests/check_code_uniqueness", (ITestsService s, string code, long? id) => s.CheckCodeUniqueness(code, id).ContinueWith(t => new { is_unique = t.Result }));
             apiGroup.MapGet("/tests/{id}", (long id, ITestsService s) => s.GetTest(id));
             apiGroup.MapGet("/tests/{id}/enums", (long id, ITestsService s) => s.GetTestEnums(id));
-            apiGroup.MapPost("/tests/{id}/enums", (long id, [FromBody] CreateTestEnumDto dto, ITestsService s) => s.AddTestEnum(id, dto));
-            apiGroup.MapPut("/tests/{id}/enums/reorder", (long id, [FromBody] List<ReorderTestEnumDto> dtos, ITestsService s) => s.ReorderTestEnums(id, dtos));
-            apiGroup.MapPut("/tests/{id}/enums/{enumId}", (long id, long enumId, [FromBody] UpdateTestEnumDto dto, ITestsService s) => s.UpdateTestEnum(id, enumId, dto));
-            apiGroup.MapDelete("/tests/{id}/enums/{enumId}", (long id, long enumId, ITestsService s) => s.DeleteTestEnum(id, enumId));
-            apiGroup.MapPost("/tests", ([FromBody] CreateTestDto dto, ITestsService s) => s.CreateTest(dto));
-            apiGroup.MapPut("/tests/reorder", ([FromBody] List<ReorderTestDto> dtos, ITestsService s) => s.ReorderTests(dtos));
-            apiGroup.MapPut("/tests/{id}", (long id, [FromBody] UpdateTestDto dto, ITestsService s) => s.UpdateTest(id, dto));
-            apiGroup.MapPut("/tests/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ITestsService s) => s.ToggleObsolete(id, dto));
+            apiGroup.MapPost("/tests/{id}/enums", (long id, [FromBody] CreateTestEnumDto dto, ITestsService s) => s.AddTestEnum(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/tests/{id}/enums/reorder", (long id, [FromBody] List<ReorderTestEnumDto> dtos, ITestsService s) => s.ReorderTestEnums(id, dtos)).RequireQcPers();
+            apiGroup.MapPut("/tests/{id}/enums/{enumId}", (long id, long enumId, [FromBody] UpdateTestEnumDto dto, ITestsService s) => s.UpdateTestEnum(id, enumId, dto)).RequireQcPers();
+            apiGroup.MapDelete("/tests/{id}/enums/{enumId}", (long id, long enumId, ITestsService s) => s.DeleteTestEnum(id, enumId)).RequireQcPers();
+            apiGroup.MapPost("/tests", ([FromBody] CreateTestDto dto, ITestsService s) => s.CreateTest(dto)).RequireQcPers();
+            apiGroup.MapPut("/tests/reorder", ([FromBody] List<ReorderTestDto> dtos, ITestsService s) => s.ReorderTests(dtos)).RequireQcPers();
+            apiGroup.MapPut("/tests/{id}", (long id, [FromBody] UpdateTestDto dto, ITestsService s) => s.UpdateTest(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/tests/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, ITestsService s) => s.ToggleObsolete(id, dto)).RequireQcPers();
             apiGroup.MapGet("/tests/{id}/equipments", (long id, ITestsService s) => s.GetTestEquipments(id));
-            apiGroup.MapPut("/tests/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, ITestsService s) => s.UpdateTestEquipments(id, dto));
+            apiGroup.MapPut("/tests/{id}/equipments", (long id, [FromBody] UpdateTestEquipmentsDto dto, ITestsService s) => s.UpdateTestEquipments(id, dto)).RequireQcPers();
             apiGroup.MapGet("/tests/{id}/reagents", (long id, ITestsService s) => s.GetTestReagents(id));
-            apiGroup.MapPut("/tests/{id}/reagents", (long id, [FromBody] UpdateTestReagentsDto dto, ITestsService s) => s.UpdateTestReagents(id, dto));
+            apiGroup.MapPut("/tests/{id}/reagents", (long id, [FromBody] UpdateTestReagentsDto dto, ITestsService s) => s.UpdateTestReagents(id, dto)).RequireQcPers();
 
             // Units
             apiGroup.MapGet("/units", (IUnitsService s) => s.GetAllUnits());
@@ -763,29 +781,29 @@ namespace QCLab
             {
                 try { return Results.Ok(await s.CreateUnit(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
             apiGroup.MapPut("/units/{id}", async (long id, [FromBody] UpdateUnitDto dto, IUnitsService s) =>
             {
                 try { await s.UpdateUnit(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireQcPers();
 
             // Users
-            apiGroup.MapGet("/users", (IUsersService s) => s.GetAllUsers());
+            apiGroup.MapGet("/users", (IUsersService s) => s.GetAllUsers()).RequireAdmin();
             apiGroup.MapGet("/users-info", (IUsersService s) => s.GetUsersInfo());
-            apiGroup.MapGet("/users/{id}", (long id, IUsersService s) => s.GetUser(id));
+            apiGroup.MapGet("/users/{id}", (long id, IUsersService s) => s.GetUser(id)).RequireAdmin();
             apiGroup.MapPost("/users", async ([FromBody] CreateUserDto dto, IUsersService s) =>
             {
                 try { return Results.Ok(await s.CreateUser(dto)); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
+            }).RequireAdmin();
             apiGroup.MapPut("/users/{id}", async (long id, [FromBody] UpdateUserDto dto, IUsersService s) =>
             {
                 try { await s.UpdateUser(id, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
-            });
-            apiGroup.MapPut("/users/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IUsersService s) => s.ToggleObsolete(id, dto));
-            apiGroup.MapPut("/users/{id}/reset_password", (long id, [FromBody] ResetPasswordDto dto, IUsersService s) => s.ResetPassword(id, dto));
+            }).RequireAdmin();
+            apiGroup.MapPut("/users/{id}/toggle_obsolete", (long id, [FromBody] ToggleObsoleteDto dto, IUsersService s) => s.ToggleObsolete(id, dto)).RequireAdmin();
+            apiGroup.MapPut("/users/{id}/reset_password", (long id, [FromBody] ResetPasswordDto dto, IUsersService s) => s.ResetPassword(id, dto)).RequireAdmin();
 
             // Electronic Signatures API
             apiGroup.MapGet("/signatures/{entityName}/{entityId}", async (string entityName, long entityId, ElectronicSignatureService s) =>
