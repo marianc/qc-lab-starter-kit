@@ -5,7 +5,7 @@ import {
   DialogContent, 
   DialogFooter 
 } from '../common/ui';
-import type { CertificationStatusDto } from '@/types/certificationStatus';
+import type { CertificationStatusDto } from '@/types/certificate';
 
 interface Props {
   open: boolean;

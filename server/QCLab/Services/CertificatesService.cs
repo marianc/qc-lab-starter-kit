@@ -1135,4 +1135,30 @@ public class CertificatesService : ICertificatesService
 
         return resultRows;
     }
+
+    // GET /certification_status
+    public async Task<List<CertificationStatusDto>> GetCertificationStatus()
+    {
+        var results = await _context.ControlCodes
+            .Include(cc => cc.Material)
+            .Where(cc => cc.Receptions.Any(r => 
+                r.TypeId == 1 && 
+                (r.IsSubmitted || r.IsReceived) && 
+                !r.IsRejected)
+            )
+            .Where(cc => !cc.Certificates.Any())
+            .OrderByDescending(cc => cc.Id)
+            .Select(cc => new CertificationStatusDto
+            {
+                MaterialId = cc.Material.Id,
+                MaterialName = cc.Material.Name,
+                ControlCodeId = cc.Id,
+                ControlCode = cc.Code,
+                Status = cc.Receptions.Any(r => r.TypeId == 1 && !r.IsRejected && r.Reports.Any(rep => rep.IsSubmitted && !rep.IsCancelled)) ? "Reported" :
+                         cc.Receptions.Any(r => r.TypeId == 1 && !r.IsRejected && r.IsReceived) ? "Received" : "Submitted"
+            })
+            .ToListAsync();
+
+        return results;
+    }
 }

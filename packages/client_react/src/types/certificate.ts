@@ -81,3 +81,11 @@ export interface CertificateAnalysisDto {
   isConformingSpec: boolean;
   isConformingUncertainty: boolean;
 }
+
+export interface CertificationStatusDto {
+  materialId: number;
+  materialName: string;
+  controlCodeId: number;
+  controlCode: string;
+  status: string;
+}

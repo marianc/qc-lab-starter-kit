@@ -73,7 +73,6 @@ namespace QCLab
             // Register application services
             builder.Services.AddTransient<ICategoriesService, CategoriesService>();
             builder.Services.AddTransient<ICertificatesService, CertificatesService>();
-            builder.Services.AddTransient<ICertificationStatusService, CertificationStatusService>();
             builder.Services.AddTransient<IControlCodesService, ControlCodesService>();
             builder.Services.AddTransient<IFormGroupsService, FormGroupsService>();
             builder.Services.AddTransient<IFormsService, FormsService>();
@@ -309,7 +308,7 @@ namespace QCLab
             });
 
             // Certification Status
-            apiGroup.MapGet("/certification_status", (ICertificationStatusService s) => s.GetCertificationStatus());
+            apiGroup.MapGet("/certification_status", (ICertificatesService s) => s.GetCertificationStatus());
 
             // Control Codes
             apiGroup.MapGet("/control_codes", (IControlCodesService s) => s.GetAllControlCodes());

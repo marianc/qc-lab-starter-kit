@@ -1,4 +1,4 @@
-import type { CertificateActionDto, CertificateAnalysisDto, CertificateDetailDto, GenerateCertificateDto, PaginatedCertificatesDto, UpdateCertificateDto } from '@/types/certificate';
+import type { CertificateActionDto, CertificateAnalysisDto, CertificateDetailDto, CertificationStatusDto, GenerateCertificateDto, PaginatedCertificatesDto, UpdateCertificateDto } from '@/types/certificate';
 import apiClient from './apiClient';
 
 const certificatesService = {
@@ -102,6 +102,11 @@ const certificatesService = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  },
+
+  getCertificationStatus: async (): Promise<CertificationStatusDto[]> => {
+    const response = await apiClient.get<CertificationStatusDto[]>('/api/certification_status');
+    return response.data;
   }
   };
 

@@ -30,5 +30,6 @@ namespace QCLab.Client.Services.Interfaces
             int? loadedPages = null,
             int pageSize = 15,
             IHttpClientFactory? clientFactory = null);
+        Task<List<CertificationStatusDto>> GetCertificationStatus();
     }
 }

@@ -3,16 +3,14 @@ import CertificateDialog from '@/components/certificates/CertificateDialog';
 import CertificationStatusDialog from '@/components/certificates/CertificationStatusDialog';
 import CertificateDetailView from '@/components/certificates/CertificateDetailView';
 import styles from './CertificatesPage.module.css';
-import type { CertificateDto } from '@/types/certificate';
+import type { CertificateDto, CertificationStatusDto } from '@/types/certificate';
 import type { MaterialDto } from '@/types/material';
 import type { TestDto } from '@/types/test';
 import type { UserSessionDto } from '@/types/auth';
-import type { CertificationStatusDto } from '@/types/certificationStatus';
 import certificatesService from '@/services/certificatesService';
 import authService from '@/services/authService';
 import materialsService from '@/services/materialsService';
 import testsService from '@/services/testsService';
-import certificationStatusService from '@/services/certificationStatusService';
 import { formatDate } from '@/lib/utils';
 
 const PER_PAGE = 15;
@@ -150,7 +148,7 @@ const CertificatesPage: React.FC = () => {
 
   const openStatusDialog = async () => {
     try {
-      const items = await certificationStatusService.getCertificationStatus();
+      const items = await certificatesService.getCertificationStatus();
       setCertificationStatusItems(items);
       setShowStatusDialog(true);
     } catch (err) {
