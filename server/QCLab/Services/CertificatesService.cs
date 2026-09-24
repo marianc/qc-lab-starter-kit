@@ -228,10 +228,11 @@ public class CertificatesService : ICertificatesService
     public async Task<PaginatedCertificatesDto> GetAllCertificates(
         int page,
         int pageSize,
-        bool isQCPersonnel,
         long? materialId = null,
         int? submissionYear = null,
-        int? submissionMonth = null)
+        int? submissionMonth = null,
+        bool isQcPers = false,
+        bool isLabOrQcPers = false)
     {
         var query = _context.Certificates
             .Include(c => c.ControlCode)
@@ -240,7 +241,12 @@ public class CertificatesService : ICertificatesService
             .ThenInclude(ct => ct.Report)
             .AsQueryable();
 
-        if (!isQCPersonnel)
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(c => c.ControlCode == null || c.ControlCode.Material == null || !c.ControlCode.Material.IsReagent);
+        }
+
+        if (!isQcPers)
         {
             query = query.Where(c => c.IsSubmitted && !c.IsCancelled);
         }
@@ -940,12 +946,13 @@ public class CertificatesService : ICertificatesService
     }
 
     public async Task<byte[]?> ExportCertificatesExcel(
-        bool isQCPersonnel,
         long? materialId = null,
         int? submissionYear = null,
         int? submissionMonth = null,
         int? loadedPages = null,
         int pageSize = 15,
+        bool isQcPers = false,
+        bool isLabOrQcPers = false,
         IHttpClientFactory? clientFactory = null)
     {
         var query = _context.Certificates
@@ -955,7 +962,12 @@ public class CertificatesService : ICertificatesService
             .Where(c => !c.IsCancelled)
             .AsQueryable();
 
-        if (!isQCPersonnel)
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(c => c.ControlCode == null || c.ControlCode.Material == null || !c.ControlCode.Material.IsReagent);
+        }
+
+        if (!isQcPers)
         {
             query = query.Where(c => c.IsSubmitted);
         }

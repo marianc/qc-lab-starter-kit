@@ -18,14 +18,19 @@ public class SpecsService : ISpecsService
     }
 
     // GET /specs
-    public async Task<List<SpecDto>> GetAllSpecs(long? userId, bool isQCPersonnel)
+    public async Task<List<SpecDto>> GetAllSpecs(bool isQcPers, bool isLabOrQcPers = false)
     {
         var query = _context.Specs
             .Include(s => s.Material)
             .ThenInclude(m => m.Norm)
             .AsQueryable();
 
-        if (!isQCPersonnel)
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(s => s.Material == null || !s.Material.IsReagent);
+        }
+
+        if (!isQcPers)
         {
             query = query.Where(s => s.IsSubmitted && !s.IsCancelled);
         }

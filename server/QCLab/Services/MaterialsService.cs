@@ -15,10 +15,18 @@ public class MaterialsService : IMaterialsService
     }
 
     // GET /materials
-    public async Task<List<MaterialDto>> GetAllMaterials()
+    public async Task<List<MaterialDto>> GetAllMaterials(bool isLabOrQcPers)
     {
-        var materials = await _context.Materials
+        var query = _context.Materials
             .Include(m => m.Norm)
+            .AsQueryable();
+
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(m => !m.IsReagent);
+        }
+
+        var materials = await query
             .OrderBy(m => m.Name)
             .Select(m => new MaterialDto
             {
@@ -42,10 +50,18 @@ public class MaterialsService : IMaterialsService
     }
 
     // GET /materials/with_valid_spec
-    public async Task<List<MaterialDto>> GetMaterialsWithValidSpec()
+    public async Task<List<MaterialDto>> GetMaterialsWithValidSpec(bool isLabOrQcPers)
     {
-        var materials = await _context.Materials
+        var query = _context.Materials
             .Where(m => m.Specs.Any(s => s.IsSubmitted && !s.IsCancelled))
+            .AsQueryable();
+
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(m => !m.IsReagent);
+        }
+
+        var materials = await query
             .OrderBy(m => m.Name)
             .Select(m => new MaterialDto
             {
@@ -69,11 +85,19 @@ public class MaterialsService : IMaterialsService
     }
 
     // GET /materials/{id}
-    public async Task<MaterialDto?> GetMaterial(long id)
+    public async Task<MaterialDto?> GetMaterial(long id, bool isLabOrQcPers)
     {
-        var material = await _context.Materials
+        var query = _context.Materials
             .Include(m => m.Norm)
             .Where(m => m.Id == id)
+            .AsQueryable();
+
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(m => !m.IsReagent);
+        }
+
+        var material = await query
             .Select(m => new MaterialDto
             {
                 Id = m.Id,

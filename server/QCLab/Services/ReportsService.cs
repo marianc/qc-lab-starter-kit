@@ -20,11 +20,11 @@ public class ReportsService : IReportsService
     public async Task<PaginatedReportsDto> GetAllReports(
         int page,
         int pageSize,
-        long userId,
         long? receptionTypeId = null,
         long? materialId = null,
         int? submissionYear = null,
-        int? submissionMonth = null)
+        int? submissionMonth = null,
+        bool isLabOrQcPers = false)
     {
         var query = _context.Reports
             .Include(r => r.Reception)
@@ -37,6 +37,11 @@ public class ReportsService : IReportsService
             .Include(r => r.UserSubmitted)
             .Where(r => !r.IsCancelled)
             .AsQueryable();
+
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(r => r.Reception.ControlCode == null || r.Reception.ControlCode.Material == null || !r.Reception.ControlCode.Material.IsReagent);
+        }
 
         if (receptionTypeId.HasValue)
         {
@@ -268,6 +273,7 @@ public class ReportsService : IReportsService
         int? submissionMonth = null,
         int? loadedPages = null,
         int pageSize = 15,
+        bool isLabOrQcPers = false,
         IHttpClientFactory? clientFactory = null)
     {
         var query = _context.Reports
@@ -280,6 +286,11 @@ public class ReportsService : IReportsService
                 .ThenInclude(rec => rec.Category)
             .Where(r => !r.IsCancelled)
             .AsQueryable();
+
+        if (!isLabOrQcPers)
+        {
+            query = query.Where(r => r.Reception.ControlCode == null || r.Reception.ControlCode.Material == null || !r.Reception.ControlCode.Material.IsReagent);
+        }
 
         if (receptionTypeId.HasValue)
         {

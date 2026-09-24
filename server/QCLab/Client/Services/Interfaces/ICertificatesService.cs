@@ -7,10 +7,11 @@ namespace QCLab.Client.Services.Interfaces
         Task<PaginatedCertificatesDto> GetAllCertificates(
             int page,
             int pageSize,
-            bool isQCPersonnel,
             long? materialId = null,
             int? submissionYear = null,
-            int? submissionMonth = null);
+            int? submissionMonth = null,
+            bool isQcPers = false,
+            bool isLabOrQcPers = false);
         Task<CertificateDetailDto?> GetCertificate(long id);
         Task<CertificateDetailDto?> GenerateCertificate(GenerateCertificateDto dto);
         Task UpdateCertificate(long id, UpdateCertificateDto dto);
@@ -23,12 +24,13 @@ namespace QCLab.Client.Services.Interfaces
         Task DeleteCertificate(long id, long userId);
         Task<byte[]?> GetCertificatePdf(long id);
         Task<byte[]?> ExportCertificatesExcel(
-            bool isQCPersonnel,
             long? materialId = null,
             int? submissionYear = null,
             int? submissionMonth = null,
             int? loadedPages = null,
             int pageSize = 15,
+            bool isQcPers = false,
+            bool isLabOrQcPers = false,
             IHttpClientFactory? clientFactory = null);
         Task<List<CertificationStatusDto>> GetCertificationStatus();
     }

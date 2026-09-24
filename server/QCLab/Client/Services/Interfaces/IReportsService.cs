@@ -7,11 +7,11 @@ namespace QCLab.Client.Services.Interfaces
         Task<PaginatedReportsDto> GetAllReports(
             int page,
             int pageSize,
-            long userId,
             long? receptionTypeId = null,
             long? materialId = null,
             int? submissionYear = null,
-            int? submissionMonth = null);
+            int? submissionMonth = null,
+            bool isLabOrQcPers = false);
         Task<ReportDetailDto?> GetReport(long id);
         Task CancelReport(long id, CancelReportDto dto);
         Task<bool> CheckReportConflict(long id);
@@ -22,6 +22,7 @@ namespace QCLab.Client.Services.Interfaces
             int? submissionMonth = null,
             int? loadedPages = null,
             int pageSize = 15,
+            bool isLabOrQcPers = false,
             IHttpClientFactory? clientFactory = null);
     }
 }

@@ -4,9 +4,9 @@ namespace QCLab.Client.Services.Interfaces
 {
     public interface IMaterialsService
     {
-        Task<List<MaterialDto>> GetAllMaterials();
-        Task<List<MaterialDto>> GetMaterialsWithValidSpec();
-        Task<MaterialDto?> GetMaterial(long id);
+        Task<List<MaterialDto>> GetAllMaterials(bool isLabOrQcPers);
+        Task<List<MaterialDto>> GetMaterialsWithValidSpec(bool isLabOrQcPers);
+        Task<MaterialDto?> GetMaterial(long id, bool isLabOrQcPers);
         Task<IdDto> CreateMaterial(CreateMaterialDto dto);
         Task UpdateMaterial(long id, UpdateMaterialDto dto);
         Task ToggleObsolete(long id, ToggleObsoleteDto dto);

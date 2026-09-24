@@ -5,7 +5,7 @@ namespace QCLab.Client.Services.Interfaces
 {
     public interface ISpecsService
     {
-        Task<List<SpecDto>> GetAllSpecs(long? userId, bool isQCPersonnel);
+        Task<List<SpecDto>> GetAllSpecs(bool isQcPers, bool isLabOrQcPers = false);
         Task<SpecDto?> GetSpec(long id);
         Task<IdDto> CreateSpec(CreateSpecDto dto);
         Task UpdateSpec(long id, UpdateSpecDto dto);

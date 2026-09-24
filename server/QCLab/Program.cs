@@ -240,8 +240,9 @@ namespace QCLab
             {
                 try
                 {
-                    bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
-                    return Results.Ok(await s.GetAllCertificates(page, pageSize, isQCPersonnel, materialId, submissionYear, submissionMonth));
+                    bool isQcPers = httpContext.User.IsInRole("QcPers");
+                    bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || isQcPers;
+                    return Results.Ok(await s.GetAllCertificates(page, pageSize, materialId, submissionYear, submissionMonth, isQcPers, isLabOrQcPers));
                 }
                 catch (Exception ex)
                 {
@@ -261,8 +262,9 @@ namespace QCLab
             {
                 try
                 {
-                    bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
-                    var excelBytes = await s.ExportCertificatesExcel(isQCPersonnel, materialId, submissionYear, submissionMonth, loadedPages, 15, clientFactory);
+                    bool isQcPers = httpContext.User.IsInRole("QcPers");
+                    bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || isQcPers;
+                    var excelBytes = await s.ExportCertificatesExcel(materialId, submissionYear, submissionMonth, loadedPages, 15, isQcPers, isLabOrQcPers, clientFactory);
                     if (excelBytes == null) return Results.NotFound();
                     return Results.File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "quality_certificates.xlsx");
                 }
@@ -454,9 +456,21 @@ namespace QCLab
             }).RequireLabOrQcPers();
 
             // Materials
-            apiGroup.MapGet("/materials", (IMaterialsService s) => s.GetAllMaterials());
-            apiGroup.MapGet("/materials/with_valid_spec", (IMaterialsService s) => s.GetMaterialsWithValidSpec());
-            apiGroup.MapGet("/materials/{id}", (long id, IMaterialsService s) => s.GetMaterial(id));
+            apiGroup.MapGet("/materials", (HttpContext httpContext, IMaterialsService s) => 
+            {
+                bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || httpContext.User.IsInRole("QcPers") || httpContext.User.IsInRole("Admin");
+                return s.GetAllMaterials(isLabOrQcPers);
+            });
+            apiGroup.MapGet("/materials/with_valid_spec", (HttpContext httpContext, IMaterialsService s) => 
+            {
+                bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || httpContext.User.IsInRole("QcPers") || httpContext.User.IsInRole("Admin");
+                return s.GetMaterialsWithValidSpec(isLabOrQcPers);
+            });
+            apiGroup.MapGet("/materials/{id}", (long id, HttpContext httpContext, IMaterialsService s) => 
+            {
+                bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || httpContext.User.IsInRole("QcPers") || httpContext.User.IsInRole("Admin");
+                return s.GetMaterial(id, isLabOrQcPers);
+            });
             apiGroup.MapPost("/materials", async ([FromBody] CreateMaterialDto dto, IMaterialsService s) =>
             {
                 try { return Results.Ok(await s.CreateMaterial(dto)); }
@@ -634,8 +648,8 @@ namespace QCLab
                 [FromQuery] int? submissionMonth,
                 HttpContext httpContext) =>
             {
-                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
-                return s.GetAllReports(page, pageSize, userId, receptionTypeId, materialId, submissionYear, submissionMonth);
+                bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || httpContext.User.IsInRole("QcPers");
+                return s.GetAllReports(page, pageSize, receptionTypeId, materialId, submissionYear, submissionMonth, isLabOrQcPers);
             });
 
             apiGroup.MapGet("/reports/export-excel", async (
@@ -645,11 +659,13 @@ namespace QCLab
                 [FromQuery] int? submissionYear,
                 [FromQuery] int? submissionMonth,
                 [FromQuery] int? loadedPages,
+                HttpContext httpContext,
                 [FromServices] IHttpClientFactory clientFactory) =>
             {
                 try
                 {
-                    var excelBytes = await s.ExportReportsExcel(receptionTypeId, materialId, submissionYear, submissionMonth, loadedPages, 15, clientFactory);
+                    bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || httpContext.User.IsInRole("QcPers");
+                    var excelBytes = await s.ExportReportsExcel(receptionTypeId, materialId, submissionYear, submissionMonth, loadedPages, 15, isLabOrQcPers, clientFactory);
                     if (excelBytes == null) return Results.NotFound();
                     return Results.File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "testing_reports.xlsx");
                 }
@@ -697,9 +713,9 @@ namespace QCLab
             // Specs
             apiGroup.MapGet("/specs", (ISpecsService s, HttpContext httpContext) => 
             {
-                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
-                bool isQCPersonnel = httpContext.User.IsInRole("QcPers");
-                return s.GetAllSpecs(userId, isQCPersonnel);
+                bool isQcPers = httpContext.User.IsInRole("QcPers");
+                bool isLabOrQcPers = httpContext.User.IsInRole("LabPers") || isQcPers;
+                return s.GetAllSpecs(isQcPers, isLabOrQcPers);
             });
             apiGroup.MapGet("/specs/{id}", (long id, ISpecsService s) => s.GetSpec(id));
             apiGroup.MapPost("/specs", ([FromBody] CreateSpecDto dto, ISpecsService s) => s.CreateSpec(dto)).RequireQcPers();
