@@ -63,7 +63,6 @@ const CertificatesPage: React.FC = () => {
       const result = await certificatesService.getAllCertificates(
         pageToFetch,
         countToFetch,
-        isQCPersonnel,
         selectedMaterialId,
         filterSubmissionYear,
         filterSubmissionMonth
@@ -99,7 +98,6 @@ const CertificatesPage: React.FC = () => {
           certificatesService.getAllCertificates(
             1,
             PER_PAGE,
-            isQC,
             selectedMaterialId,
             filterSubmissionYear,
             filterSubmissionMonth

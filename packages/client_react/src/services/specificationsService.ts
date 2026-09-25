@@ -11,12 +11,8 @@ import type {
 import type { IdDto } from '../types/models';
 
 const specificationsService = {
-  getAllSpecs: async (userId?: number, isQCPersonnel?: boolean): Promise<SpecDto[]> => {
-    const params = new URLSearchParams();
-    if (userId !== undefined) params.append('userId', userId.toString());
-    if (isQCPersonnel !== undefined) params.append('isQCPersonnel', isQCPersonnel.toString());
-    
-    const response = await apiClient.get<SpecDto[]>(`/api/specs?${params.toString()}`);
+  getAllSpecs: async (): Promise<SpecDto[]> => {
+    const response = await apiClient.get<SpecDto[]>('/api/specs');
     return response.data;
   },
 

@@ -5,15 +5,13 @@ const certificatesService = {
   getAllCertificates: async (
     page: number,
     pageSize: number,
-    isQCPersonnel: boolean,
     materialId?: number,
     submissionYear?: number,
     submissionMonth?: number
   ): Promise<PaginatedCertificatesDto> => {
     const params: any = {
       page,
-      pageSize,
-      isQCPersonnel: isQCPersonnel.toString()
+      pageSize
     };
     if (materialId) params.materialId = materialId.toString();
     if (submissionYear) params.submissionYear = submissionYear.toString();

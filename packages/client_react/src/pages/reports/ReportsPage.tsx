@@ -45,7 +45,6 @@ const ReportsPage: React.FC = () => {
       const result = await reportsService.getAllReports({
         page: pageToFetch,
         pageSize: countToFetch,
-        userId: user.id,
         receptionTypeId: selectedReceptionType,
         materialId: selectedMaterialId,
         submissionYear: filterSubmissionYear,
@@ -83,8 +82,7 @@ const ReportsPage: React.FC = () => {
       if (user) {
         const result = await reportsService.getAllReports({
           page: 1,
-          pageSize: perPage,
-          userId: user.id
+          pageSize: perPage
         });
         setReports(result.reports);
         setTotalPages(Math.ceil(result.totalCount / perPage));

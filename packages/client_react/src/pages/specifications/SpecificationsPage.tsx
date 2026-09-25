@@ -35,7 +35,7 @@ const SpecificationsPage: React.FC = () => {
         setIsQCPersonnel(user.roles.includes('QcPers'));
         const [materialsData, specsData, testsData] = await Promise.all([
           materialsService.getAllMaterials(),
-          specificationsService.getAllSpecs(user.id, user.roles.includes('QcPers')),
+          specificationsService.getAllSpecs(),
           testsService.getAllTests()
         ]);
         setMaterials(materialsData);
@@ -48,7 +48,7 @@ const SpecificationsPage: React.FC = () => {
 
   const fetchSpecs = async () => {
     if (currentUser) {
-      const specsData = await specificationsService.getAllSpecs(currentUser.id, isQCPersonnel);
+      const specsData = await specificationsService.getAllSpecs();
       setSpecs(specsData);
     }
   };

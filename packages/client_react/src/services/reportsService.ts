@@ -9,7 +9,6 @@ const reportsService = {
   async getAllReports(params: {
     page: number;
     pageSize: number;
-    userId: number;
     receptionTypeId?: number | null;
     materialId?: number | null;
     submissionYear?: number | null;
