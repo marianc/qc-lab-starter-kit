@@ -239,7 +239,8 @@ public class ReceptionsService : IReceptionsService
     public async Task<PaginatedReceptionsDto> GetAllReceptions(
         int page,
         int per_page,
-        long? user_id,
+        long userId,
+        bool isLabPers,
         long? submitted_by,
         long? type_id,
         long? material_id,
@@ -259,19 +260,13 @@ public class ReceptionsService : IReceptionsService
             .Include(r => r.Reports)
             .AsQueryable();
 
-        if (user_id.HasValue)
+        if (isLabPers)
         {
-            var user = await _context.Users.FindAsync(user_id.Value);
-            bool isLabPers = user != null && user.IsLabPers;
-
-            if (isLabPers)
-            {
-                query = query.Where(r => r.UserSubmittedId == user_id || r.UserReceivedId == user_id || r.UserRejectedId == user_id || r.IsSubmitted);
-            }
-            else
-            {
-                query = query.Where(r => r.UserSubmittedId == user_id || r.UserReceivedId == user_id || r.UserRejectedId == user_id);
-            }
+            query = query.Where(r => r.UserSubmittedId == userId || r.UserReceivedId == userId || r.UserRejectedId == userId || r.IsSubmitted);
+        }
+        else
+        {
+            query = query.Where(r => r.UserSubmittedId == userId || r.UserReceivedId == userId || r.UserRejectedId == userId);
         }
 
         if (submitted_by.HasValue)

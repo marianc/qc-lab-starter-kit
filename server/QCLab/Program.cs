@@ -602,17 +602,21 @@ namespace QCLab
             // Receptions
             apiGroup.MapGet("/receptions", (
                 IReceptionsService s,
+                HttpContext httpContext,
                 [FromQuery] int page = 1,
                 [FromQuery] int per_page = 15,
-                [FromQuery] long? user_id = null,
                 [FromQuery] long? submitted_by = null,
                 [FromQuery] long? type_id = null,
                 [FromQuery] long? material_id = null,
                 [FromQuery] string? report_submitted = null,
                 [FromQuery] string? status = null,
                 [FromQuery] int? submission_year = null,
-                [FromQuery] int? submission_month = null) => 
-                    s.GetAllReceptions(page, per_page, user_id, submitted_by, type_id, material_id, report_submitted, status, submission_year, submission_month));
+                [FromQuery] int? submission_month = null) =>
+            {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                bool isLabPers = httpContext.User.IsInRole("LabPers");
+                return s.GetAllReceptions(page, per_page, userId, isLabPers, submitted_by, type_id, material_id, report_submitted, status, submission_year, submission_month);
+            });
 
             apiGroup.MapGet("/receptions/{id}", (long id, IReceptionsService s) => s.GetReception(id));
             apiGroup.MapGet("/receptions/{id}/applicable_forms", (long id, IReceptionsService s) => s.GetApplicableForms(id));

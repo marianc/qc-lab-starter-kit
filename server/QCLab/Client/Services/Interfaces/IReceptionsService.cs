@@ -8,7 +8,8 @@ namespace QCLab.Client.Services.Interfaces
         Task<PaginatedReceptionsDto> GetAllReceptions(
             int page,
             int per_page,
-            long? user_id,
+            long userId,
+            bool isLabPers,
             long? submitted_by,
             long? type_id,
             long? material_id,

@@ -91,8 +91,7 @@ const ReceptionsPage: React.FC = () => {
 
     const params: Record<string, any> = {
       page: pageToFetch,
-      per_page: countToFetch,
-      user_id: currentUser.id
+      per_page: countToFetch
     };
 
     if (filterSubmittedBy) params.submitted_by = filterSubmittedBy;
