@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import controlCodesService from '@/services/controlCodesService';
 
 export const certificationSchema = z.object({
   materialId: z.coerce.number().min(1, 'Material is required'),
@@ -11,6 +12,18 @@ export const certificationSchema = z.object({
 }).refine(data => data.controlCodeId || data.controlCodeName, {
   message: "Please select an existing code or enter a new one.",
   path: ["controlCodeId"]
+}).refine(async (data) => {
+  if (!data.controlCodeName || !data.controlCodeName.trim() || Number(data.materialId) <= 0) {
+    return true;
+  }
+  try {
+    return await controlCodesService.validateUniqueness('Code', data.controlCodeName.trim(), Number(data.materialId));
+  } catch {
+    return true;
+  }
+}, {
+  message: 'This control code already exists for this material.',
+  path: ['controlCodeName']
 });
 
 export const verificationSchema = z.object({
@@ -25,6 +38,18 @@ export const verificationSchema = z.object({
 }).refine(data => data.controlCodeId || data.controlCodeName, {
   message: "Please select an existing code or enter a new one.",
   path: ["controlCodeId"]
+}).refine(async (data) => {
+  if (!data.controlCodeName || !data.controlCodeName.trim() || Number(data.materialId) <= 0) {
+    return true;
+  }
+  try {
+    return await controlCodesService.validateUniqueness('Code', data.controlCodeName.trim(), Number(data.materialId));
+  } catch {
+    return true;
+  }
+}, {
+  message: 'This control code already exists for this material.',
+  path: ['controlCodeName']
 });
 
 export const categoryVerificationSchema = z.object({

@@ -20,6 +20,11 @@ const controlCodesService = {
   async createControlCode(dto: CreateControlCodeDto): Promise<IdDto> {
     const response = await apiClient.post<IdDto>('api/control_codes', dto);
     return response.data;
+  },
+
+  async validateUniqueness(property: string, value: string, scopeId: number): Promise<boolean> {
+    const response = await apiClient.get<{ is_unique: boolean }>(`api/validate/unique?entity=ControlCode&property=${property}&value=${encodeURIComponent(value)}&scope_id=${scopeId}`);
+    return response.data.is_unique;
   }
 };
 
