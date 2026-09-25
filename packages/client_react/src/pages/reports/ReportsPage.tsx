@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ReportDetailView from '@/components/reports/ReportDetailView';
 import styles from './ReportsPage.module.css';
 import type { ReportDto } from '@/types/report';
-import type { ReceptionTypeDto } from '@/types/receptionType';
+import type { ReceptionTypeDto } from '@/types/reception';
 import type { MaterialDto } from '@/types/material';
 import type { UserSessionDto } from '@/types/auth';
 import authService from '@/services/authService';
 import reportsService from '@/services/reportsService';
-import receptionTypesService from '@/services/receptionTypesService';
+import receptionsService from '@/services/receptionsService';
 import materialsService from '@/services/materialsService';
 import { formatDate } from '@/lib/utils';
 
@@ -73,7 +73,7 @@ const ReportsPage: React.FC = () => {
       setCurrentUser(user);
       
       const [types, mats] = await Promise.all([
-        receptionTypesService.getAllReceptionTypes(),
+        receptionsService.getAllReceptionTypes(),
         materialsService.getAllMaterials()
       ]);
       setReceptionTypes(types);

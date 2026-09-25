@@ -3,12 +3,10 @@ import { DragHandle } from '@/components/common/ui';
 import TestDialog from '@/components/tests/TestDialog';
 import TestDetailView from '@/components/tests/TestDetailView';
 import styles from './TestsPage.module.css';
-import type { CreateTestDto, ReorderTestDto, TestDto } from '@/types/test';
+import type { CreateTestDto, ReorderTestDto, TestDto, ValueTypeDto } from '@/types/test';
 import type { NormDto } from '@/types/norm';
-import type { ValueTypeDto } from '@/types/valueType';
 import testsService from '@/services/testsService';
 import normsService from '@/services/normsService';
-import valueTypesService from '@/services/valueTypesService';
 
 const TestsPage: React.FC = () => {
   const [tests, setTests] = useState<TestDto[]>([]);
@@ -33,7 +31,7 @@ const TestsPage: React.FC = () => {
   useEffect(() => {
     fetchTests();
     normsService.getAllNorms().then(setNorms);
-    valueTypesService.getAllValueTypes().then(setValueTypes);
+    testsService.getAllValueTypes().then(setValueTypes);
   }, []);
 
   const handleDragStart = (index: number) => {

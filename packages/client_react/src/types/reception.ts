@@ -122,3 +122,8 @@ export interface PaginatedReceptionsDto {
   currentPage: number;
   totalCount: number;
 }
+
+export interface ReceptionTypeDto {
+  id: number;
+  name: string;
+}

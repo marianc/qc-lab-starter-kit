@@ -411,4 +411,17 @@ public class TestsService : ITestsService
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<ValueTypeDto>> GetAllValueTypes()
+    {
+        var valueTypes = await _context.ValueTypes
+            .Select(vt => new ValueTypeDto
+            {
+                Id = vt.Id,
+                Name = vt.Name
+            })
+            .ToListAsync();
+
+        return valueTypes;
+    }
 }

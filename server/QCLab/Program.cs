@@ -82,13 +82,11 @@ namespace QCLab
             builder.Services.AddTransient<INormsService, NormsService>();
             builder.Services.AddTransient<ISopsService, SopsService>();
             builder.Services.AddTransient<IReceptionsService, ReceptionsService>();
-            builder.Services.AddTransient<IReceptionTypesService, ReceptionTypesService>();
             builder.Services.AddTransient<IReportsService, ReportsService>();
             builder.Services.AddTransient<ISpecsService, SpecsService>();
             builder.Services.AddTransient<ITestsService, TestsService>();
             builder.Services.AddTransient<IUnitsService, UnitsService>();
             builder.Services.AddTransient<IUsersService, UsersService>();
-            builder.Services.AddTransient<IValueTypesService, ValueTypesService>();
             builder.Services.AddTransient<IFormEvalsService, FormEvalsService>();
             builder.Services.AddTransient<IReagentsService, ReagentsService>();
 
@@ -635,7 +633,7 @@ namespace QCLab
             apiGroup.MapPost("/receptions/{id}/submit_express_certificate", (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s) => s.SubmitExpressCertificate(id, dto)).RequireQcPers();
 
             // Reception Types
-            apiGroup.MapGet("/reception_types", (IReceptionTypesService s) => s.GetAllReceptionTypes());
+            apiGroup.MapGet("/reception_types", (IReceptionsService s) => s.GetAllReceptionTypes());
 
             // Reports
             apiGroup.MapGet("/reports", (
@@ -881,7 +879,7 @@ namespace QCLab
             });
 
             // Value Types
-            apiGroup.MapGet("/value_types", (IValueTypesService s) => s.GetAllValueTypes());
+            apiGroup.MapGet("/value_types", (ITestsService s) => s.GetAllValueTypes());
 
             app.Run();
         }

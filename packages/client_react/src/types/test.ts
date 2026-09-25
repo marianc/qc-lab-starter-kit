@@ -101,4 +101,9 @@ export interface UpdateTestReagentsDto {
   materialIds: number[];
 }
 
+export interface ValueTypeDto {
+  id: number;
+  name: string;
+}
+
 

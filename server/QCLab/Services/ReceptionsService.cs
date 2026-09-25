@@ -1334,4 +1334,17 @@ public class ReceptionsService : IReceptionsService
             CertificateId = certDetail.Id
         };
     }
+
+    public async Task<List<ReceptionTypeDto>> GetAllReceptionTypes()
+    {
+        var receptionTypes = await _context.ReceptionTypes
+            .Select(rt => new ReceptionTypeDto
+            {
+                Id = rt.Id,
+                Name = rt.Name
+            })
+            .ToListAsync();
+
+        return receptionTypes;
+    }
 }

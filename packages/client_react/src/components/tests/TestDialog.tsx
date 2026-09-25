@@ -3,14 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from '../common/ui';
 import styles from './TestDialog.module.css';
-import type { TestDto } from '@/types/test';
+import type { TestDto, ValueTypeDto } from '@/types/test';
 import type { UnitDto } from '@/types/unit';
 import type { NormDto } from '@/types/norm';
-import type { ValueTypeDto } from '@/types/valueType';
 import type { SopDto } from '@/types/sop';
 import unitsService from '@/services/unitsService';
 import normsService from '@/services/normsService';
-import valueTypesService from '@/services/valueTypesService';
 import sopsService from '@/services/sopsService';
 import testsService from '@/services/testsService';
 import { testSchema } from '@/lib/schemas/test';
@@ -113,7 +111,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       Promise.all([
         unitsService.getAllUnits(),
         normsService.getAllNorms(),
-        valueTypesService.getAllValueTypes()
+        testsService.getAllValueTypes()
       ]).then(([u, n, vt]) => {
         setUnits([...u].sort((a, b) => a.name.localeCompare(b.name)));
         setNorms(n);

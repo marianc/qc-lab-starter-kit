@@ -7,13 +7,11 @@ import CertificationDetailView from '@/components/receptions/CertificationDetail
 import VerificationDetailView from '@/components/receptions/VerificationDetailView';
 import CategoryVerificationDetailView from '@/components/receptions/CategoryVerificationDetailView';
 import styles from './ReceptionsPage.module.css';
-import type { ReceptionDto } from '@/types/reception';
-import type { ReceptionTypeDto } from '@/types/receptionType';
+import type { ReceptionDto, ReceptionTypeDto } from '@/types/reception';
 import type { UserInfoDto } from '@/types/user';
 import type { MaterialDto } from '@/types/material';
 import type { TestDto } from '@/types/test';
 import type { FormDto } from '@/types/form';
-import receptionTypesService from '@/services/receptionTypesService';
 import usersService from '@/services/usersService';
 import materialsService from '@/services/materialsService';
 import testsService from '@/services/testsService';
@@ -69,7 +67,7 @@ const ReceptionsPage: React.FC = () => {
   const fetchDropdownData = async () => {
     try {
       const [types, users, mats, tests, forms] = await Promise.all([
-        receptionTypesService.getAllReceptionTypes(),
+        receptionsService.getAllReceptionTypes(),
         usersService.getUsersInfo(),
         materialsService.getAllMaterials(),
         testsService.getAllTests(),

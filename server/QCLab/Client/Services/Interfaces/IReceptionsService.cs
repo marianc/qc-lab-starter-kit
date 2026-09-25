@@ -32,5 +32,6 @@ namespace QCLab.Client.Services.Interfaces
         Task<List<MeasurementParamDetailDto>> GetReceptionMeasurementParams(long reception_id);
         Task<PreviewReportDto> GetPreviewReport(long reception_id);
         Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto);
+        Task<List<ReceptionTypeDto>> GetAllReceptionTypes();
     }
 }

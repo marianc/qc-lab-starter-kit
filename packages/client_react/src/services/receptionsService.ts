@@ -14,7 +14,8 @@ import type {
   ReportSummaryDto,
   CreateReportDto,
   ExpressCertificateDto,
-  ExpressCertificateResultDto
+  ExpressCertificateResultDto,
+  ReceptionTypeDto
 } from '../types/reception';
 import type { PreviewReportDto } from '../types/report';
 import type { 
@@ -105,6 +106,11 @@ const receptionsService = {
 
   async submitExpressCertificate(id: number, dto: ExpressCertificateDto): Promise<ExpressCertificateResultDto> {
     const response = await apiClient.post<ExpressCertificateResultDto>(`api/receptions/${id}/submit_express_certificate`, dto);
+    return response.data;
+  },
+
+  async getAllReceptionTypes(): Promise<ReceptionTypeDto[]> {
+    const response = await apiClient.get<ReceptionTypeDto[]>('api/reception_types');
     return response.data;
   }
 };

@@ -140,3 +140,9 @@ public class PaginatedReceptionsDto
     public int CurrentPage { get; set; }
     public long TotalCount { get; set; }
 }
+
+public class ReceptionTypeDto
+{
+    public long Id { get; set; }
+    public required string Name { get; set; }
+}

@@ -159,4 +159,10 @@ public class UpdateTestReagentsDto
     public List<long> MaterialIds { get; set; } = new();
 }
 
+public class ValueTypeDto
+{
+    public long Id { get; set; }
+    public required string Name { get; set; }
+}
+
 

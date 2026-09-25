@@ -21,5 +21,6 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateTestEquipments(long id, UpdateTestEquipmentsDto dto);
         Task<List<TestReagentDto>> GetTestReagents(long id);
         Task UpdateTestReagents(long id, UpdateTestReagentsDto dto);
+        Task<List<ValueTypeDto>> GetAllValueTypes();
     }
 }

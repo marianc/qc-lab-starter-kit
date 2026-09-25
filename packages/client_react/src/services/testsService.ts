@@ -11,7 +11,8 @@ import type {
   TestEquipmentDto,
   UpdateTestEquipmentsDto,
   TestReagentDto,
-  UpdateTestReagentsDto
+  UpdateTestReagentsDto,
+  ValueTypeDto
 } from '../types/test';
 import type { IdDto, ToggleObsoleteDto } from '../types/models';
 
@@ -19,6 +20,11 @@ import type { IdDto, ToggleObsoleteDto } from '../types/models';
 const testsService = {
   async getAllTests(): Promise<TestDto[]> {
     const response = await apiClient.get<TestDto[]>('api/tests');
+    return response.data;
+  },
+
+  async getAllValueTypes(): Promise<ValueTypeDto[]> {
+    const response = await apiClient.get<ValueTypeDto[]>('api/value_types');
     return response.data;
   },
 
