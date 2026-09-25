@@ -813,7 +813,7 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}/validate
-    public async Task ValidateForm(long id, FormActionDto dto)
+    public async Task ValidateForm(long id, FormActionDto dto, string clientIp = "127.0.0.1")
     {
         if (dto.UserId == 0) throw new ArgumentException("User ID is required for validation");
 
@@ -929,7 +929,7 @@ public class FormsService : IFormsService
                 id,
                 dto.UserId,
                 "Approval",
-                "127.0.0.1",
+                clientIp,
                 dto.CommentsValidated);
         }
         catch (Exception)

@@ -289,7 +289,7 @@ public class SpecsService : ISpecsService
     }
 
     // PUT /specs/{id}/submit
-    public async Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto)
+    public async Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1")
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -369,7 +369,7 @@ public class SpecsService : ISpecsService
                     existing.Id,
                     dto.UserId,
                     "Cancellation",
-                    "127.0.0.1",
+                    clientIp,
                     existing.CommentsCancelled,
                     _context);
             }
@@ -381,7 +381,7 @@ public class SpecsService : ISpecsService
                 id,
                 dto.UserId,
                 "Approval",
-                "127.0.0.1",
+                clientIp,
                 dto.CommentsSubmitted);
 
             return await GetSpecDto(id);
@@ -394,7 +394,7 @@ public class SpecsService : ISpecsService
     }
 
     // PUT /specs/{id}/cancel
-    public async Task CancelSpec(long id, SpecActionDto dto)
+    public async Task CancelSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1")
     {
         var spec = await _context.Specs.FindAsync(id);
         if (spec == null) throw new ArgumentException("Specification not found");
@@ -411,7 +411,7 @@ public class SpecsService : ISpecsService
             id,
             dto.UserId,
             "Cancellation",
-            "127.0.0.1",
+            clientIp,
             dto.CommentsCancelled);
     }
 

@@ -680,7 +680,7 @@ public class ReceptionsService : IReceptionsService
     }
 
     // POST /receptions/:reception_id/create_report
-    public async Task<IdDto> CreateReport(long reception_id, CreateReportDto dto)
+    public async Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, string clientIp = "127.0.0.1")
     {
         if (dto.UserId == 0) throw new ArgumentException("User ID is required");
 
@@ -723,7 +723,7 @@ public class ReceptionsService : IReceptionsService
                     existingReport.Id,
                     dto.UserId,
                     "Cancellation",
-                    "127.0.0.1",
+                    clientIp,
                     existingReport.CommentsCancelled,
                     _context);
             }
@@ -808,7 +808,7 @@ public class ReceptionsService : IReceptionsService
                 newReport.Id,
                 dto.UserId,
                 "Submission",
-                "127.0.0.1",
+                clientIp,
                 dto.Comments,
                 _context);
 
@@ -1183,7 +1183,7 @@ public class ReceptionsService : IReceptionsService
         return result;
     }
 
-    public async Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto)
+    public async Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, string clientIp = "127.0.0.1")
     {
         var reception = await _context.Receptions
             .Include(r => r.ControlCode)
@@ -1298,7 +1298,7 @@ public class ReceptionsService : IReceptionsService
         {
             UserId = dto.UserId,
             Comments = dto.Comments
-        });
+        }, clientIp);
 
         var generateDto = new GenerateCertificateDto
         {
@@ -1321,7 +1321,7 @@ public class ReceptionsService : IReceptionsService
         {
             UserId = dto.UserId,
             CommentsSubmitted = dto.Comments
-        });
+        }, clientIp);
 
         return new ExpressCertificateResultDto
         {

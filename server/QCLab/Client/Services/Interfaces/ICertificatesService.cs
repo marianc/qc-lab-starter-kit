@@ -19,8 +19,8 @@ namespace QCLab.Client.Services.Interfaces
         Task<CertificateAnalysisDto> AnalyzeResults(long id);
         Task<CertificateAnalysisDto> AnalyzeInFlightResults(long specId, long controlCodeId, List<(long MeasurementId, bool HasForm, long TestId, decimal Value, int Idx, decimal? UncertaintyValue, decimal? CoverageFactorK)> currentReportTestRows);
         Task<bool> HasExistingValidCertificates(long id);
-        Task SubmitCertificate(long id, CertificateActionDto dto);
-        Task CancelCertificate(long id, CertificateActionDto dto);
+        Task SubmitCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1");
+        Task CancelCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1");
         Task DeleteCertificate(long id, long userId);
         Task<byte[]?> GetCertificatePdf(long id);
         Task<byte[]?> ExportCertificatesExcel(

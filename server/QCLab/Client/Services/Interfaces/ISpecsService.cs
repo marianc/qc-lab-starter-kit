@@ -13,8 +13,8 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateSpecTest(long id, long testId, UpdateSpecTestDto dto);
         Task DeleteSpecTest(long id, long testId);
         Task DeleteSpec(long id);
-        Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto);
-        Task CancelSpec(long id, SpecActionDto dto);
+        Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1");
+        Task CancelSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1");
         Task<IdDto> DuplicateSpec(long id, SpecActionDto dto);
         Task ValidateCondition(string condition);
         Task<byte[]?> GetSpecPdf(long id);

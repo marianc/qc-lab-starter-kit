@@ -27,12 +27,12 @@ namespace QCLab.Client.Services.Interfaces
         Task ReceiveReception(long reception_id, ReceiveReceptionDto dto);
         Task RejectReception(long reception_id, RejectReceptionDto dto);
         Task<List<ReportSummaryDto>> GetReceptionReports(long reception_id);
-        Task<IdDto> CreateReport(long reception_id, CreateReportDto dto);
+        Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, string clientIp = "127.0.0.1");
         Task<bool> CheckReportConflict(long reception_id);
         Task<List<MeasurementTestDetailDto>> GetReceptionMeasurementTests(long reception_id);
         Task<List<MeasurementParamDetailDto>> GetReceptionMeasurementParams(long reception_id);
         Task<PreviewReportDto> GetPreviewReport(long reception_id);
-        Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto);
+        Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, string clientIp = "127.0.0.1");
         Task<List<ReceptionTypeDto>> GetAllReceptionTypes();
     }
 }

@@ -733,7 +733,7 @@ public class CertificatesService : ICertificatesService
     }
 
     // PUT /certificates/{id}/submit
-    public async Task SubmitCertificate(long id, CertificateActionDto dto)
+    public async Task SubmitCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1")
     {
         if (dto.UserId == 0) throw new ArgumentException("user_id is required");
 
@@ -782,7 +782,7 @@ public class CertificatesService : ICertificatesService
                     oldCert.Id,
                     dto.UserId,
                     "Cancellation",
-                    "127.0.0.1",
+                    clientIp,
                     oldCert.CommentsCancelled,
                     _context);
             }
@@ -794,7 +794,7 @@ public class CertificatesService : ICertificatesService
                 id,
                 dto.UserId,
                 "Approval",
-                "127.0.0.1",
+                clientIp,
                 dto.CommentsSubmitted);
         }
         catch (Exception)
@@ -805,7 +805,7 @@ public class CertificatesService : ICertificatesService
     }
 
     // PUT /certificates/{id}/cancel
-    public async Task CancelCertificate(long id, CertificateActionDto dto)
+    public async Task CancelCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1")
     {
         if (dto.UserId == 0) throw new ArgumentException("user_id is required");
 
@@ -824,7 +824,7 @@ public class CertificatesService : ICertificatesService
             id,
             dto.UserId,
             "Cancellation",
-            "127.0.0.1",
+            clientIp,
             dto.CommentsCancelled);
     }
 

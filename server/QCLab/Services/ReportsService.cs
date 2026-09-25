@@ -223,7 +223,7 @@ public class ReportsService : IReportsService
     }
 
     // PUT /reports/{id}/cancel
-    public async Task CancelReport(long id, CancelReportDto dto)
+    public async Task CancelReport(long id, CancelReportDto dto, string clientIp = "127.0.0.1")
     {
         if (dto.UserId == 0) throw new ArgumentException("user_id is required");
 
@@ -253,7 +253,7 @@ public class ReportsService : IReportsService
             id,
             dto.UserId,
             "Cancellation",
-            "127.0.0.1",
+            clientIp,
             dto.CommentsCancelled);
     }
 

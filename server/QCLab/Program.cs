@@ -277,8 +277,18 @@ namespace QCLab
             apiGroup.MapPut("/certificates/{id}", (long id, [FromBody] UpdateCertificateDto dto, ICertificatesService s) => s.UpdateCertificate(id, dto)).RequireQcPers();
             apiGroup.MapPut("/certificates/{id}/refresh_tests", (long id, ICertificatesService s) => s.RefreshTests(id)).RequireQcPers();
             apiGroup.MapGet("/certificates/{id}/analyze_results", (long id, ICertificatesService s) => s.AnalyzeResults(id));
-            apiGroup.MapPut("/certificates/{id}/submit", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.SubmitCertificate(id, dto)).RequireQcPers();
-            apiGroup.MapPut("/certificates/{id}/cancel", (long id, [FromBody] CertificateActionDto dto, ICertificatesService s) => s.CancelCertificate(id, dto)).RequireQcPers();
+            apiGroup.MapPut("/certificates/{id}/submit", async (long id, [FromBody] CertificateActionDto dto, ICertificatesService s, HttpContext httpContext) =>
+            {
+                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                await s.SubmitCertificate(id, dto, clientIp);
+                return Results.Ok();
+            }).RequireQcPers();
+            apiGroup.MapPut("/certificates/{id}/cancel", async (long id, [FromBody] CertificateActionDto dto, ICertificatesService s, HttpContext httpContext) =>
+            {
+                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                await s.CancelCertificate(id, dto, clientIp);
+                return Results.Ok();
+            }).RequireQcPers();
             apiGroup.MapDelete("/certificates/{id}", async (long id, HttpContext httpContext, ICertificatesService s) =>
             {
                 try
@@ -352,9 +362,14 @@ namespace QCLab
                 try { await s.SubmitForm(id, dto); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPut("/forms/{id}/validate", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
+            apiGroup.MapPut("/forms/{id}/validate", async (long id, [FromBody] FormActionDto dto, IFormsService s, HttpContext httpContext) =>
             {
-                try { await s.ValidateForm(id, dto); return Results.Ok(); }
+                try
+                {
+                    var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    await s.ValidateForm(id, dto, clientIp);
+                    return Results.Ok();
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/cancel", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
@@ -629,12 +644,20 @@ namespace QCLab
             apiGroup.MapPut("/receptions/{id}/receive", (long id, [FromBody] ReceiveReceptionDto dto, IReceptionsService s) => s.ReceiveReception(id, dto));
             apiGroup.MapPut("/receptions/{id}/reject", (long id, [FromBody] RejectReceptionDto dto, IReceptionsService s) => s.RejectReception(id, dto));
             apiGroup.MapGet("/receptions/{id}/reports", (long id, IReceptionsService s) => s.GetReceptionReports(id));
-            apiGroup.MapPost("/receptions/{id}/create_report", (long id, [FromBody] CreateReportDto dto, IReceptionsService s) => s.CreateReport(id, dto)).RequireLabPers();
+            apiGroup.MapPost("/receptions/{id}/create_report", async (long id, [FromBody] CreateReportDto dto, IReceptionsService s, HttpContext httpContext) =>
+            {
+                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                return Results.Ok(await s.CreateReport(id, dto, clientIp));
+            }).RequireLabPers();
             apiGroup.MapGet("/receptions/{id}/check_report_conflict", (long id, IReceptionsService s) => s.CheckReportConflict(id).ContinueWith(t => new { conflict = t.Result }));
             apiGroup.MapGet("/receptions/{id}/measurement_tests", (long id, IReceptionsService s) => s.GetReceptionMeasurementTests(id));
             apiGroup.MapGet("/receptions/{id}/measurement_params", (long id, IReceptionsService s) => s.GetReceptionMeasurementParams(id));
             apiGroup.MapGet("/receptions/{id}/preview", (long id, IReceptionsService s) => s.GetPreviewReport(id));
-            apiGroup.MapPost("/receptions/{id}/submit_express_certificate", (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s) => s.SubmitExpressCertificate(id, dto)).RequireQcPers();
+            apiGroup.MapPost("/receptions/{id}/submit_express_certificate", async (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s, HttpContext httpContext) =>
+            {
+                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                return Results.Ok(await s.SubmitExpressCertificate(id, dto, clientIp));
+            }).RequireQcPers();
 
             // Reception Types
             apiGroup.MapGet("/reception_types", (IReceptionsService s) => s.GetAllReceptionTypes());
@@ -699,11 +722,12 @@ namespace QCLab
                 var pdfBytes = await response.Content.ReadAsByteArrayAsync();
                 return Results.File(pdfBytes, "application/pdf", $"testing_report_{id}.pdf");
             });
-            apiGroup.MapPut("/reports/{id}/cancel", async (long id, [FromBody] CancelReportDto dto, IReportsService s) =>
+            apiGroup.MapPut("/reports/{id}/cancel", async (long id, [FromBody] CancelReportDto dto, IReportsService s, HttpContext httpContext) =>
             {
                 try
                 {
-                    await s.CancelReport(id, dto);
+                    var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    await s.CancelReport(id, dto, clientIp);
                     return Results.Ok();
                 }
                 catch (Exception ex)
@@ -726,14 +750,23 @@ namespace QCLab
             apiGroup.MapPut("/specs/{id}/tests/{testId}", (long id, long testId, [FromBody] UpdateSpecTestDto dto, ISpecsService s) => s.UpdateSpecTest(id, testId, dto)).RequireQcPers();
             apiGroup.MapDelete("/specs/{id}/tests/{testId}", (long id, long testId, ISpecsService s) => s.DeleteSpecTest(id, testId)).RequireQcPers();
             apiGroup.MapDelete("/specs/{id}", (long id, ISpecsService s) => s.DeleteSpec(id)).RequireQcPers();
-            apiGroup.MapPut("/specs/{id}/submit", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
+            apiGroup.MapPut("/specs/{id}/submit", async (long id, [FromBody] SpecActionDto dto, ISpecsService s, HttpContext httpContext) =>
             {
-                try { return Results.Ok(await s.SubmitSpec(id, dto)); }
+                try
+                {
+                    var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    return Results.Ok(await s.SubmitSpec(id, dto, clientIp));
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPut("/specs/{id}/cancel", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
+            apiGroup.MapPut("/specs/{id}/cancel", async (long id, [FromBody] SpecActionDto dto, ISpecsService s, HttpContext httpContext) =>
             {
-                try { await s.CancelSpec(id, dto); return Results.Ok(); }
+                try
+                {
+                    var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    await s.CancelSpec(id, dto, clientIp);
+                    return Results.Ok();
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
             apiGroup.MapPost("/specs/{id}/duplicate", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
