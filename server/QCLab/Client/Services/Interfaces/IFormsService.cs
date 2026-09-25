@@ -7,19 +7,19 @@ namespace QCLab.Client.Services.Interfaces
     {
         Task<List<FormDto>> GetAllForms();
         Task<FormDetailDto?> GetForm(long id);
-        Task<IdDto> CreateForm(CreateFormDto dto);
-        Task UpdateForm(long id, UpdateFormDto dto);
+        Task<IdDto> CreateForm(CreateFormDto dto, long userId);
+        Task UpdateForm(long id, UpdateFormDto dto, long userId);
         Task<List<FormParamDto>> GetFormParams(long id);
         Task ReorderFormParams(long id, List<ReorderFormParamDto> reorderedParams);
         Task BatchUpdateFormParams(long id, List<BatchUpdateFormParamDto> paramsData);
         Task<IdDto> AddFormParam(long id, CreateFormParamDto dto);
         Task UpdateFormParam(long id, long testId, UpdateFormParamDto dto);
         Task DeleteFormParam(long id, long testId);
-        Task SubmitForm(long id, FormActionDto dto);
-        Task ValidateForm(long id, FormActionDto dto, string clientIp = "127.0.0.1");
-        Task CancelForm(long id, FormActionDto dto);
+        Task SubmitForm(long id, FormActionDto dto, long userId);
+        Task ValidateForm(long id, FormActionDto dto, long userId, string clientIp = "127.0.0.1");
+        Task CancelForm(long id, FormActionDto dto, long userId);
         Task ReactivateForm(long id);
-        Task<IdDto> DuplicateForm(long id, FormActionDto dto);
+        Task<IdDto> DuplicateForm(long id, FormActionDto dto, long userId);
         Task ValidateFormula(long formId, long testId, bool isCalculated, string? formula);
         Task ValidateCondition(string condition);
         Task<Dictionary<string, object>> EvaluateFormCalculations(long formId, Dictionary<string, object> measurementData);

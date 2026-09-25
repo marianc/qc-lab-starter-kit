@@ -58,7 +58,6 @@ public class CreateFormDto
     public int DaysActiveForEditing { get; set; } = 10;
     public string? CustomNav { get; set; }
     public bool IsCustomized { get; set; }
-    public long SubmittedUserId { get; set; }
     public DateTime? SubmittedDate { get; set; }
 }
 
@@ -69,7 +68,6 @@ public class UpdateFormDto
     public int DaysActiveForEditing { get; set; }
     public string? CustomNav { get; set; }
     public bool IsCustomized { get; set; }
-    public long UserId { get; set; }
 }
 
 public class FormConditionEvalDto
@@ -144,7 +142,6 @@ public class UpdateFormParamDto : BatchUpdateFormParamDto { }
 
 public class FormActionDto
 {
-    public long UserId { get; set; }
     public string? CommentsValidated { get; set; }
     public string? CommentsCancelled { get; set; }
 }

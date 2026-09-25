@@ -88,7 +88,7 @@ public class FormsService : IFormsService
     }
 
     // POST /forms
-    public async Task<IdDto> CreateForm(CreateFormDto dto)
+    public async Task<IdDto> CreateForm(CreateFormDto dto, long userId)
     {
         var form = new Form
         {
@@ -97,8 +97,8 @@ public class FormsService : IFormsService
             DaysActiveForEditing = dto.DaysActiveForEditing,
             CustomNav = dto.CustomNav,
             IsCustomized = dto.IsCustomized,
-            UserSubmittedId = dto.SubmittedUserId,
-            DateSubmitted = dto.SubmittedDate
+            UserSubmittedId = userId,
+            DateSubmitted = dto.SubmittedDate ?? DateTime.UtcNow
         };
 
         _context.Forms.Add(form);
@@ -108,7 +108,7 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}
-    public async Task UpdateForm(long id, UpdateFormDto dto)
+    public async Task UpdateForm(long id, UpdateFormDto dto, long userId)
     {
         var form = await _context.Forms.FindAsync(id);
         if (form == null) throw new ArgumentException("Form not found");
@@ -125,9 +125,9 @@ public class FormsService : IFormsService
         form.CustomNav = dto.CustomNav;
         form.IsCustomized = dto.IsCustomized;
         
-        if (!form.IsSubmitted && dto.UserId > 0)
+        if (!form.IsSubmitted && userId > 0)
         {
-            form.UserSubmittedId = dto.UserId;
+            form.UserSubmittedId = userId;
             form.DateSubmitted = DateTime.UtcNow;
         }
 
@@ -723,9 +723,9 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}/submit
-    public async Task SubmitForm(long id, FormActionDto dto)
+    public async Task SubmitForm(long id, FormActionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required for submission");
+        if (userId <= 0) throw new ArgumentException("User ID is required for submission");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -797,7 +797,7 @@ public class FormsService : IFormsService
             if (form != null)
             {
                 form.IsSubmitted = true;
-                form.UserSubmittedId = dto.UserId;
+                form.UserSubmittedId = userId;
                 form.DateSubmitted = DateTime.UtcNow;
             }
 
@@ -813,9 +813,9 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}/validate
-    public async Task ValidateForm(long id, FormActionDto dto, string clientIp = "127.0.0.1")
+    public async Task ValidateForm(long id, FormActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required for validation");
+        if (userId <= 0) throw new ArgumentException("User ID is required for validation");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -903,7 +903,7 @@ public class FormsService : IFormsService
             }
 
             form.IsValidated = true;
-            form.UserValidatedId = dto.UserId;
+            form.UserValidatedId = userId;
             form.DateValidated = DateTime.UtcNow;
             form.CommentsValidated = dto.CommentsValidated;
 
@@ -927,7 +927,7 @@ public class FormsService : IFormsService
             await _signatureService.SignEntityAsync(
                 "forms",
                 id,
-                dto.UserId,
+                userId,
                 "Approval",
                 clientIp,
                 dto.CommentsValidated);
@@ -940,16 +940,16 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}/cancel
-    public async Task CancelForm(long id, FormActionDto dto)
+    public async Task CancelForm(long id, FormActionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required for cancellation");
+        if (userId <= 0) throw new ArgumentException("User ID is required for cancellation");
 
         var form = await _context.Forms.FindAsync(id);
         if (form == null) throw new ArgumentException("Form not found");
         if (form.IsCancelled) throw new InvalidOperationException("Form already cancelled");
 
         form.IsCancelled = true;
-        form.UserCancelledId = dto.UserId;
+        form.UserCancelledId = userId;
         form.DateCancelled = DateTime.UtcNow;
         form.CommentsCancelled = dto.CommentsCancelled;
 
@@ -972,9 +972,9 @@ public class FormsService : IFormsService
     }
 
     // POST /forms/{id}/duplicate
-    public async Task<IdDto> DuplicateForm(long id, FormActionDto dto)
+    public async Task<IdDto> DuplicateForm(long id, FormActionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required for duplication");
+        if (userId <= 0) throw new ArgumentException("User ID is required for duplication");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -990,7 +990,7 @@ public class FormsService : IFormsService
                 CustomNav = originalForm.CustomNav,
                 IsCustomized = originalForm.IsCustomized,
                 IsSubmitted = true, // Start in Submitted state
-                UserSubmittedId = dto.UserId,
+                UserSubmittedId = userId,
                 DateSubmitted = DateTime.UtcNow,
                 IsValidated = false,
                 IsCancelled = false

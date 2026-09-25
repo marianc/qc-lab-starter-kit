@@ -81,18 +81,14 @@ const FormGroupsPage: React.FC = () => {
       });
       const newId = res.id;
 
-      const user = await authService.me();
-      if (user) {
-        await formsService.createForm({
-          formGroupId: newId,
-          version: "v0",
-          daysActiveForEditing: 10,
-          customNav: null,
-          isCustomized: false,
-          submittedUserId: user.id,
-          submittedDate: new Date().toISOString()
-        });
-      }
+      await formsService.createForm({
+        formGroupId: newId,
+        version: "v0",
+        daysActiveForEditing: 10,
+        customNav: null,
+        isCustomized: false,
+        submittedDate: new Date().toISOString()
+      });
 
       setShowAddDialog(false);
       fetchData();

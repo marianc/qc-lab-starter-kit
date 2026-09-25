@@ -337,8 +337,14 @@ namespace QCLab
             // Forms
             apiGroup.MapGet("/forms", (IFormsService s) => s.GetAllForms());
             apiGroup.MapGet("/forms/{id}", (long id, IFormsService s) => s.GetForm(id));
-            apiGroup.MapPost("/forms", ([FromBody] CreateFormDto dto, IFormsService s) => s.CreateForm(dto)).RequireQcPers();
-            apiGroup.MapPut("/forms/{id}", (long id, [FromBody] UpdateFormDto dto, IFormsService s) => s.UpdateForm(id, dto)).RequireQcPers();
+            apiGroup.MapPost("/forms", ([FromBody] CreateFormDto dto, IFormsService s, HttpContext httpContext) => {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                return s.CreateForm(dto, userId);
+            }).RequireQcPers();
+            apiGroup.MapPut("/forms/{id}", (long id, [FromBody] UpdateFormDto dto, IFormsService s, HttpContext httpContext) => {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                return s.UpdateForm(id, dto, userId);
+            }).RequireQcPers();
             apiGroup.MapGet("/forms/{id}/params", (long id, IFormsService s) => s.GetFormParams(id));
             apiGroup.MapPut("/forms/{id}/params/reorder", (long id, [FromBody] List<ReorderFormParamDto> dtos, IFormsService s) => s.ReorderFormParams(id, dtos)).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/params/batch-update", (long id, [FromBody] List<BatchUpdateFormParamDto> dtos, IFormsService s) => s.BatchUpdateFormParams(id, dtos)).RequireQcPers();
@@ -357,24 +363,33 @@ namespace QCLab
                 try { await s.DeleteFormParam(id, testId); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPut("/forms/{id}/submit", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
+            apiGroup.MapPut("/forms/{id}/submit", async (long id, [FromBody] FormActionDto dto, IFormsService s, HttpContext httpContext) =>
             {
-                try { await s.SubmitForm(id, dto); return Results.Ok(); }
+                try {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    await s.SubmitForm(id, dto, userId);
+                    return Results.Ok();
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/validate", async (long id, [FromBody] FormActionDto dto, IFormsService s, HttpContext httpContext) =>
             {
                 try
                 {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                     var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                    await s.ValidateForm(id, dto, clientIp);
+                    await s.ValidateForm(id, dto, userId, clientIp);
                     return Results.Ok();
                 }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPut("/forms/{id}/cancel", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
+            apiGroup.MapPut("/forms/{id}/cancel", async (long id, [FromBody] FormActionDto dto, IFormsService s, HttpContext httpContext) =>
             {
-                try { await s.CancelForm(id, dto); return Results.Ok(); }
+                try {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    await s.CancelForm(id, dto, userId);
+                    return Results.Ok();
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
             apiGroup.MapPut("/forms/{id}/reactivate", async (long id, IFormsService s) =>
@@ -382,9 +397,12 @@ namespace QCLab
                 try { await s.ReactivateForm(id); return Results.Ok(); }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPost("/forms/{id}/duplicate", async (long id, [FromBody] FormActionDto dto, IFormsService s) =>
+            apiGroup.MapPost("/forms/{id}/duplicate", async (long id, [FromBody] FormActionDto dto, IFormsService s, HttpContext httpContext) =>
             {
-                try { return Results.Ok(await s.DuplicateForm(id, dto)); }
+                try {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    return Results.Ok(await s.DuplicateForm(id, dto, userId));
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
 

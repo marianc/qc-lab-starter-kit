@@ -26,7 +26,6 @@ import type { FormEvalDto } from '@/types/formEval';
 import formsService from '@/services/formsService';
 import testsService from '@/services/testsService';
 import formEvalsService from '@/services/formEvalsService';
-import authService from '@/services/authService';
 import { formatDate } from '@/lib/utils';
 
 interface FormDetailViewProps {
@@ -172,15 +171,12 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
   const handleEditFormSave = async (updatedForm: FormDetailDto) => {
     setError(null);
     try {
-      const user = await authService.me();
-      if (!user) return;
       await formsService.updateForm(updatedForm.id, {
         formGroupId: updatedForm.formGroupId > 0 ? updatedForm.formGroupId : form!.formGroupId,
         version: updatedForm.version || '',
         daysActiveForEditing: updatedForm.daysActiveForEditing,
         customNav: updatedForm.customNav,
-        isCustomized: updatedForm.isCustomized,
-        userId: user.id
+        isCustomized: updatedForm.isCustomized
       });
       setShowFormDialog(false);
       loadData();
@@ -281,9 +277,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
 
   const handleSubmitForm = async () => {
     try {
-      const user = await authService.me();
-      if (!user) return;
-      await formsService.submitForm(formId, { userId: user.id });
+      await formsService.submitForm(formId, {});
       loadData();
     } catch (err: any) {
       setError(err.message);
@@ -292,12 +286,10 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
 
   const handleCommentSubmit = async (comments: string) => {
     try {
-      const user = await authService.me();
-      if (!user) return;
       if (commentType === "validate") {
-        await formsService.validateForm(formId, { userId: user.id, commentsValidated: comments });
+        await formsService.validateForm(formId, { commentsValidated: comments });
       } else {
-        await formsService.cancelForm(formId, { userId: user.id, commentsCancelled: comments });
+        await formsService.cancelForm(formId, { commentsCancelled: comments });
       }
       setShowCommentDialog(false);
       setSignatureRefreshKey(prev => prev + 1);
@@ -310,9 +302,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
 
   const handleDuplicateForm = async () => {
     try {
-      const user = await authService.me();
-      if (!user) return;
-      await formsService.duplicateForm(formId, { userId: user.id });
+      await formsService.duplicateForm(formId, {});
       onClose(formId);
     } catch (err: any) {
       setError(err.message);

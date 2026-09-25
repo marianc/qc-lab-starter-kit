@@ -48,7 +48,6 @@ export interface CreateFormDto {
   daysActiveForEditing?: number;
   customNav: string | null;
   isCustomized: boolean;
-  submittedUserId: number;
   submittedDate: string | null;
 }
 
@@ -58,7 +57,6 @@ export interface UpdateFormDto {
   daysActiveForEditing?: number;
   customNav: string | null;
   isCustomized: boolean;
-  userId: number;
 }
 
 export interface FormConditionEvalDto {
@@ -120,7 +118,6 @@ export interface CreateFormParamDto extends BatchUpdateFormParamDto { }
 export interface UpdateFormParamDto extends BatchUpdateFormParamDto { }
 
 export interface FormActionDto {
-  userId: number;
   commentsValidated?: string | null;
   commentsCancelled?: string | null;
 }
