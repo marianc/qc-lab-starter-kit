@@ -42,7 +42,7 @@ const CertificationDialog: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors, isValidating } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, reset, setError, clearErrors, formState: { errors, isValidating } } = useForm<FormData>({
     resolver: zodResolver(certificationSchema) as any,
     defaultValues: {
       materialId: 0,
@@ -121,11 +121,25 @@ const CertificationDialog: React.FC<Props> = ({
     }
   };
 
-  const validateUniqueness = async (name: string, mid: number): Promise<boolean> => {
-    if (!name.trim() || mid <= 0) return true;
+  const validateUniqueness = async (): Promise<boolean> => {
+    const name = watch('controlCodeName');
+    const mid = watch('materialId');
+    if (!name || !name.trim() || Number(mid) <= 0) {
+      clearErrors('controlCodeName');
+      return true;
+    }
     try {
       const response = await apiClient.get<{ is_unique: boolean }>(`api/validate/unique?entity=ControlCode&property=Code&value=${encodeURIComponent(name.trim())}&scope_id=${mid}`);
-      return response.data.is_unique;
+      if (!response.data.is_unique) {
+        setError('controlCodeName', {
+          type: 'manual',
+          message: 'This control code already exists for this material.'
+        });
+        return false;
+      } else {
+        clearErrors('controlCodeName');
+        return true;
+      }
     } catch (err) {
       console.error('Uniqueness check failed:', err);
       return true;
@@ -151,9 +165,8 @@ const CertificationDialog: React.FC<Props> = ({
 
     try {
       if (data.controlCodeName) {
-        const isUnique = await validateUniqueness(data.controlCodeName, data.materialId);
+        const isUnique = await validateUniqueness();
         if (!isUnique) {
-          setServerError('This control code already exists for this material.');
           setIsSubmitting(false);
           return;
         }
@@ -247,15 +260,22 @@ const CertificationDialog: React.FC<Props> = ({
           <div className="form-group">
             <label>Control Code:</label>
             <div className={styles.ccSelectionRow}>
-              {!isReagent && (
-                <input 
-                  type="text"
-                  placeholder="Enter new code"
-                  className={`form-control ${styles.flex1} ${errors.controlCodeName ? 'invalid' : ''}`}
-                  {...register('controlCodeName')}
-                  onFocus={onCCInputFocus}
-                />
-              )}
+              {!isReagent && (() => {
+                const reg = register('controlCodeName');
+                return (
+                  <input 
+                    type="text"
+                    placeholder="Enter new code"
+                    className={`form-control ${styles.flex1} ${errors.controlCodeName ? 'invalid' : ''}`}
+                    {...reg}
+                    onFocus={onCCInputFocus}
+                    onBlur={(e) => {
+                      reg.onBlur(e);
+                      validateUniqueness();
+                    }}
+                  />
+                );
+              })()}
               <select 
                 className={`form-control ${styles.flex1} ${errors.controlCodeId ? 'invalid' : ''}`}
                 value={watchControlCodeId || ''}
