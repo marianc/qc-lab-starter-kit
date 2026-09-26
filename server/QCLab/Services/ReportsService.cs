@@ -223,9 +223,9 @@ public class ReportsService : IReportsService
     }
 
     // PUT /reports/{id}/cancel
-    public async Task CancelReport(long id, CancelReportDto dto, string clientIp = "127.0.0.1")
+    public async Task CancelReport(long id, CancelReportDto dto, long userId, string clientIp = "127.0.0.1")
     {
-        if (dto.UserId == 0) throw new ArgumentException("user_id is required");
+        if (userId == 0) throw new ArgumentException("user_id is required");
 
         var conflict = await _context.CertificateTests
             .Include(ct => ct.Certificate)
@@ -242,7 +242,7 @@ public class ReportsService : IReportsService
         if (report == null) throw new ArgumentException("Report not found");
 
         report.IsCancelled = true;
-        report.UserCancelledId = dto.UserId;
+        report.UserCancelledId = userId;
         report.DateCancelled = DateTime.UtcNow;
         report.CommentsCancelled = dto.CommentsCancelled;
 
@@ -251,7 +251,7 @@ public class ReportsService : IReportsService
         await _signatureService.SignEntityAsync(
             "reports",
             id,
-            dto.UserId,
+            userId,
             "Cancellation",
             clientIp,
             dto.CommentsCancelled);

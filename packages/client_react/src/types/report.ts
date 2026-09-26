@@ -78,6 +78,5 @@ export interface PreviewReportDto {
 }
 
 export interface CancelReportDto {
-  userId: number;
   commentsCancelled?: string | null;
 }

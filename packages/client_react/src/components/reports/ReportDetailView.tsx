@@ -75,10 +75,9 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
 
   const handleCancelReport = async (comments: string) => {
     setErrorMessage(null);
-    if (report && currentUser) {
+    if (report) {
       try {
         await reportsService.cancelReport(report.id, {
-          userId: currentUser.id,
           commentsCancelled: comments
         });
         setShowCommentDialog(false);

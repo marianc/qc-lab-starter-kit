@@ -176,7 +176,6 @@ const VerificationDialog: React.FC<Props> = ({
           controlCodeId: finalCCId || null,
           categoryId: null,
           materialName: null,
-          userId: user.id,
           commentsSubmitted: data.comments || null
         });
         finalId = reception.id;
@@ -190,7 +189,6 @@ const VerificationDialog: React.FC<Props> = ({
           controlCodeId: finalCCId || null,
           categoryId: null,
           materialName: null,
-          userId: user.id,
           commentsSubmitted: data.comments || null
         });
         finalId = res.id;
@@ -210,13 +208,11 @@ const VerificationDialog: React.FC<Props> = ({
   const submitAndAutoReceive = async (receptionId: number, comments: string) => {
     if (!user) return;
     await receptionsService.submitReception(receptionId, { 
-      userId: user.id, 
       comments 
     });
 
     if (user.roles.includes('LabPers')) {
       await receptionsService.receiveReception(receptionId, {
-        userId: user.id,
         comments: 'Automatically received'
       });
     }

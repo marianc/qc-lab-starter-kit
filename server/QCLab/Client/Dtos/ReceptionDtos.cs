@@ -44,7 +44,6 @@ public class CreateReceptionDto
     public long? CategoryId { get; set; }
     public string? CommentsSubmitted { get; set; }
     public string? MaterialName { get; set; }
-    public long UserId { get; set; }
 }
 
 public class UpdateReceptionDto
@@ -54,7 +53,6 @@ public class UpdateReceptionDto
     public long? CategoryId { get; set; }
     public string? CommentsSubmitted { get; set; }
     public string? MaterialName { get; set; }
-    public long UserId { get; set; }
 }
 
 public class UpdateReceptionTestsDto
@@ -64,31 +62,26 @@ public class UpdateReceptionTestsDto
 
 public class SubmitReceptionDto
 {
-    public long UserId { get; set; }
     public string? Comments { get; set; }
 }
 
 public class ReceiveReceptionDto
 {
-    public long UserId { get; set; }
     public string? Comments { get; set; }
 }
 
 public class RejectReceptionDto
 {
-    public long UserId { get; set; }
     public required string Reason { get; set; }
 }
 
 public class CreateReportDto
 {
-    public long UserId { get; set; }
     public string? Comments { get; set; }
 }
 
 public class ExpressCertificateDto
 {
-    public long UserId { get; set; }
     public string? Comments { get; set; }
 }
 

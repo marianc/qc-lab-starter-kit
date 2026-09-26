@@ -653,19 +653,20 @@ namespace QCLab
 
             apiGroup.MapGet("/receptions/{id}", (long id, IReceptionsService s) => s.GetReception(id));
             apiGroup.MapGet("/receptions/{id}/applicable_forms", (long id, IReceptionsService s) => s.GetApplicableForms(id));
-            apiGroup.MapPost("/receptions", ([FromBody] CreateReceptionDto dto, IReceptionsService s) => s.CreateReception(dto));
-            apiGroup.MapPut("/receptions/{id}", (long id, [FromBody] UpdateReceptionDto dto, IReceptionsService s) => s.UpdateReception(id, dto));
+            apiGroup.MapPost("/receptions", ([FromBody] CreateReceptionDto dto, IReceptionsService s, HttpContext httpContext) => s.CreateReception(dto, AuthUtils.GetCurrentUserId(httpContext)));
+            apiGroup.MapPut("/receptions/{id}", (long id, [FromBody] UpdateReceptionDto dto, IReceptionsService s, HttpContext httpContext) => s.UpdateReception(id, dto, AuthUtils.GetCurrentUserId(httpContext)));
             apiGroup.MapGet("/receptions/{id}/tests", (long id, IReceptionsService s) => s.GetReceptionTests(id));
             apiGroup.MapPut("/receptions/{id}/tests", (long id, [FromBody] UpdateReceptionTestsDto dto, IReceptionsService s) => s.UpdateReceptionTests(id, dto));
-            apiGroup.MapPut("/receptions/{id}/submit", (long id, [FromBody] SubmitReceptionDto dto, IReceptionsService s) => s.SubmitReception(id, dto));
+            apiGroup.MapPut("/receptions/{id}/submit", (long id, [FromBody] SubmitReceptionDto dto, IReceptionsService s, HttpContext httpContext) => s.SubmitReception(id, dto, AuthUtils.GetCurrentUserId(httpContext)));
             apiGroup.MapPut("/receptions/{id}/cancel_submission", (long id, IReceptionsService s) => s.CancelSubmission(id));
-            apiGroup.MapPut("/receptions/{id}/receive", (long id, [FromBody] ReceiveReceptionDto dto, IReceptionsService s) => s.ReceiveReception(id, dto));
-            apiGroup.MapPut("/receptions/{id}/reject", (long id, [FromBody] RejectReceptionDto dto, IReceptionsService s) => s.RejectReception(id, dto));
+            apiGroup.MapPut("/receptions/{id}/receive", (long id, [FromBody] ReceiveReceptionDto dto, IReceptionsService s, HttpContext httpContext) => s.ReceiveReception(id, dto, AuthUtils.GetCurrentUserId(httpContext)));
+            apiGroup.MapPut("/receptions/{id}/reject", (long id, [FromBody] RejectReceptionDto dto, IReceptionsService s, HttpContext httpContext) => s.RejectReception(id, dto, AuthUtils.GetCurrentUserId(httpContext)));
             apiGroup.MapGet("/receptions/{id}/reports", (long id, IReceptionsService s) => s.GetReceptionReports(id));
             apiGroup.MapPost("/receptions/{id}/create_report", async (long id, [FromBody] CreateReportDto dto, IReceptionsService s, HttpContext httpContext) =>
             {
+                long userId = AuthUtils.GetCurrentUserId(httpContext);
                 var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                return Results.Ok(await s.CreateReport(id, dto, clientIp));
+                return Results.Ok(await s.CreateReport(id, dto, userId, clientIp));
             }).RequireLabPers();
             apiGroup.MapGet("/receptions/{id}/check_report_conflict", (long id, IReceptionsService s) => s.CheckReportConflict(id).ContinueWith(t => new { conflict = t.Result }));
             apiGroup.MapGet("/receptions/{id}/measurement_tests", (long id, IReceptionsService s) => s.GetReceptionMeasurementTests(id));
@@ -673,8 +674,9 @@ namespace QCLab
             apiGroup.MapGet("/receptions/{id}/preview", (long id, IReceptionsService s) => s.GetPreviewReport(id));
             apiGroup.MapPost("/receptions/{id}/submit_express_certificate", async (long id, [FromBody] ExpressCertificateDto dto, IReceptionsService s, HttpContext httpContext) =>
             {
+                long userId = AuthUtils.GetCurrentUserId(httpContext);
                 var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                return Results.Ok(await s.SubmitExpressCertificate(id, dto, clientIp));
+                return Results.Ok(await s.SubmitExpressCertificate(id, dto, userId, clientIp));
             }).RequireQcPers();
 
             // Reception Types
@@ -744,8 +746,9 @@ namespace QCLab
             {
                 try
                 {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                     var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                    await s.CancelReport(id, dto, clientIp);
+                    await s.CancelReport(id, dto, userId, clientIp);
                     return Results.Ok();
                 }
                 catch (Exception ex)

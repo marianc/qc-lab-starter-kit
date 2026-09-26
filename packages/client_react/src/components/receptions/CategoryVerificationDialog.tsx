@@ -128,8 +128,7 @@ const CategoryVerificationDialog: React.FC<Props> = ({
           categoryId: data.categoryId,
           materialName: data.materialName,
           controlCodeId: null,
-          commentsSubmitted: data.comments || null,
-          userId: user.id
+          commentsSubmitted: data.comments || null
         });
         finalId = reception.id;
 
@@ -142,8 +141,7 @@ const CategoryVerificationDialog: React.FC<Props> = ({
           categoryId: data.categoryId,
           materialName: data.materialName,
           controlCodeId: null,
-          commentsSubmitted: data.comments || null,
-          userId: user.id
+          commentsSubmitted: data.comments || null
         });
         finalId = res.id;
         await submitAndAutoReceive(finalId, data.comments || '');
@@ -162,13 +160,11 @@ const CategoryVerificationDialog: React.FC<Props> = ({
   const submitAndAutoReceive = async (receptionId: number, comments: string) => {
     if (!user) return;
     await receptionsService.submitReception(receptionId, { 
-      userId: user.id, 
       comments 
     });
 
     if (user.roles.includes('LabPers')) {
       await receptionsService.receiveReception(receptionId, {
-        userId: user.id,
         comments: 'Automatically received'
       });
     }

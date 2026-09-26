@@ -18,21 +18,21 @@ namespace QCLab.Client.Services.Interfaces
             int? submission_year,
             int? submission_month);
         Task<ReceptionDetailDto?> GetReception(long reception_id);
-        Task<IdDto> CreateReception(CreateReceptionDto dto);
-        Task UpdateReception(long reception_id, UpdateReceptionDto dto);
+        Task<IdDto> CreateReception(CreateReceptionDto dto, long userId);
+        Task UpdateReception(long reception_id, UpdateReceptionDto dto, long userId);
         Task<List<ReceptionTestDto>> GetReceptionTests(long reception_id);
         Task UpdateReceptionTests(long reception_id, UpdateReceptionTestsDto dto);
-        Task SubmitReception(long reception_id, SubmitReceptionDto dto);
+        Task SubmitReception(long reception_id, SubmitReceptionDto dto, long userId);
         Task CancelSubmission(long reception_id);
-        Task ReceiveReception(long reception_id, ReceiveReceptionDto dto);
-        Task RejectReception(long reception_id, RejectReceptionDto dto);
+        Task ReceiveReception(long reception_id, ReceiveReceptionDto dto, long userId);
+        Task RejectReception(long reception_id, RejectReceptionDto dto, long userId);
         Task<List<ReportSummaryDto>> GetReceptionReports(long reception_id);
-        Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, string clientIp = "127.0.0.1");
+        Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, long userId, string clientIp = "127.0.0.1");
         Task<bool> CheckReportConflict(long reception_id);
         Task<List<MeasurementTestDetailDto>> GetReceptionMeasurementTests(long reception_id);
         Task<List<MeasurementParamDetailDto>> GetReceptionMeasurementParams(long reception_id);
         Task<PreviewReportDto> GetPreviewReport(long reception_id);
-        Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, string clientIp = "127.0.0.1");
+        Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, long userId, string clientIp = "127.0.0.1");
         Task<List<ReceptionTypeDto>> GetAllReceptionTypes();
     }
 }

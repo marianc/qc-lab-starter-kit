@@ -68,10 +68,8 @@ const PreviewReportDetailView: React.FC<Props> = ({
   };
 
   const handleCommentSubmit = async (comment: string) => {
-    if (!currentUser) return;
     try {
       await receptionsService.createReport(receptionId, { 
-        userId: currentUser.id, 
         comments: comment 
       });
       setShowCommentDialog(false);
@@ -90,10 +88,8 @@ const PreviewReportDetailView: React.FC<Props> = ({
   };
 
   const handleExpressCommentSubmit = async (comment: string) => {
-    if (!currentUser) return;
     try {
       const result = await receptionsService.submitExpressCertificate(receptionId, {
-        userId: currentUser.id,
         comments: comment
       });
 

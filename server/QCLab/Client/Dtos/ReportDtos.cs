@@ -89,7 +89,6 @@ public class PreviewTestRowDto
 
 public class CancelReportDto
 {
-    public long UserId { get; set; }
     public string? CommentsCancelled { get; set; }
 }
 

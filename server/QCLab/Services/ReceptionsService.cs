@@ -498,7 +498,7 @@ public class ReceptionsService : IReceptionsService
     }
 
     // POST /receptions
-    public async Task<IdDto> CreateReception(CreateReceptionDto dto)
+    public async Task<IdDto> CreateReception(CreateReceptionDto dto, long userId)
     {
         var reception = new Reception
         {
@@ -507,7 +507,7 @@ public class ReceptionsService : IReceptionsService
             CategoryId = dto.CategoryId,
             CommentsSubmitted = dto.CommentsSubmitted,
             MaterialName = dto.MaterialName,
-            UserSubmittedId = dto.UserId,
+            UserSubmittedId = userId,
             DateSubmitted = DateTime.UtcNow
         };
 
@@ -518,7 +518,7 @@ public class ReceptionsService : IReceptionsService
     }
 
     // PUT /receptions/:reception_id
-    public async Task UpdateReception(long reception_id, UpdateReceptionDto dto)
+    public async Task UpdateReception(long reception_id, UpdateReceptionDto dto, long userId)
     {
         var reception = await _context.Receptions.FindAsync(reception_id);
         if (reception == null) throw new ArgumentException("Reception not found");
@@ -531,7 +531,7 @@ public class ReceptionsService : IReceptionsService
 
         if (!reception.IsSubmitted)
         {
-            reception.UserSubmittedId = dto.UserId;
+            reception.UserSubmittedId = userId;
             reception.DateSubmitted = DateTime.UtcNow;
         }
 
@@ -575,16 +575,16 @@ public class ReceptionsService : IReceptionsService
     }
 
     // PUT /receptions/:reception_id/submit
-    public async Task SubmitReception(long reception_id, SubmitReceptionDto dto)
+    public async Task SubmitReception(long reception_id, SubmitReceptionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required for submission");
+        if (userId == 0) throw new ArgumentException("User ID is required for submission");
 
         var reception = await _context.Receptions.FindAsync(reception_id);
         if (reception == null) throw new ArgumentException("Reception not found");
         if (reception.IsSubmitted) throw new InvalidOperationException("Reception already submitted");
 
         reception.IsSubmitted = true;
-        reception.UserSubmittedId = dto.UserId;
+        reception.UserSubmittedId = userId;
         reception.DateSubmitted = DateTime.UtcNow;
         reception.CommentsSubmitted = dto.Comments;
 
@@ -603,9 +603,9 @@ public class ReceptionsService : IReceptionsService
     }
 
     // PUT /receptions/:reception_id/receive
-    public async Task ReceiveReception(long reception_id, ReceiveReceptionDto dto)
+    public async Task ReceiveReception(long reception_id, ReceiveReceptionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required");
+        if (userId == 0) throw new ArgumentException("User ID is required");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -616,7 +616,7 @@ public class ReceptionsService : IReceptionsService
             if (reception.IsReceived || reception.IsRejected) throw new InvalidOperationException("Reception already processed (received or rejected)");
 
             reception.IsReceived = true;
-            reception.UserReceivedId = dto.UserId;
+            reception.UserReceivedId = userId;
             reception.DateReceived = DateTime.UtcNow;
             reception.CommentsReceived = dto.Comments;
 
@@ -637,9 +637,9 @@ public class ReceptionsService : IReceptionsService
     }
 
     // PUT /receptions/:reception_id/reject
-    public async Task RejectReception(long reception_id, RejectReceptionDto dto)
+    public async Task RejectReception(long reception_id, RejectReceptionDto dto, long userId)
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required");
+        if (userId == 0) throw new ArgumentException("User ID is required");
         if (string.IsNullOrEmpty(dto.Reason)) throw new ArgumentException("Reason for rejection is required");
 
         var reception = await _context.Receptions.FindAsync(reception_id);
@@ -648,7 +648,7 @@ public class ReceptionsService : IReceptionsService
         if (reception.IsReceived || reception.IsRejected) throw new InvalidOperationException("Reception already processed (received or rejected)");
 
         reception.IsRejected = true;
-        reception.UserRejectedId = dto.UserId;
+        reception.UserRejectedId = userId;
         reception.DateRejected = DateTime.UtcNow;
         reception.CommentsRejected = dto.Reason;
 
@@ -680,9 +680,9 @@ public class ReceptionsService : IReceptionsService
     }
 
     // POST /receptions/:reception_id/create_report
-    public async Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, string clientIp = "127.0.0.1")
+    public async Task<IdDto> CreateReport(long reception_id, CreateReportDto dto, long userId, string clientIp = "127.0.0.1")
     {
-        if (dto.UserId == 0) throw new ArgumentException("User ID is required");
+        if (userId == 0) throw new ArgumentException("User ID is required");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -694,7 +694,7 @@ public class ReceptionsService : IReceptionsService
             {
                 reportReplacedId = existingReport.Id;
                 existingReport.IsCancelled = true;
-                existingReport.UserCancelledId = dto.UserId;
+                existingReport.UserCancelledId = userId;
                 existingReport.DateCancelled = DateTime.UtcNow;
                 existingReport.CommentsCancelled = $"Replaced by new report for reception {reception_id}";
             }
@@ -703,7 +703,7 @@ public class ReceptionsService : IReceptionsService
             {
                 ReceptionId = reception_id,
                 IsSubmitted = true,
-                UserSubmittedId = dto.UserId,
+                UserSubmittedId = userId,
                 DateSubmitted = DateTime.UtcNow,
                 CommentsSubmitted = dto.Comments,
                 ReportReplacedId = reportReplacedId,
@@ -721,7 +721,7 @@ public class ReceptionsService : IReceptionsService
                 await _signatureService.SignEntityAsync(
                     "reports",
                     existingReport.Id,
-                    dto.UserId,
+                    userId,
                     "Cancellation",
                     clientIp,
                     existingReport.CommentsCancelled,
@@ -806,7 +806,7 @@ public class ReceptionsService : IReceptionsService
             await _signatureService.SignEntityAsync(
                 "reports",
                 newReport.Id,
-                dto.UserId,
+                userId,
                 "Submission",
                 clientIp,
                 dto.Comments,
@@ -1183,7 +1183,7 @@ public class ReceptionsService : IReceptionsService
         return result;
     }
 
-    public async Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, string clientIp = "127.0.0.1")
+    public async Task<ExpressCertificateResultDto> SubmitExpressCertificate(long reception_id, ExpressCertificateDto dto, long userId, string clientIp = "127.0.0.1")
     {
         var reception = await _context.Receptions
             .Include(r => r.ControlCode)
@@ -1296,15 +1296,14 @@ public class ReceptionsService : IReceptionsService
         // 4. Everything is OK -> submit testing report (reusing CreateReport) and then issue quality certificate (reusing GenerateCertificate and SubmitCertificate)
         var reportIdDto = await CreateReport(reception_id, new CreateReportDto
         {
-            UserId = dto.UserId,
             Comments = dto.Comments
-        }, clientIp);
+        }, userId, clientIp);
 
         var generateDto = new GenerateCertificateDto
         {
             MaterialId = materialId,
             ControlCodeId = controlCodeId,
-            UserId = dto.UserId
+            UserId = userId
         };
 
         var certDetail = await _certificatesService.GenerateCertificate(generateDto);
@@ -1319,7 +1318,7 @@ public class ReceptionsService : IReceptionsService
 
         await _certificatesService.SubmitCertificate(certDetail.Id, new CertificateActionDto
         {
-            UserId = dto.UserId,
+            UserId = userId,
             CommentsSubmitted = dto.Comments
         }, clientIp);
 

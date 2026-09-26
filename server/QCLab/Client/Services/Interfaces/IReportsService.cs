@@ -13,7 +13,7 @@ namespace QCLab.Client.Services.Interfaces
             int? submissionMonth = null,
             bool isLabOrQcPers = false);
         Task<ReportDetailDto?> GetReport(long id);
-        Task CancelReport(long id, CancelReportDto dto, string clientIp = "127.0.0.1");
+        Task CancelReport(long id, CancelReportDto dto, long userId, string clientIp = "127.0.0.1");
         Task<bool> CheckReportConflict(long id);
         Task<byte[]?> ExportReportsExcel(
             long? receptionTypeId = null,

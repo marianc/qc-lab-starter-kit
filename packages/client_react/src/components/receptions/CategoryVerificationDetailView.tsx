@@ -71,12 +71,12 @@ const CategoryVerificationDetailView: React.FC<Props> = ({
   };
 
   const handleCommentSubmit = async (comment: string) => {
-    if (!currentUser || !reception) return;
+    if (!reception) return;
     try {
       if (commentType === 'received') {
-        await receptionsService.receiveReception(reception.id, { userId: currentUser.id, comments: comment });
+        await receptionsService.receiveReception(reception.id, { comments: comment });
       } else if (commentType === 'rejected') {
-        await receptionsService.rejectReception(reception.id, { userId: currentUser.id, reason: comment });
+        await receptionsService.rejectReception(reception.id, { reason: comment });
       }
       setShowCommentDialog(false);
       loadData();

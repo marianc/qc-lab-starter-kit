@@ -39,7 +39,6 @@ export interface CreateReceptionDto {
   categoryId: number | null;
   commentsSubmitted: string | null;
   materialName: string | null;
-  userId: number;
 }
 
 export interface UpdateReceptionDto {
@@ -48,7 +47,6 @@ export interface UpdateReceptionDto {
   categoryId: number | null;
   commentsSubmitted: string | null;
   materialName: string | null;
-  userId: number;
 }
 
 export interface UpdateReceptionTestsDto {
@@ -56,27 +54,22 @@ export interface UpdateReceptionTestsDto {
 }
 
 export interface SubmitReceptionDto {
-  userId: number;
   comments: string | null;
 }
 
 export interface ReceiveReceptionDto {
-  userId: number;
   comments: string | null;
 }
 
 export interface RejectReceptionDto {
-  userId: number;
   reason: string;
 }
 
 export interface CreateReportDto {
-  userId: number;
   comments: string | null;
 }
 
 export interface ExpressCertificateDto {
-  userId: number;
   comments: string | null;
 }
 
