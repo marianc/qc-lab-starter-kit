@@ -7,9 +7,10 @@ interface Props {
   sops: SopDto[];
   onAddSop: () => void;
   onViewDetails: (sop: SopDto) => void;
+  lastEditedSopId?: number | null;
 }
 
-const SopsList: React.FC<Props> = ({ sops, onAddSop, onViewDetails }) => {
+const SopsList: React.FC<Props> = ({ sops, onAddSop, onViewDetails, lastEditedSopId }) => {
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
@@ -26,6 +27,7 @@ const SopsList: React.FC<Props> = ({ sops, onAddSop, onViewDetails }) => {
         <table className="data-table">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Doc Code</th>
               <th>Title</th>
               <th>Active Version</th>
@@ -36,13 +38,14 @@ const SopsList: React.FC<Props> = ({ sops, onAddSop, onViewDetails }) => {
           <tbody>
             {sops.length === 0 ? (
               <tr>
-                <td colSpan={5} className={styles.emptyCell}>No SOPs found for this norm.</td>
+                <td colSpan={6} className={styles.emptyCell}>No SOPs found for this norm.</td>
               </tr>
             ) : (
               sops.map((sop) => {
                 const activeVersion = sop.versions.find(v => v.isActive);
                 return (
-                  <tr key={sop.id}>
+                  <tr key={sop.id} className={sop.id === lastEditedSopId ? 'highlighted-row' : ''}>
+                    <td>{sop.id}</td>
                     <td>{sop.docCode}</td>
                     <td>{sop.title}</td>
                     <td>{activeVersion ? activeVersion.versionNumber : 'None'}</td>

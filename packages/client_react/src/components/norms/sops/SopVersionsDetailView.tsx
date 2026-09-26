@@ -16,7 +16,7 @@ import styles from './SopVersionsDetailView.module.css';
 
 interface Props {
   sopId: number;
-  onClose: () => void;
+  onClose: (savedId?: number) => void;
   breadcrumbs: string[];
 }
 
@@ -76,8 +76,8 @@ const SopVersionsDetailView: React.FC<Props> = ({ sopId, onClose, breadcrumbs })
   return (
     <DetailView>
       <DetailViewHeader 
-        title={`SOP: ${sop?.docCode || ''} - ${sop?.title || ''}`} 
-        onBack={onClose} 
+        title={`SOP ${sop?.id || ''}`} 
+        onBack={() => onClose(sopId)} 
         breadcrumbs={breadcrumbs} 
       />
       <DetailViewContent>

@@ -52,6 +52,7 @@ const NormsPage: React.FC = () => {
 
   const openDetail = (id: number) => {
     setSelectedNormId(id);
+    setLastEditedNormId(id);
     setIsDetailOpen(true);
   };
 

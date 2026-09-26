@@ -43,18 +43,18 @@ const Sidebar: React.FC = () => {
               </li>
               <li>
                 <NavLink 
-                  to="/units" 
-                  className={({ isActive }) => isActive ? styles.active : undefined}
-                >
-                  Measurement Units
-                </NavLink>
-              </li>
-              <li>
-                <NavLink 
                   to="/norms" 
                   className={({ isActive }) => isActive ? styles.active : undefined}
                 >
                   Norms
+                </NavLink>
+              </li>
+              <li>
+                <NavLink 
+                  to="/units" 
+                  className={({ isActive }) => isActive ? styles.active : undefined}
+                >
+                  Measurement Units
                 </NavLink>
               </li>
               <li>

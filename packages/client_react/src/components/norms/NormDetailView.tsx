@@ -34,6 +34,7 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
   const [showAddSopDialog, setShowAddSopDialog] = useState(false);
   const [selectedSopForDetails, setSelectedSopForDetails] = useState<SopDto | null>(null);
+  const [lastEditedSopId, setLastEditedSopId] = useState<number | null>(null);
 
   const fetchNormAndSops = useCallback(async () => {
     try {
@@ -100,27 +101,22 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
 
   const handleSaveNewSop = async (dto: CreateSopWithVersionDto) => {
     try {
-      await sopsService.createSop(dto);
+      const res = await sopsService.createSop(dto);
       setShowAddSopDialog(false);
       await fetchNormAndSops();
+      if (res && res.id) {
+        setLastEditedSopId(res.id);
+      }
     } catch (err) {
       console.error('Error creating SOP:', err);
       throw err;
     }
   };
 
-  if (selectedSopForDetails) {
-    return (
-      <SopVersionsDetailView 
-        sopId={selectedSopForDetails.id}
-        onClose={() => {
-          setSelectedSopForDetails(null);
-          fetchNormAndSops();
-        }}
-        breadcrumbs={[...breadcrumbs, `Norm ${norm?.name || normId}`, `SOP ${selectedSopForDetails.docCode}`]}
-      />
-    );
-  }
+  const handleViewSopDetails = (sop: SopDto) => {
+    setSelectedSopForDetails(sop);
+    setLastEditedSopId(sop.id);
+  };
 
   return (
     <DetailView>
@@ -161,11 +157,26 @@ const NormDetailView: React.FC<Props> = ({ normId, onClose, breadcrumbs }) => {
               <SopsList 
                 sops={sops}
                 onAddSop={() => setShowAddSopDialog(true)}
-                onViewDetails={(sop) => setSelectedSopForDetails(sop)}
+                onViewDetails={handleViewSopDetails}
+                lastEditedSopId={lastEditedSopId}
               />
             </>
           )}
         </div>
+
+        {selectedSopForDetails && norm && (
+          <SopVersionsDetailView 
+            sopId={selectedSopForDetails.id}
+            onClose={(savedId) => {
+              setSelectedSopForDetails(null);
+              fetchNormAndSops();
+              if (savedId !== undefined) {
+                setLastEditedSopId(savedId);
+              }
+            }}
+            breadcrumbs={[breadcrumbs[0] || 'Norms', `SOP ${selectedSopForDetails.id}`]}
+          />
+        )}
 
         {showEditDialog && norm && (
           <NormDialog 
