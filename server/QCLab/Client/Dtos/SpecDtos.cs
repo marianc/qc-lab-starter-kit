@@ -70,14 +70,12 @@ public class SpecTestEvalDto
 public class CreateSpecDto
 {
     public long MaterialId { get; set; }
-    public long UserId { get; set; }
     public string? CommentsSubmitted { get; set; }
 }
 
 public class UpdateSpecDto
 {
     public long MaterialId { get; set; }
-    public long UserId { get; set; }
     public string? CommentsSubmitted { get; set; }
 }
 
@@ -124,7 +122,6 @@ public class UpdateSpecTestDto
 
 public class SpecActionDto
 {
-    public long UserId { get; set; }
     public string? CommentsSubmitted { get; set; } // for submit
     public string? CommentsCancelled { get; set; } // for cancel
 }

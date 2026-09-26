@@ -74,16 +74,13 @@ const SpecificationsPage: React.FC = () => {
   };
 
   const handleAddSave = async (specData: SpecDto) => {
-    if (currentUser) {
-      const res = await specificationsService.createSpec({ 
-        materialId: specData.materialId, 
-        userId: currentUser.id,
-        commentsSubmitted: null
-      });
-      setShowAddDialog(false);
-      await fetchSpecs();
-      setLastEditedSpecificationId(res.id);
-    }
+    const res = await specificationsService.createSpec({ 
+      materialId: specData.materialId, 
+      commentsSubmitted: null
+    });
+    setShowAddDialog(false);
+    await fetchSpecs();
+    setLastEditedSpecificationId(res.id);
   };
 
   return (

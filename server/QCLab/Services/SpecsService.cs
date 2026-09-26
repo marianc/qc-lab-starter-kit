@@ -66,12 +66,12 @@ public class SpecsService : ISpecsService
     }
 
     // POST /specs
-    public async Task<IdDto> CreateSpec(CreateSpecDto dto)
+    public async Task<IdDto> CreateSpec(CreateSpecDto dto, long userId)
     {
         var spec = new Spec
         {
             MaterialId = dto.MaterialId,
-            UserSubmittedId = dto.UserId,
+            UserSubmittedId = userId,
             DateSubmitted = DateTime.UtcNow,
             CommentsSubmitted = dto.CommentsSubmitted,
             IsSubmitted = false, 
@@ -85,13 +85,13 @@ public class SpecsService : ISpecsService
     }
 
     // PUT /specs/{id}
-    public async Task UpdateSpec(long id, UpdateSpecDto dto)
+    public async Task UpdateSpec(long id, UpdateSpecDto dto, long userId)
     {
         var spec = await _context.Specs.FindAsync(id);
         if (spec == null) throw new ArgumentException("Specification not found");
 
         spec.MaterialId = dto.MaterialId;
-        spec.UserSubmittedId = dto.UserId;
+        spec.UserSubmittedId = userId;
         spec.DateSubmitted = DateTime.UtcNow;
         spec.CommentsSubmitted = dto.CommentsSubmitted;
 
@@ -289,7 +289,7 @@ public class SpecsService : ISpecsService
     }
 
     // PUT /specs/{id}/submit
-    public async Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1")
+    public async Task<SpecDto?> SubmitSpec(long id, SpecActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -349,13 +349,13 @@ public class SpecsService : ISpecsService
             foreach (var existing in existingSpecs)
             {
                 existing.IsCancelled = true;
-                existing.UserCancelledId = dto.UserId;
+                existing.UserCancelledId = userId;
                 existing.DateCancelled = DateTime.UtcNow;
                 existing.CommentsCancelled = $"Replaced by new spec #{id}";
             }
 
             spec.IsSubmitted = true;
-            spec.UserSubmittedId = dto.UserId;
+            spec.UserSubmittedId = userId;
             spec.DateSubmitted = DateTime.UtcNow;
             spec.CommentsSubmitted = dto.CommentsSubmitted;
             spec.SpecReplacedId = existingSpecs.FirstOrDefault()?.Id;
@@ -367,7 +367,7 @@ public class SpecsService : ISpecsService
                 await _signatureService.SignEntityAsync(
                     "specs",
                     existing.Id,
-                    dto.UserId,
+                    userId,
                     "Cancellation",
                     clientIp,
                     existing.CommentsCancelled,
@@ -379,7 +379,7 @@ public class SpecsService : ISpecsService
             await _signatureService.SignEntityAsync(
                 "specs",
                 id,
-                dto.UserId,
+                userId,
                 "Approval",
                 clientIp,
                 dto.CommentsSubmitted);
@@ -394,13 +394,13 @@ public class SpecsService : ISpecsService
     }
 
     // PUT /specs/{id}/cancel
-    public async Task CancelSpec(long id, SpecActionDto dto, string clientIp = "127.0.0.1")
+    public async Task CancelSpec(long id, SpecActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
         var spec = await _context.Specs.FindAsync(id);
         if (spec == null) throw new ArgumentException("Specification not found");
 
         spec.IsCancelled = true;
-        spec.UserCancelledId = dto.UserId;
+        spec.UserCancelledId = userId;
         spec.DateCancelled = DateTime.UtcNow;
         spec.CommentsCancelled = dto.CommentsCancelled;
 
@@ -409,14 +409,14 @@ public class SpecsService : ISpecsService
         await _signatureService.SignEntityAsync(
             "specs",
             id,
-            dto.UserId,
+            userId,
             "Cancellation",
             clientIp,
             dto.CommentsCancelled);
     }
 
     // POST /specs/{id}/duplicate
-    public async Task<IdDto> DuplicateSpec(long id, SpecActionDto dto)
+    public async Task<IdDto> DuplicateSpec(long id, SpecActionDto dto, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -427,7 +427,7 @@ public class SpecsService : ISpecsService
             var newSpec = new Spec
             {
                 MaterialId = originalSpec.MaterialId,
-                UserSubmittedId = dto.UserId,
+                UserSubmittedId = userId,
                 DateSubmitted = DateTime.UtcNow,
                 CommentsSubmitted = $"Duplicated from spec #{id}",
                 IsSubmitted = false,

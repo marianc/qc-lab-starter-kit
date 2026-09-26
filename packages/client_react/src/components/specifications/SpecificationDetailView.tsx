@@ -184,10 +184,9 @@ const SpecificationDetailView: React.FC<Props> = ({
   };
 
   const handleSubmit = async (comment: string) => {
-    if (!spec || !currentUser) return;
+    if (!spec) return;
     try {
       await specificationsService.submitSpec(spec.id, { 
-        userId: currentUser.id, 
         commentsSubmitted: comment,
         commentsCancelled: null
       });
@@ -201,9 +200,8 @@ const SpecificationDetailView: React.FC<Props> = ({
   };
 
   const handleCancelSpec = async (reason: string) => {
-    if (!spec || !currentUser) return;
+    if (!spec) return;
     await specificationsService.cancelSpec(spec.id, { 
-      userId: currentUser.id, 
       commentsCancelled: reason,
       commentsSubmitted: null
     });
@@ -213,9 +211,8 @@ const SpecificationDetailView: React.FC<Props> = ({
   };
 
   const handleDuplicateSpec = async () => {
-    if (!spec || !currentUser) return;
+    if (!spec) return;
     const res = await specificationsService.duplicateSpec(spec.id, { 
-      userId: currentUser.id,
       commentsSubmitted: null,
       commentsCancelled: null
     });

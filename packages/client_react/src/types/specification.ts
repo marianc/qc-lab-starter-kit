@@ -41,13 +41,11 @@ export interface SpecDto {
 
 export interface CreateSpecDto {
   materialId: number;
-  userId: number;
   commentsSubmitted: string | null;
 }
 
 export interface UpdateSpecDto {
   materialId: number;
-  userId: number;
   commentsSubmitted: string | null;
 }
 
@@ -69,7 +67,6 @@ export interface UpdateSpecTestDto {
 }
 
 export interface SpecActionDto {
-  userId: number;
   commentsSubmitted: string | null; // for submit
   commentsCancelled: string | null; // for cancel
 }

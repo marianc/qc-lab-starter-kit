@@ -765,8 +765,8 @@ namespace QCLab
                 return s.GetAllSpecs(isQcPers, isLabOrQcPers);
             });
             apiGroup.MapGet("/specs/{id}", (long id, ISpecsService s) => s.GetSpec(id));
-            apiGroup.MapPost("/specs", ([FromBody] CreateSpecDto dto, ISpecsService s) => s.CreateSpec(dto)).RequireQcPers();
-            apiGroup.MapPut("/specs/{id}", (long id, [FromBody] UpdateSpecDto dto, ISpecsService s) => s.UpdateSpec(id, dto)).RequireQcPers();
+            apiGroup.MapPost("/specs", ([FromBody] CreateSpecDto dto, ISpecsService s, HttpContext httpContext) => s.CreateSpec(dto, AuthUtils.GetCurrentUserId(httpContext))).RequireQcPers();
+            apiGroup.MapPut("/specs/{id}", (long id, [FromBody] UpdateSpecDto dto, ISpecsService s, HttpContext httpContext) => s.UpdateSpec(id, dto, AuthUtils.GetCurrentUserId(httpContext))).RequireQcPers();
             apiGroup.MapPost("/specs/{id}/tests", (long id, [FromBody] CreateSpecTestDto dto, ISpecsService s) => s.AddSpecTest(id, dto)).RequireQcPers();
             apiGroup.MapPut("/specs/{id}/tests/{testId}", (long id, long testId, [FromBody] UpdateSpecTestDto dto, ISpecsService s) => s.UpdateSpecTest(id, testId, dto)).RequireQcPers();
             apiGroup.MapDelete("/specs/{id}/tests/{testId}", (long id, long testId, ISpecsService s) => s.DeleteSpecTest(id, testId)).RequireQcPers();
@@ -775,8 +775,9 @@ namespace QCLab
             {
                 try
                 {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                     var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                    return Results.Ok(await s.SubmitSpec(id, dto, clientIp));
+                    return Results.Ok(await s.SubmitSpec(id, dto, userId, clientIp));
                 }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
@@ -784,15 +785,19 @@ namespace QCLab
             {
                 try
                 {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                     var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                    await s.CancelSpec(id, dto, clientIp);
+                    await s.CancelSpec(id, dto, userId, clientIp);
                     return Results.Ok();
                 }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
-            apiGroup.MapPost("/specs/{id}/duplicate", async (long id, [FromBody] SpecActionDto dto, ISpecsService s) =>
+            apiGroup.MapPost("/specs/{id}/duplicate", async (long id, [FromBody] SpecActionDto dto, ISpecsService s, HttpContext httpContext) =>
             {
-                try { return Results.Ok(await s.DuplicateSpec(id, dto)); }
+                try {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    return Results.Ok(await s.DuplicateSpec(id, dto, userId));
+                }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireQcPers();
             apiGroup.MapPost("/specs/validate-condition", async ([FromBody] string condition, ISpecsService s) =>
