@@ -9,7 +9,7 @@ import {
 } from '@/components/common/ui';
 import EquipmentCalibrationDialog from './EquipmentCalibrationDialog';
 import equipmentsService from '@/services/equipmentsService';
-import type { EquipmentDto, EquipmentCalibrationDto, CreateEquipmentCalibrationDto } from '@/types/equipment';
+import type { EquipmentDto, EquipmentCalibrationDto, CreateEquipmentCalibrationDto, EquipmentStatusDto, EquipmentCalibrationStatusDto } from '@/types/equipment';
 import { formatDate } from '@/lib/utils';
 import styles from './EquipmentDetailView.module.css';
 
@@ -19,9 +19,19 @@ interface Props {
   onEdit: (equipment: EquipmentDto) => void;
   breadcrumbs?: string[];
   equipmentUpdated?: EquipmentDto | null;
+  statuses?: EquipmentStatusDto[];
+  calibrationStatuses?: EquipmentCalibrationStatusDto[];
 }
 
-const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, breadcrumbs = [], equipmentUpdated }) => {
+const EquipmentDetailView: React.FC<Props> = ({ 
+  equipmentId, 
+  onClose, 
+  onEdit, 
+  breadcrumbs = [], 
+  equipmentUpdated,
+  statuses,
+  calibrationStatuses 
+}) => {
   const [equipment, setEquipment] = useState<EquipmentDto | null>(equipmentUpdated || null);
   const [calibrations, setCalibrations] = useState<EquipmentCalibrationDto[]>([]);
   const [showCalibrationDialog, setShowCalibrationDialog] = useState(false);
@@ -163,6 +173,7 @@ const EquipmentDetailView: React.FC<Props> = ({ equipmentId, onClose, onEdit, br
         calibration={editingCalibration}
         onSave={handleSaveCalibration}
         onClose={() => { setShowCalibrationDialog(false); setEditingCalibration(null); }}
+        statuses={calibrationStatuses}
       />
     </DetailView>
   );

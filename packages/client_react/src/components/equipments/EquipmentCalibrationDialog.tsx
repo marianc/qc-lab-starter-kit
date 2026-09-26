@@ -19,18 +19,23 @@ interface Props {
   calibration?: EquipmentCalibrationDto | null;
   onSave: (data: CreateEquipmentCalibrationDto) => void;
   onClose: () => void;
+  statuses?: EquipmentCalibrationStatusDto[];
 }
 
-const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave, onClose }) => {
+const EquipmentCalibrationDialog: React.FC<Props> = ({ open, calibration, onSave, onClose, statuses: propStatuses }) => {
   const [statuses, setStatuses] = useState<EquipmentCalibrationStatusDto[]>([]);
 
   useEffect(() => {
     if (open) {
-      equipmentsService.getEquipmentCalibrationStatuses()
-        .then(setStatuses)
-        .catch(err => console.error('Failed to load equipment calibration statuses', err));
+      if (!propStatuses || propStatuses.length === 0) {
+        equipmentsService.getEquipmentCalibrationStatuses()
+          .then(setStatuses)
+          .catch(err => console.error('Failed to load equipment calibration statuses', err));
+      } else {
+        setStatuses(propStatuses);
+      }
     }
-  }, [open]);
+  }, [open, propStatuses]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(calibrationSchema),

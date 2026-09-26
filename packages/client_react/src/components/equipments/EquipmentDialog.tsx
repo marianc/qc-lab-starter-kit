@@ -19,19 +19,24 @@ interface Props {
   equipment?: EquipmentDto | null;
   onSave: (data: CreateEquipmentDto) => void;
   onClose: () => void;
+  statuses?: EquipmentStatusDto[];
 }
 
-const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose }) => {
+const EquipmentDialog: React.FC<Props> = ({ open, equipment, onSave, onClose, statuses: propStatuses }) => {
   const [error, setError] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<EquipmentStatusDto[]>([]);
 
   useEffect(() => {
     if (open) {
-      equipmentsService.getEquipmentStatuses()
-        .then(setStatuses)
-        .catch(err => console.error('Failed to load equipment statuses', err));
+      if (!propStatuses || propStatuses.length === 0) {
+        equipmentsService.getEquipmentStatuses()
+          .then(setStatuses)
+          .catch(err => console.error('Failed to load equipment statuses', err));
+      } else {
+        setStatuses(propStatuses);
+      }
     }
-  }, [open]);
+  }, [open, propStatuses]);
 
   const { 
     register, 

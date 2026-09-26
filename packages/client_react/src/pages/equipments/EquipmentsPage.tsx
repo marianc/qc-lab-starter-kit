@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import EquipmentDetailView from '@/components/equipments/EquipmentDetailView';
 import EquipmentDialog from '@/components/equipments/EquipmentDialog';
 import styles from './EquipmentsPage.module.css';
-import type { EquipmentDto, CreateEquipmentDto, EquipmentStatusDto } from '@/types/equipment';
+import type { EquipmentDto, CreateEquipmentDto, EquipmentStatusDto, EquipmentCalibrationStatusDto } from '@/types/equipment';
 import type { UserSessionDto } from '@/types/auth';
 import authService from '@/services/authService';
 import equipmentsService from '@/services/equipmentsService';
@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/utils';
 const EquipmentsPage: React.FC = () => {
   const [equipments, setEquipments] = useState<EquipmentDto[]>([]);
   const [statuses, setStatuses] = useState<EquipmentStatusDto[]>([]);
+  const [calibrationStatuses, setCalibrationStatuses] = useState<EquipmentCalibrationStatusDto[]>([]);
   const [currentUser, setCurrentUser] = useState<UserSessionDto | null>(null);
   const [isQCPersonnel, setIsQCPersonnel] = useState(false);
   
@@ -30,12 +31,14 @@ const EquipmentsPage: React.FC = () => {
       setCurrentUser(user);
       if (user) {
         setIsQCPersonnel(user.roles.includes('QcPers'));
-        const [data, statusList] = await Promise.all([
+        const [data, statusList, calStatusList] = await Promise.all([
           equipmentsService.getAllEquipments(),
-          equipmentsService.getEquipmentStatuses()
+          equipmentsService.getEquipmentStatuses(),
+          equipmentsService.getEquipmentCalibrationStatuses()
         ]);
         setEquipments(data);
         setStatuses(statusList);
+        setCalibrationStatuses(calStatusList);
       }
     };
     init();
@@ -188,6 +191,8 @@ const EquipmentsPage: React.FC = () => {
           equipmentUpdated={currentEquipment}
           onClose={handleDetailClose}
           onEdit={handleOpenEdit}
+          statuses={statuses}
+          calibrationStatuses={calibrationStatuses}
         />
       )}
 
@@ -196,6 +201,7 @@ const EquipmentsPage: React.FC = () => {
         equipment={editingEquipment}
         onSave={handleSaveEquipment}
         onClose={() => { setShowDialog(false); setEditingEquipment(null); }}
+        statuses={statuses}
       />
     </div>
   );
