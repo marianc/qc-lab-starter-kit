@@ -89,8 +89,7 @@ const CertificateDialog: React.FC<Props> = ({ open, onClose, onCreated }) => {
 
       const res = await certificatesService.generateCertificate({
         materialId: data.materialId,
-        controlCodeId: data.controlCodeId,
-        userId: user.id
+        controlCodeId: data.controlCodeId
       });
       onCreated(res.id);
     } catch (err) {

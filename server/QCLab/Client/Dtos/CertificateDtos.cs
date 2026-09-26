@@ -69,7 +69,6 @@ public class GenerateCertificateDto
 {
     public long MaterialId { get; set; }
     public long ControlCodeId { get; set; }
-    public long UserId { get; set; }
 }
 
 public class UpdateCertificateDto
@@ -80,7 +79,6 @@ public class UpdateCertificateDto
 
 public class CertificateActionDto
 {
-    public long UserId { get; set; }
     public string? CommentsSubmitted { get; set; }
     public string? CommentsCancelled { get; set; }
 }

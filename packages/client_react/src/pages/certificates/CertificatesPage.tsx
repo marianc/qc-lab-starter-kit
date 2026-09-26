@@ -159,8 +159,7 @@ const CertificatesPage: React.FC = () => {
     try {
       const res = await certificatesService.generateCertificate({
         materialId: item.materialId,
-        controlCodeId: item.controlCodeId,
-        userId: currentUser.id
+        controlCodeId: item.controlCodeId
       });
       setShowStatusDialog(false);
       await fetchCertificates(1, false, true);

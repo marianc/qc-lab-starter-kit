@@ -140,7 +140,6 @@ const CertificateDetailView: React.FC<Props> = ({
     if (!certificate || !currentUser) return;
     try {
       await certificatesService.submitCertificate(certificate.id, {
-        userId: currentUser.id,
         commentsSubmitted: combinedComment,
         commentsCancelled: null
       });
@@ -159,7 +158,6 @@ const CertificateDetailView: React.FC<Props> = ({
     if (!certificate || !currentUser) return;
     try {
       await certificatesService.cancelCertificate(certificate.id, {
-        userId: currentUser.id,
         commentsCancelled: reason,
         commentsSubmitted: null
       });

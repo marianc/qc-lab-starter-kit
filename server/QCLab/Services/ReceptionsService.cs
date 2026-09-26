@@ -1302,11 +1302,10 @@ public class ReceptionsService : IReceptionsService
         var generateDto = new GenerateCertificateDto
         {
             MaterialId = materialId,
-            ControlCodeId = controlCodeId,
-            UserId = userId
+            ControlCodeId = controlCodeId
         };
 
-        var certDetail = await _certificatesService.GenerateCertificate(generateDto);
+        var certDetail = await _certificatesService.GenerateCertificate(generateDto, userId);
         if (certDetail == null)
         {
             return new ExpressCertificateResultDto
@@ -1318,9 +1317,8 @@ public class ReceptionsService : IReceptionsService
 
         await _certificatesService.SubmitCertificate(certDetail.Id, new CertificateActionDto
         {
-            UserId = userId,
             CommentsSubmitted = dto.Comments
-        }, clientIp);
+        }, userId, clientIp);
 
         return new ExpressCertificateResultDto
         {

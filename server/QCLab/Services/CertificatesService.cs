@@ -442,7 +442,7 @@ public class CertificatesService : ICertificatesService
     }
 
     // POST /certificates/generate
-    public async Task<CertificateDetailDto?> GenerateCertificate(GenerateCertificateDto dto)
+    public async Task<CertificateDetailDto?> GenerateCertificate(GenerateCertificateDto dto, long userId)
     {
         if (dto.MaterialId == 0 || dto.ControlCodeId == 0)
         {
@@ -464,7 +464,7 @@ public class CertificatesService : ICertificatesService
             IsConformingUncertainty = true,
             IsSubmitted = false,
             IsCancelled = false,
-            UserSubmittedId = dto.UserId,
+            UserSubmittedId = userId,
             DateSubmitted = DateTime.UtcNow
         };
 
@@ -733,9 +733,9 @@ public class CertificatesService : ICertificatesService
     }
 
     // PUT /certificates/{id}/submit
-    public async Task SubmitCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1")
+    public async Task SubmitCertificate(long id, CertificateActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
-        if (dto.UserId == 0) throw new ArgumentException("user_id is required");
+        if (userId == 0) throw new ArgumentException("user_id is required");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -754,7 +754,7 @@ public class CertificatesService : ICertificatesService
             }
 
             certificate.IsSubmitted = true;
-            certificate.UserSubmittedId = dto.UserId;
+            certificate.UserSubmittedId = userId;
             certificate.DateSubmitted = DateTime.UtcNow;
             certificate.CommentsSubmitted = dto.CommentsSubmitted;
 
@@ -768,7 +768,7 @@ public class CertificatesService : ICertificatesService
             foreach (var oldCert in existingValidCerts)
             {
                 oldCert.IsCancelled = true;
-                oldCert.UserCancelledId = dto.UserId;
+                oldCert.UserCancelledId = userId;
                 oldCert.DateCancelled = DateTime.UtcNow;
                 oldCert.CommentsCancelled = $"Replaced by new certificate #{certificate.Id}";
             }
@@ -780,7 +780,7 @@ public class CertificatesService : ICertificatesService
                 await _signatureService.SignEntityAsync(
                     "certificates",
                     oldCert.Id,
-                    dto.UserId,
+                    userId,
                     "Cancellation",
                     clientIp,
                     oldCert.CommentsCancelled,
@@ -792,7 +792,7 @@ public class CertificatesService : ICertificatesService
             await _signatureService.SignEntityAsync(
                 "certificates",
                 id,
-                dto.UserId,
+                userId,
                 "Approval",
                 clientIp,
                 dto.CommentsSubmitted);
@@ -805,15 +805,15 @@ public class CertificatesService : ICertificatesService
     }
 
     // PUT /certificates/{id}/cancel
-    public async Task CancelCertificate(long id, CertificateActionDto dto, string clientIp = "127.0.0.1")
+    public async Task CancelCertificate(long id, CertificateActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
-        if (dto.UserId == 0) throw new ArgumentException("user_id is required");
+        if (userId == 0) throw new ArgumentException("user_id is required");
 
         var certificate = await _context.Certificates.FindAsync(id);
         if (certificate == null) throw new ArgumentException("Certificate not found");
 
         certificate.IsCancelled = true;
-        certificate.UserCancelledId = dto.UserId;
+        certificate.UserCancelledId = userId;
         certificate.DateCancelled = DateTime.UtcNow;
         certificate.CommentsCancelled = dto.CommentsCancelled;
 
@@ -822,7 +822,7 @@ public class CertificatesService : ICertificatesService
         await _signatureService.SignEntityAsync(
             "certificates",
             id,
-            dto.UserId,
+            userId,
             "Cancellation",
             clientIp,
             dto.CommentsCancelled);

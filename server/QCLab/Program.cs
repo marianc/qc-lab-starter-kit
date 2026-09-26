@@ -273,20 +273,22 @@ namespace QCLab
             });
             apiGroup.MapGet("/certificates/{id}", (long id, ICertificatesService s) => s.GetCertificate(id));
             apiGroup.MapGet("/certificates/{id}/has_existing", async (long id, ICertificatesService s) => new { hasExisting = await s.HasExistingValidCertificates(id) });
-            apiGroup.MapPost("/certificates/generate", ([FromBody] GenerateCertificateDto dto, ICertificatesService s) => s.GenerateCertificate(dto)).RequireQcPers();
+            apiGroup.MapPost("/certificates/generate", ([FromBody] GenerateCertificateDto dto, ICertificatesService s, HttpContext httpContext) => s.GenerateCertificate(dto, AuthUtils.GetCurrentUserId(httpContext))).RequireQcPers();
             apiGroup.MapPut("/certificates/{id}", (long id, [FromBody] UpdateCertificateDto dto, ICertificatesService s) => s.UpdateCertificate(id, dto)).RequireQcPers();
             apiGroup.MapPut("/certificates/{id}/refresh_tests", (long id, ICertificatesService s) => s.RefreshTests(id)).RequireQcPers();
             apiGroup.MapGet("/certificates/{id}/analyze_results", (long id, ICertificatesService s) => s.AnalyzeResults(id));
             apiGroup.MapPut("/certificates/{id}/submit", async (long id, [FromBody] CertificateActionDto dto, ICertificatesService s, HttpContext httpContext) =>
             {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                 var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                await s.SubmitCertificate(id, dto, clientIp);
+                await s.SubmitCertificate(id, dto, userId, clientIp);
                 return Results.Ok();
             }).RequireQcPers();
             apiGroup.MapPut("/certificates/{id}/cancel", async (long id, [FromBody] CertificateActionDto dto, ICertificatesService s, HttpContext httpContext) =>
             {
+                long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
                 var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                await s.CancelCertificate(id, dto, clientIp);
+                await s.CancelCertificate(id, dto, userId, clientIp);
                 return Results.Ok();
             }).RequireQcPers();
             apiGroup.MapDelete("/certificates/{id}", async (long id, HttpContext httpContext, ICertificatesService s) =>

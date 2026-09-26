@@ -62,7 +62,6 @@ export interface CertificateTestDto {
 export interface GenerateCertificateDto {
   materialId: number;
   controlCodeId: number;
-  userId: number;
 }
 
 export interface UpdateCertificateDto {
@@ -71,7 +70,6 @@ export interface UpdateCertificateDto {
 }
 
 export interface CertificateActionDto {
-  userId: number;
   commentsSubmitted: string | null;
   commentsCancelled: string | null;
 }
