@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   DetailView, 
   DetailViewHeader, 
@@ -14,6 +14,8 @@ import {
 import ReagentDialog from './ReagentDialog';
 import SupplierLotDialog from './SupplierLotDialog';
 import ProductionLotDialog from './ProductionLotDialog';
+import SupplierLotDetailView from './SupplierLotDetailView';
+import ProductionLotDetailView from './ProductionLotDetailView';
 import styles from './ReagentDetailView.module.css';
 import type { ReagentDto, ReagentLotDto } from '@/types/reagent';
 import reagentsService from '@/services/reagentsService';
@@ -38,6 +40,8 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
   const [showSupplierLotDialog, setShowSupplierLotDialog] = useState(false);
   const [showProductionLotDialog, setShowProductionLotDialog] = useState(false);
   const [editingLot, setEditingLot] = useState<ReagentLotDto | null>(null);
+  const [selectedLotForDetail, setSelectedLotForDetail] = useState<ReagentLotDto | null>(null);
+  const [lastEditedControlCodeId, setLastEditedControlCodeId] = useState<number | null>(null);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showDeactivateCommentDialog, setShowDeactivateCommentDialog] = useState(false);
 
@@ -66,18 +70,20 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
     }
   };
 
-  const handleSupplierLotDialogClose = (saved?: boolean) => {
+  const handleSupplierLotDialogClose = (savedId?: number | null) => {
     setShowSupplierLotDialog(false);
     setEditingLot(null);
-    if (saved) {
+    if (savedId) {
+      setLastEditedControlCodeId(savedId);
       fetchReagentData();
     }
   };
 
-  const handleProductionLotDialogClose = (saved?: boolean) => {
+  const handleProductionLotDialogClose = (savedId?: number | null) => {
     setShowProductionLotDialog(false);
     setEditingLot(null);
-    if (saved) {
+    if (savedId) {
+      setLastEditedControlCodeId(savedId);
       fetchReagentData();
     }
   };
@@ -176,6 +182,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
           <table className="data-table">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Control Code</th>
                 <th>Type</th>
                 <th>Status</th>
@@ -190,13 +197,17 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
             <tbody>
               {lots.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className={styles.textCenter}>No lots registered for this reagent.</td>
+                  <td colSpan={10} className={styles.textCenter}>No lots registered for this reagent.</td>
                 </tr>
               ) : (
                 lots.map(lot => {
                   const isExpired = new Date(lot.expirationDate) < new Date();
                   return (
-                    <tr key={lot.controlCodeId}>
+                    <tr 
+                      key={lot.controlCodeId} 
+                      className={lot.controlCodeId === lastEditedControlCodeId ? "highlighted-row" : ""}
+                    >
+                      <td>{lot.controlCodeId}</td>
                       <td><strong>{lot.controlCode}</strong></td>
                       <td>{lot.isProduced ? "Production" : "Supplier"}</td>
                       <td>
@@ -215,12 +226,16 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                       <td>
                         {lot.isProduced ? (
                           lot.ingredientControlCodes.length > 0 ? (
-                            <span>
+                            <div>
                               {lot.ingredientControlCodes.map((code, idx) => {
-                                const matCode = lot.ingredientMaterialCodes?.[idx] || '';
-                                return `${matCode} (${code})`;
-                              }).join(', ')}
-                            </span>
+                                const matName = lot.ingredientMaterialCodes?.[idx] || '';
+                                return { code, matName };
+                              }).sort((a, b) => a.matName.localeCompare(b.matName)).map(({ code, matName }) => (
+                                <div key={code}>
+                                  {matName} ({code})
+                                </div>
+                              ))}
+                            </div>
                           ) : "-"
                         ) : (
                           lot.manufacturerLotNumber || "-"
@@ -228,10 +243,13 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
                       </td>
                       <td>
                         <button 
-                          onClick={() => handleOpenEditLot(lot)} 
-                          className="action-button edit-button small-button"
+                          onClick={() => {
+                            setLastEditedControlCodeId(lot.controlCodeId);
+                            setSelectedLotForDetail(lot);
+                          }} 
+                          className="action-button secondary small-button"
                         >
-                          Edit
+                          Details
                         </button>
                       </td>
                     </tr>
@@ -285,6 +303,40 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
           onSubmit={handleDeactivateSubmit}
           onClose={() => setShowDeactivateCommentDialog(false)}
         />
+      )}
+
+      {selectedLotForDetail && (
+        selectedLotForDetail.isProduced ? (
+          <ProductionLotDetailView 
+            controlCodeId={selectedLotForDetail.controlCodeId}
+            reagentId={reagentId}
+            onClose={() => {
+              setLastEditedControlCodeId(selectedLotForDetail.controlCodeId);
+              setSelectedLotForDetail(null);
+              fetchReagentData();
+            }}
+            onLotUpdated={(savedId) => {
+              setLastEditedControlCodeId(savedId);
+              fetchReagentData();
+            }}
+            breadcrumbs={['Reagents', 'Production Lot']}
+          />
+        ) : (
+          <SupplierLotDetailView 
+            controlCodeId={selectedLotForDetail.controlCodeId}
+            reagentId={reagentId}
+            onClose={() => {
+              setLastEditedControlCodeId(selectedLotForDetail.controlCodeId);
+              setSelectedLotForDetail(null);
+              fetchReagentData();
+            }}
+            onLotUpdated={(savedId) => {
+              setLastEditedControlCodeId(savedId);
+              fetchReagentData();
+            }}
+            breadcrumbs={['Reagents', 'Supplier Lot']}
+          />
+        )
       )}
     </DetailView>
   );

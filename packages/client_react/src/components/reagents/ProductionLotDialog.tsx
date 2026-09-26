@@ -15,7 +15,7 @@ interface ProductionLotDialogProps {
   open: boolean;
   reagentId: number;
   lot?: ReagentLotDto | null;
-  onClose: (saved?: boolean) => void;
+  onClose: (savedId?: number | null) => void;
 }
 
 type ProductionLotFormValues = {
@@ -73,7 +73,8 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
         const filtered = lot 
           ? activeLotsData.filter(l => l.controlCodeId !== lot.controlCodeId) 
           : activeLotsData;
-        setAvailableLots(filtered);
+        const sorted = [...filtered].sort((a, b) => a.materialName.localeCompare(b.materialName));
+        setAvailableLots(sorted);
 
         if (lot) {
           reset({
@@ -118,6 +119,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
       const parsedStatusId = Number(values.statusId);
       const parsedQuantity = Number(values.quantity);
 
+      let savedControlCodeId = lot?.controlCodeId;
       if (isEdit && lot) {
         await reagentsService.updateProductionLot(lot.controlCodeId, {
           statusId: parsedStatusId,
@@ -128,7 +130,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
           ingredientControlCodeIds: values.ingredientControlCodeIds
         });
       } else {
-        await reagentsService.createProductionLot({
+        const res = await reagentsService.createProductionLot({
           materialId: reagentId,
           controlCode: values.controlCode,
           statusId: parsedStatusId,
@@ -138,8 +140,9 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
           producedByUserId: parsedUserId,
           ingredientControlCodeIds: values.ingredientControlCodeIds
         });
+        savedControlCodeId = res.id;
       }
-      onClose(true);
+      onClose(savedControlCodeId);
     } catch (err: any) {
       console.error('Failed to save production lot', err);
       if (err.response?.data?.msg) {
@@ -149,7 +152,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
   };
 
   return (
-    <Dialog open={open} onClose={() => onClose(false)}>
+    <Dialog open={open} onClose={() => onClose(undefined)}>
       <DialogHeader>
         {isEdit ? `Edit Production Lot (${lot?.controlCode})` : "Add New Production Lot"}
       </DialogHeader>
@@ -247,7 +250,7 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
         </DialogContent>
         <DialogFooter>
           <button type="submit" className="action-button primary">Save</button>
-          <button type="button" className="action-button secondary" onClick={() => onClose(false)}>Cancel</button>
+          <button type="button" className="action-button secondary" onClick={() => onClose(undefined)}>Cancel</button>
         </DialogFooter>
       </form>
     </Dialog>

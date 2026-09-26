@@ -14,7 +14,7 @@ interface SupplierLotDialogProps {
   open: boolean;
   reagentId: number;
   lot?: ReagentLotDto | null;
-  onClose: (saved?: boolean) => void;
+  onClose: (savedId?: number | null) => void;
 }
 
 type SupplierLotFormValues = {
@@ -169,6 +169,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       const parsedStatusId = Number(values.statusId);
       const parsedQuantity = Number(values.quantity);
 
+      let savedControlCodeId = lot?.controlCodeId;
       if (isEdit && lot) {
         await reagentsService.updateSupplierLot(lot.controlCodeId, {
           statusId: parsedStatusId,
@@ -182,7 +183,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           comments: values.comments || null
         });
       } else {
-        await reagentsService.createSupplierLot({
+        const res = await reagentsService.createSupplierLot({
           materialId: reagentId,
           controlCode: values.controlCode,
           statusId: parsedStatusId,
@@ -195,8 +196,9 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
           certificateOfAnalysisRef: values.certificateOfAnalysisRef || null,
           comments: values.comments || null
         });
+        savedControlCodeId = res.id;
       }
-      onClose(true);
+      onClose(savedControlCodeId);
     } catch (err: any) {
       console.error('Failed to save supplier lot', err);
       if (err.response?.data?.msg) {
@@ -208,7 +210,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
   };
 
   return (
-    <Dialog open={open} onClose={() => onClose(false)}>
+    <Dialog open={open} onClose={() => onClose(undefined)}>
       <DialogHeader>
         {isEdit ? `Edit Supplier Lot (${lot?.controlCode})` : "Add New Supplier Lot"}
       </DialogHeader>
@@ -340,7 +342,7 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
         </DialogContent>
         <DialogFooter>
           <button type="submit" className="action-button primary">Save</button>
-          <button type="button" className="action-button secondary" onClick={() => onClose(false)}>Cancel</button>
+          <button type="button" className="action-button secondary" onClick={() => onClose(undefined)}>Cancel</button>
         </DialogFooter>
       </form>
     </Dialog>

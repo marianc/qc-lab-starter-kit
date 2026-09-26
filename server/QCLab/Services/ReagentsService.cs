@@ -392,7 +392,7 @@ public class ReagentsService : IReagentsService
 
             IngredientControlCodeIds = rl.IngredientControlCodes.Select(i => i.ControlCodeId).ToList(),
             IngredientControlCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Code).ToList(),
-            IngredientMaterialCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Material != null ? i.ControlCode.Material.Code : string.Empty).ToList()
+            IngredientMaterialCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Material != null ? i.ControlCode.Material.Name : string.Empty).ToList()
         };
     }
 }
