@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from '@/components/common/ui';
 import type { ReagentLotDto, ReagentLotStatusDto } from '@/types/reagent';
 import type { UnitDto } from '@/types/unit';
-import type { UserDto } from '@/types/user';
+import type { UserInfoDto } from '@/types/user';
 import unitsService from '@/services/unitsService';
 import usersService from '@/services/usersService';
 import reagentsService from '@/services/reagentsService';
@@ -16,6 +16,9 @@ interface ProductionLotDialogProps {
   reagentId: number;
   lot?: ReagentLotDto | null;
   onClose: (savedId?: number | null) => void;
+  units?: UnitDto[];
+  statuses?: ReagentLotStatusDto[];
+  users?: UserInfoDto[];
 }
 
 type ProductionLotFormValues = {
@@ -28,10 +31,18 @@ type ProductionLotFormValues = {
   ingredientControlCodeIds: number[];
 };
 
-const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagentId, lot, onClose }) => {
+const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ 
+  open, 
+  reagentId, 
+  lot, 
+  onClose,
+  units: propUnits,
+  statuses: propStatuses,
+  users: propUsers
+}) => {
   const [units, setUnits] = useState<UnitDto[]>([]);
   const [statuses, setStatuses] = useState<ReagentLotStatusDto[]>([]);
-  const [users, setUsers] = useState<UserDto[]>([]);
+  const [users, setUsers] = useState<UserInfoDto[]>([]);
   const [availableLots, setAvailableLots] = useState<ReagentLotDto[]>([]);
   const isEdit = !!lot;
 
@@ -60,15 +71,28 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
 
   useEffect(() => {
     if (open) {
-      Promise.all([
-        unitsService.getAllUnits(),
-        reagentsService.getReagentLotStatuses(),
-        usersService.getAllUsers(),
-        reagentsService.getAllActiveReagentLots()
-      ]).then(([unitsData, statusesData, usersData, activeLotsData]) => {
-        setUnits(unitsData);
-        setStatuses(statusesData);
-        setUsers(usersData);
+      const loadData = async () => {
+        let uData = propUnits;
+        let stData = propStatuses;
+        let usData = propUsers;
+
+        if (!uData || uData.length === 0 || !stData || stData.length === 0 || !usData || usData.length === 0) {
+          const [fetchedUnits, fetchedStatuses, fetchedUsers] = await Promise.all([
+            !uData || uData.length === 0 ? unitsService.getAllUnits() : Promise.resolve(uData),
+            !stData || stData.length === 0 ? reagentsService.getReagentLotStatuses() : Promise.resolve(stData),
+            !usData || usData.length === 0 ? usersService.getUsersInfo() : Promise.resolve(usData)
+          ]);
+          uData = fetchedUnits;
+          stData = fetchedStatuses;
+          usData = fetchedUsers;
+        }
+
+        const activeLotsData = await reagentsService.getAllActiveReagentLots();
+
+        setUnits(uData);
+        setStatuses(stData);
+        setUsers(usData);
+
         // Exclude current lot if in edit mode to prevent circular dependency
         const filtered = lot 
           ? activeLotsData.filter(l => l.controlCodeId !== lot.controlCodeId) 
@@ -97,9 +121,11 @@ const ProductionLotDialog: React.FC<ProductionLotDialogProps> = ({ open, reagent
             ingredientControlCodeIds: []
           });
         }
-      });
+      };
+
+      loadData();
     }
-  }, [open, lot, reset]);
+  }, [open, lot, reset, propUnits, propStatuses, propUsers]);
 
   const toggleIngredient = (id: number) => {
     const current = [...selectedIngredients];

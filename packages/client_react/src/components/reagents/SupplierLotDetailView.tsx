@@ -7,7 +7,8 @@ import {
   DetailColumn, 
   DetailItem 
 } from '../common/ui';
-import type { ReagentLotDto } from '@/types/reagent';
+import type { ReagentLotDto, ReagentLotStatusDto, ReagentSupplierDto } from '@/types/reagent';
+import type { UnitDto } from '@/types/unit';
 import reagentsService from '@/services/reagentsService';
 import { formatDate } from '@/lib/utils';
 import SupplierLotDialog from './SupplierLotDialog';
@@ -19,6 +20,10 @@ interface SupplierLotDetailViewProps {
   onClose: () => void;
   onLotUpdated?: (controlCodeId: number) => void;
   breadcrumbs?: string[];
+  units?: UnitDto[];
+  statuses?: ReagentLotStatusDto[];
+  suppliers?: ReagentSupplierDto[];
+  onSupplierCreated?: () => void;
 }
 
 const SupplierLotDetailView: React.FC<SupplierLotDetailViewProps> = ({
@@ -26,7 +31,11 @@ const SupplierLotDetailView: React.FC<SupplierLotDetailViewProps> = ({
   reagentId,
   onClose,
   onLotUpdated,
-  breadcrumbs = []
+  breadcrumbs = [],
+  units,
+  statuses,
+  suppliers,
+  onSupplierCreated
 }) => {
   const [lot, setLot] = useState<ReagentLotDto | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -98,6 +107,10 @@ const SupplierLotDetailView: React.FC<SupplierLotDetailViewProps> = ({
           reagentId={reagentId}
           lot={lot}
           onClose={handleEditDialogClose}
+          units={units}
+          statuses={statuses}
+          suppliers={suppliers}
+          onSupplierCreated={onSupplierCreated}
         />
       )}
     </DetailView>

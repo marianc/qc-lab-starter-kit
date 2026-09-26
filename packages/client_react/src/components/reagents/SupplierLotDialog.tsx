@@ -15,6 +15,10 @@ interface SupplierLotDialogProps {
   reagentId: number;
   lot?: ReagentLotDto | null;
   onClose: (savedId?: number | null) => void;
+  units?: UnitDto[];
+  statuses?: ReagentLotStatusDto[];
+  suppliers?: ReagentSupplierDto[];
+  onSupplierCreated?: () => void;
 }
 
 type SupplierLotFormValues = {
@@ -31,7 +35,16 @@ type SupplierLotFormValues = {
   expirationDate: string;
 };
 
-const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, lot, onClose }) => {
+const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ 
+  open, 
+  reagentId, 
+  lot, 
+  onClose,
+  units: propUnits,
+  statuses: propStatuses,
+  suppliers: propSuppliers,
+  onSupplierCreated
+}) => {
   const [units, setUnits] = useState<UnitDto[]>([]);
   const [statuses, setStatuses] = useState<ReagentLotStatusDto[]>([]);
   const [suppliers, setSuppliers] = useState<ReagentSupplierDto[]>([]);
@@ -67,14 +80,25 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
 
   useEffect(() => {
     if (open) {
-      Promise.all([
-        unitsService.getAllUnits(),
-        reagentsService.getReagentLotStatuses(),
-        reagentsService.getSuppliers()
-      ]).then(([unitsData, statusesData, suppliersData]) => {
-        setUnits(unitsData);
-        setStatuses(statusesData);
-        setSuppliers(suppliersData);
+      const loadData = async () => {
+        let uData = propUnits;
+        let stData = propStatuses;
+        let supData = propSuppliers;
+
+        if (!uData || uData.length === 0 || !stData || stData.length === 0 || !supData || supData.length === 0) {
+          const [fetchedUnits, fetchedStatuses, fetchedSuppliers] = await Promise.all([
+            !uData || uData.length === 0 ? unitsService.getAllUnits() : Promise.resolve(uData),
+            !stData || stData.length === 0 ? reagentsService.getReagentLotStatuses() : Promise.resolve(stData),
+            !supData || supData.length === 0 ? reagentsService.getSuppliers() : Promise.resolve(supData)
+          ]);
+          uData = fetchedUnits;
+          stData = fetchedStatuses;
+          supData = fetchedSuppliers;
+        }
+
+        setUnits(uData);
+        setStatuses(stData);
+        setSuppliers(supData);
 
         if (lot) {
           reset({
@@ -105,9 +129,11 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
             expirationDate: ''
           });
         }
-      });
+      };
+
+      loadData();
     }
-  }, [open, lot, reset]);
+  }, [open, lot, reset, propUnits, propStatuses, propSuppliers]);
 
   const validateSupplierUniqueness = async (name: string): Promise<boolean> => {
     if (!name.trim()) return true;
@@ -163,6 +189,9 @@ const SupplierLotDialog: React.FC<SupplierLotDialogProps> = ({ open, reagentId, 
       if (values.supplierName?.trim()) {
         const res = await reagentsService.createSupplier({ name: values.supplierName.trim() });
         finalSupplierId = res.id;
+        if (onSupplierCreated) {
+          onSupplierCreated();
+        }
       }
 
       const parsedUnitId = values.unitId ? Number(values.unitId) : null;

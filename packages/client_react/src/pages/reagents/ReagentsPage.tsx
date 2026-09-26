@@ -2,12 +2,23 @@
 import ReagentDialog from '@/components/reagents/ReagentDialog';
 import ReagentDetailView from '@/components/reagents/ReagentDetailView';
 import styles from './ReagentsPage.module.css';
-import type { ReagentDto } from '@/types/reagent';
+import type { ReagentDto, ReagentLotStatusDto, ReagentSupplierDto } from '@/types/reagent';
+import type { UnitDto } from '@/types/unit';
+import type { UserInfoDto } from '@/types/user';
+import type { NormDto } from '@/types/norm';
 import reagentsService from '@/services/reagentsService';
+import unitsService from '@/services/unitsService';
+import usersService from '@/services/usersService';
+import normsService from '@/services/normsService';
 import { formatDate } from '@/lib/utils';
 
 const ReagentsPage: React.FC = () => {
   const [reagents, setReagents] = useState<ReagentDto[]>([]);
+  const [units, setUnits] = useState<UnitDto[]>([]);
+  const [statuses, setStatuses] = useState<ReagentLotStatusDto[]>([]);
+  const [suppliers, setSuppliers] = useState<ReagentSupplierDto[]>([]);
+  const [users, setUsers] = useState<UserInfoDto[]>([]);
+  const [norms, setNorms] = useState<NormDto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedReagentId, setSelectedReagentId] = useState<number | null>(null);
@@ -25,8 +36,37 @@ const ReagentsPage: React.FC = () => {
     }
   };
 
+  const fetchPreloadedData = async () => {
+    try {
+      const [unitsData, statusesData, suppliersData, usersData, normsData] = await Promise.all([
+        unitsService.getAllUnits(),
+        reagentsService.getReagentLotStatuses(),
+        reagentsService.getSuppliers(),
+        usersService.getUsersInfo(),
+        normsService.getAllNorms()
+      ]);
+      setUnits(unitsData);
+      setStatuses(statusesData);
+      setSuppliers(suppliersData);
+      setUsers(usersData);
+      setNorms(normsData);
+    } catch (err) {
+      console.error('Failed to fetch preloaded data', err);
+    }
+  };
+
+  const handleSupplierCreated = async () => {
+    try {
+      const data = await reagentsService.getSuppliers();
+      setSuppliers(data);
+    } catch (err) {
+      console.error('Failed to fetch suppliers', err);
+    }
+  };
+
   useEffect(() => {
     fetchReagents();
+    fetchPreloadedData();
   }, []);
 
   const filteredReagents = reagents.filter(r => {
@@ -153,6 +193,12 @@ const ReagentsPage: React.FC = () => {
           onClose={handleDetailsClose}
           onReagentUpdated={handleReagentUpdated}
           breadcrumbs={["Reagents"]}
+          units={units}
+          statuses={statuses}
+          suppliers={suppliers}
+          users={users}
+          norms={norms}
+          onSupplierCreated={handleSupplierCreated}
         />
       )}
 
@@ -160,6 +206,7 @@ const ReagentsPage: React.FC = () => {
         <ReagentDialog 
           open={true}
           onClose={handleAddDialogClose}
+          norms={norms}
         />
       )}
     </div>

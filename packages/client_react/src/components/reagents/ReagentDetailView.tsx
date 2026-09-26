@@ -17,7 +17,10 @@ import ProductionLotDialog from './ProductionLotDialog';
 import SupplierLotDetailView from './SupplierLotDetailView';
 import ProductionLotDetailView from './ProductionLotDetailView';
 import styles from './ReagentDetailView.module.css';
-import type { ReagentDto, ReagentLotDto } from '@/types/reagent';
+import type { ReagentDto, ReagentLotDto, ReagentLotStatusDto, ReagentSupplierDto } from '@/types/reagent';
+import type { UnitDto } from '@/types/unit';
+import type { UserInfoDto } from '@/types/user';
+import type { NormDto } from '@/types/norm';
 import reagentsService from '@/services/reagentsService';
 import { formatDate } from '@/lib/utils';
 
@@ -26,13 +29,25 @@ interface ReagentDetailViewProps {
   onClose: (savedId?: number | null) => void;
   onReagentUpdated?: (updatedReagent: ReagentDto) => void;
   breadcrumbs?: string[];
+  units?: UnitDto[];
+  statuses?: ReagentLotStatusDto[];
+  suppliers?: ReagentSupplierDto[];
+  users?: UserInfoDto[];
+  norms?: NormDto[];
+  onSupplierCreated?: () => void;
 }
 
 const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({ 
   reagentId, 
   onClose, 
   onReagentUpdated,
-  breadcrumbs = []
+  breadcrumbs = [],
+  units,
+  statuses,
+  suppliers,
+  users,
+  norms,
+  onSupplierCreated
 }) => {
   const [reagent, setReagent] = useState<ReagentDto | null>(null);
   const [lots, setLots] = useState<ReagentLotDto[]>([]);
@@ -265,7 +280,8 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
         <ReagentDialog 
           open={true} 
           reagentId={reagentId} 
-          onClose={handleEditDialogClose} 
+          onClose={handleEditDialogClose}
+          norms={norms}
         />
       )}
 
@@ -275,6 +291,10 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
           reagentId={reagentId}
           lot={editingLot}
           onClose={handleSupplierLotDialogClose}
+          units={units}
+          statuses={statuses}
+          suppliers={suppliers}
+          onSupplierCreated={onSupplierCreated}
         />
       )}
 
@@ -284,6 +304,9 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
           reagentId={reagentId}
           lot={editingLot}
           onClose={handleProductionLotDialogClose}
+          units={units}
+          statuses={statuses}
+          users={users}
         />
       )}
 
@@ -320,6 +343,9 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
               fetchReagentData();
             }}
             breadcrumbs={['Reagents', 'Production Lot']}
+            units={units}
+            statuses={statuses}
+            users={users}
           />
         ) : (
           <SupplierLotDetailView 
@@ -335,6 +361,10 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
               fetchReagentData();
             }}
             breadcrumbs={['Reagents', 'Supplier Lot']}
+            units={units}
+            statuses={statuses}
+            suppliers={suppliers}
+            onSupplierCreated={onSupplierCreated}
           />
         )
       )}

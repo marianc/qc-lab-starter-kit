@@ -7,7 +7,9 @@ import {
   DetailColumn, 
   DetailItem 
 } from '../common/ui';
-import type { ReagentLotDto } from '@/types/reagent';
+import type { ReagentLotDto, ReagentLotStatusDto } from '@/types/reagent';
+import type { UnitDto } from '@/types/unit';
+import type { UserInfoDto } from '@/types/user';
 import reagentsService from '@/services/reagentsService';
 import { formatDate } from '@/lib/utils';
 import ProductionLotDialog from './ProductionLotDialog';
@@ -19,6 +21,9 @@ interface ProductionLotDetailViewProps {
   onClose: () => void;
   onLotUpdated?: (controlCodeId: number) => void;
   breadcrumbs?: string[];
+  units?: UnitDto[];
+  statuses?: ReagentLotStatusDto[];
+  users?: UserInfoDto[];
 }
 
 const ProductionLotDetailView: React.FC<ProductionLotDetailViewProps> = ({
@@ -26,7 +31,10 @@ const ProductionLotDetailView: React.FC<ProductionLotDetailViewProps> = ({
   reagentId,
   onClose,
   onLotUpdated,
-  breadcrumbs = []
+  breadcrumbs = [],
+  units,
+  statuses,
+  users
 }) => {
   const [lot, setLot] = useState<ReagentLotDto | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -110,6 +118,9 @@ const ProductionLotDetailView: React.FC<ProductionLotDetailViewProps> = ({
           reagentId={reagentId}
           lot={lot}
           onClose={handleEditDialogClose}
+          units={units}
+          statuses={statuses}
+          users={users}
         />
       )}
     </DetailView>

@@ -12,6 +12,7 @@ interface ReagentDialogProps {
   open: boolean;
   reagentId?: number | null;
   onClose: (savedId?: number | null) => void;
+  norms?: NormDto[];
 }
 
 type ReagentFormValues = {
@@ -24,7 +25,12 @@ type ReagentFormValues = {
   isObsolete: boolean;
 };
 
-const ReagentDialog: React.FC<ReagentDialogProps> = ({ open, reagentId, onClose }) => {
+const ReagentDialog: React.FC<ReagentDialogProps> = ({ 
+  open, 
+  reagentId, 
+  onClose,
+  norms: propNorms
+}) => {
   const [isValidating, setIsValidating] = useState(false);
   const [norms, setNorms] = useState<NormDto[]>([]);
   const {
@@ -50,7 +56,16 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({ open, reagentId, onClose 
 
   useEffect(() => {
     if (open) {
-      normsService.getAllNorms().then(setNorms);
+      const loadNorms = async () => {
+        if (!propNorms || propNorms.length === 0) {
+          const fetched = await normsService.getAllNorms();
+          setNorms(fetched);
+        } else {
+          setNorms(propNorms);
+        }
+      };
+      loadNorms();
+
       if (reagentId) {
         reagentsService.getReagent(reagentId).then(data => {
           reset({
@@ -75,7 +90,7 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({ open, reagentId, onClose 
         });
       }
     }
-  }, [open, reagentId, reset]);
+  }, [open, reagentId, reset, propNorms]);
 
   const validateUniqueness = async (property: "Name" | "Code"): Promise<boolean> => {
     const value = getValues(property.toLowerCase() as any);
