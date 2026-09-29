@@ -32,8 +32,8 @@ public static class FormEvalMapper
             .GroupBy(p => p.CodeRelatedArrays!)
             .ToDictionary(g => g.Key, g => g.Select(p => p.Code).ToList());
 
-        var flatConditions = flatParams.Where(p => p.ConditionValue.HasValue)
-            .Select(p => new MeasurementFlatData { TestId = p.TestId, Idx = p.Idx, Value = p.ConditionValue!.Value })
+        var flatConditions = flatParams
+            .Select(p => new MeasurementFlatData { TestId = p.TestId, Idx = p.Idx, Value = p.IsConformingCondition ? 1.0m : 0.0m })
             .ToList();
 
         var dict = DataMapper.MapFlatToDict(flatConditions, parameters, relatedParameterArrays);

@@ -11,9 +11,9 @@ public partial class FormGroup
 
     public string? Description { get; set; }
 
-    public long NrOrd { get; set; }
-
     public bool IsFormValidated { get; set; }
+
+    public long NrOrd { get; set; }
 
     public virtual ICollection<Form> Forms { get; set; } = new List<Form>();
 }

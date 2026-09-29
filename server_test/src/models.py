@@ -20,7 +20,7 @@ class Categories(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    code: Mapped[str] = mapped_column(String(3), nullable=False)
+    code: Mapped[str] = mapped_column(String(5), nullable=False)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     description: Mapped[Optional[str]] = mapped_column(Text)
@@ -65,8 +65,8 @@ class FormGroups(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     is_form_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     description: Mapped[Optional[str]] = mapped_column(Text)
 
     forms: Mapped[list['Forms']] = relationship('Forms', back_populates='form_group')
@@ -196,9 +196,13 @@ class Users(Base):
     receptions_user_submitted: Mapped[list['Receptions']] = relationship('Receptions', foreign_keys='[Receptions.user_submitted_id]', back_populates='user_submitted')
     measurements_user_created: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_created_id]', back_populates='user_created')
     measurements_user_reported: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_reported_id]', back_populates='user_reported')
-    measurements_user_update: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_update_id]', back_populates='user_update')
+    measurements_user_updated: Mapped[list['Measurements']] = relationship('Measurements', foreign_keys='[Measurements.user_updated_id]', back_populates='user_updated')
     reports_user_cancelled: Mapped[list['Reports']] = relationship('Reports', foreign_keys='[Reports.user_cancelled_id]', back_populates='user_cancelled')
     reports_user_submitted: Mapped[list['Reports']] = relationship('Reports', foreign_keys='[Reports.user_submitted_id]', back_populates='user_submitted')
+    measurement_params_user_created: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', foreign_keys='[MeasurementParams.user_created_id]', back_populates='user_created')
+    measurement_params_user_updated: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', foreign_keys='[MeasurementParams.user_updated_id]', back_populates='user_updated')
+    measurement_tests_user_created: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', foreign_keys='[MeasurementTests.user_created_id]', back_populates='user_created')
+    measurement_tests_user_updated: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', foreign_keys='[MeasurementTests.user_updated_id]', back_populates='user_updated')
 
 
 class ValueTypes(Base):
@@ -365,6 +369,7 @@ class Sops(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     doc_code: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(150), nullable=False)
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     norm_id: Mapped[Optional[int]] = mapped_column(BigInteger)
 
@@ -596,8 +601,8 @@ class FormParams(Base):
     is_calculated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     has_condition: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_required: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
-    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     nr_ord_calc: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
+    nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     formula: Mapped[Optional[str]] = mapped_column(Text)
     formula_dependencies: Mapped[Optional[str]] = mapped_column(Text)
     code_related_arrays: Mapped[Optional[str]] = mapped_column(String(50))
@@ -800,15 +805,13 @@ class Measurements(Base):
         ForeignKeyConstraint(['reception_id'], ['receptions.id'], name='measurements_reception_id_fkey'),
         ForeignKeyConstraint(['user_created_id'], ['users.id'], name='measurements_user_created_id_fkey'),
         ForeignKeyConstraint(['user_reported_id'], ['users.id'], name='measurements_user_reported_id_fkey'),
-        ForeignKeyConstraint(['user_update_id'], ['users.id'], name='measurements_user_update_id_fkey'),
+        ForeignKeyConstraint(['user_updated_id'], ['users.id'], name='measurements_user_updated_id_fkey'),
         PrimaryKeyConstraint('id', name='measurements_pkey')
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True, start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True)
     reception_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     use_default_equipment: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('true'))
-    user_update_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    date_update: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
@@ -818,6 +821,8 @@ class Measurements(Base):
     user_reported_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     date_reported: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     date_readonly: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
+    user_updated_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_updated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     equipment: Mapped[list['Equipments']] = relationship('Equipments', secondary='measurement_equipments', back_populates='measurement')
     control_code: Mapped[list['ReagentLots']] = relationship('ReagentLots', secondary='measurement_reagent_lots', back_populates='measurement')
@@ -825,7 +830,7 @@ class Measurements(Base):
     reception: Mapped['Receptions'] = relationship('Receptions', back_populates='measurements')
     user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurements_user_created')
     user_reported: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_reported_id], back_populates='measurements_user_reported')
-    user_update: Mapped['Users'] = relationship('Users', foreign_keys=[user_update_id], back_populates='measurements_user_update')
+    user_updated: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_updated_id], back_populates='measurements_user_updated')
     sop_version: Mapped[list['SopVersions']] = relationship('SopVersions', secondary='measurement_sop_versions', back_populates='measurement')
     measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='measurement')
     measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='measurement')
@@ -942,6 +947,8 @@ class MeasurementParams(Base):
         ForeignKeyConstraint(['form_id'], ['forms.id'], name='measurement_params_form_id_fkey'),
         ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_params_measurement_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='measurement_params_test_id_fkey'),
+        ForeignKeyConstraint(['user_created_id'], ['users.id'], name='measurement_params_user_created_id_fkey'),
+        ForeignKeyConstraint(['user_updated_id'], ['users.id'], name='measurement_params_user_updated_id_fkey'),
         PrimaryKeyConstraint('measurement_id', 'form_id', 'test_id', 'idx', name='measurement_params_pkey')
     )
 
@@ -950,12 +957,18 @@ class MeasurementParams(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     idx: Mapped[int] = mapped_column(Integer, primary_key=True, server_default=text('0'))
     value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
-    condition_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    is_conforming_condition: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    user_updated_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_updated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='measurement_params')
     form: Mapped['Forms'] = relationship('Forms', back_populates='measurement_params')
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='measurement_params')
     test: Mapped['Tests'] = relationship('Tests', back_populates='measurement_params')
+    user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurement_params_user_created')
+    user_updated: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_updated_id], back_populates='measurement_params_user_updated')
 
 
 t_measurement_reagent_lots = Table(
@@ -983,6 +996,8 @@ class MeasurementTests(Base):
     __table_args__ = (
         ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_tests_measurement_id_fkey'),
         ForeignKeyConstraint(['test_id'], ['tests.id'], name='measurement_tests_test_id_fkey'),
+        ForeignKeyConstraint(['user_created_id'], ['users.id'], name='measurement_tests_user_created_id_fkey'),
+        ForeignKeyConstraint(['user_updated_id'], ['users.id'], name='measurement_tests_user_updated_id_fkey'),
         PrimaryKeyConstraint('measurement_id', 'test_id', 'idx', name='measurement_tests_pkey')
     )
 
@@ -990,10 +1005,16 @@ class MeasurementTests(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     idx: Mapped[int] = mapped_column(Integer, primary_key=True, server_default=text('0'))
     value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
     note: Mapped[Optional[str]] = mapped_column(String(20))
+    user_updated_id: Mapped[Optional[int]] = mapped_column(BigInteger)
+    date_updated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='measurement_tests')
     test: Mapped['Tests'] = relationship('Tests', back_populates='measurement_tests')
+    user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurement_tests_user_created')
+    user_updated: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_updated_id], back_populates='measurement_tests_user_updated')
 
 
 class ReportTests(Base):

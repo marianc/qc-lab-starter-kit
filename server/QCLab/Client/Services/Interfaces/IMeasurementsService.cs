@@ -19,6 +19,6 @@ namespace QCLab.Client.Services.Interfaces
         Task UpdateMeasurementEquipments(long id, UpdateTestEquipmentsDto dto);
         Task UpdateMeasurementSopVersions(long id, UpdateMeasurementSopVersionsDto dto);
         Task UpdateMeasurementReagentLots(long id, UpdateMeasurementReagentLotsDto dto);
-        Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto);
+        Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto, long userId);
     }
 }

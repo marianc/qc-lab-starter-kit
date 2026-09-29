@@ -13,6 +13,8 @@ public partial class Sop
 
     public long? NormId { get; set; }
 
+    public long NrOrd { get; set; }
+
     public DateTime DateCreated { get; set; }
 
     public virtual Norm? Norm { get; set; }

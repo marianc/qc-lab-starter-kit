@@ -31,9 +31,10 @@ def test_create_measurement_no_form(migrated_db, auth_session, base_url, db_sess
     assert db_m.comments is None
     assert db_m.is_reported is False
     assert db_m.form_id is None
-    assert db_m.user_update_id == 1
     assert db_m.user_created_id == 1
-    assert db_m.date_update is not None
+    assert db_m.date_created is not None
+    assert db_m.user_updated_id is None
+    assert db_m.date_updated is None
 
 def test_update_measurement_test_24_comments_only(migrated_db, auth_session, base_url, db_session):
     """
@@ -67,7 +68,8 @@ def test_update_measurement_test_24_comments_only(migrated_db, auth_session, bas
     db_session.expire_all()
     db_m = db_session.query(Measurements).filter(Measurements.id == 24).first()
     assert db_m.comments == payload["comments"]
-    assert db_m.user_update_id == 1
+    assert db_m.user_updated_id == 1
+    assert db_m.date_updated is not None
     
     # Verify tests didn't change content-wise (though they might be replaced in DB)
     db_tests = db_session.query(MeasurementTests).filter(MeasurementTests.measurement_id == 24).all()

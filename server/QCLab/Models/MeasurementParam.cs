@@ -15,7 +15,15 @@ public partial class MeasurementParam
 
     public decimal Value { get; set; }
 
-    public decimal? ConditionValue { get; set; }
+    public bool IsConformingCondition { get; set; }
+
+    public long? UserUpdatedId { get; set; }
+
+    public DateTime? DateUpdated { get; set; }
+
+    public long UserCreatedId { get; set; }
+
+    public DateTime DateCreated { get; set; }
 
     public virtual Form Form { get; set; } = null!;
 
@@ -24,4 +32,8 @@ public partial class MeasurementParam
     public virtual Measurement Measurement { get; set; } = null!;
 
     public virtual Test Test { get; set; } = null!;
+
+    public virtual User UserCreated { get; set; } = null!;
+
+    public virtual User? UserUpdated { get; set; }
 }

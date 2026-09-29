@@ -16,7 +16,7 @@ namespace QCFormula
         public long TestId { get; set; }
         public int Idx { get; set; }
         public decimal Value { get; set; }
-        public decimal? ConditionValue { get; set; }
+        public bool IsConformingCondition { get; set; }
     }
 
     public static class DataMapper

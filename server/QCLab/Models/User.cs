@@ -67,11 +67,19 @@ public partial class User
 
     public virtual ICollection<Form> FormUserValidateds { get; set; } = new List<Form>();
 
+    public virtual ICollection<MeasurementParam> MeasurementParamUserCreateds { get; set; } = new List<MeasurementParam>();
+
+    public virtual ICollection<MeasurementParam> MeasurementParamUserUpdateds { get; set; } = new List<MeasurementParam>();
+
+    public virtual ICollection<MeasurementTest> MeasurementTestUserCreateds { get; set; } = new List<MeasurementTest>();
+
+    public virtual ICollection<MeasurementTest> MeasurementTestUserUpdateds { get; set; } = new List<MeasurementTest>();
+
     public virtual ICollection<Measurement> MeasurementUserCreateds { get; set; } = new List<Measurement>();
 
     public virtual ICollection<Measurement> MeasurementUserReporteds { get; set; } = new List<Measurement>();
 
-    public virtual ICollection<Measurement> MeasurementUserUpdates { get; set; } = new List<Measurement>();
+    public virtual ICollection<Measurement> MeasurementUserUpdateds { get; set; } = new List<Measurement>();
 
     public virtual ICollection<ReagentLot> ReagentLots { get; set; } = new List<ReagentLot>();
 

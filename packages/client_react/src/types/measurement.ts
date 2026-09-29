@@ -5,10 +5,10 @@ export interface MeasurementDto {
   comments: string | null;
   isReported: boolean;
   isReadonly: boolean;
-  userUpdateId: number;
-  userUpdateTag: string | null;
+  userUpdatedId: number;
+  userUpdatedTag: string | null;
   userReportedTag: string | null;
-  dateUpdate: string;
+  dateUpdated: string;
   tests: MeasurementTestDto[];
   formParamsSchema: MeasurementFormParamSchemaDto[];
   formDataValues?: Record<string, any>;
@@ -21,10 +21,10 @@ export interface MeasurementTestDetailDto {
   useDefaultEquipment: boolean;
   isReported: boolean;
   isReadonly: boolean;
-  userUpdateId: number;
-  userUpdateTag: string | null;
+  userUpdatedId: number;
+  userUpdatedTag: string | null;
   userReportedTag: string | null;
-  dateUpdate: string;
+  dateUpdated: string;
   tests: MeasurementTestDto[];
 }
 
@@ -36,10 +36,10 @@ export interface MeasurementParamDetailDto {
   useDefaultEquipment: boolean;
   isReported: boolean;
   isReadonly: boolean;
-  userUpdateId: number;
-  userUpdateTag: string | null;
+  userUpdatedId: number;
+  userUpdatedTag: string | null;
   userReportedTag: string | null;
-  dateUpdate: string;
+  dateUpdated: string;
   formParamsSchema?: MeasurementFormParamSchemaDto[];
   measurementData: Record<string, any>;
   calculatedResults: Record<string, any>;

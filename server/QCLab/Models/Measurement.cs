@@ -15,10 +15,6 @@ public partial class Measurement
 
     public bool UseDefaultEquipment { get; set; }
 
-    public long UserUpdateId { get; set; }
-
-    public DateTime DateUpdate { get; set; }
-
     public bool IsReported { get; set; }
 
     public long? UserReportedId { get; set; }
@@ -28,6 +24,10 @@ public partial class Measurement
     public bool IsReadonly { get; set; }
 
     public DateTime? DateReadonly { get; set; }
+
+    public long? UserUpdatedId { get; set; }
+
+    public DateTime? DateUpdated { get; set; }
 
     public long UserCreatedId { get; set; }
 
@@ -49,7 +49,7 @@ public partial class Measurement
 
     public virtual User? UserReported { get; set; }
 
-    public virtual User UserUpdate { get; set; } = null!;
+    public virtual User? UserUpdated { get; set; }
 
     public virtual ICollection<ReagentLot> ControlCodes { get; set; } = new List<ReagentLot>();
 

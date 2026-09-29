@@ -14,7 +14,7 @@ public class CategoryDto
 
     [Required(ErrorMessage = "Code is required.")]
     [Unique("Category", ErrorMessage = "Category code is already in use.")]
-    [StringLength(3, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 3 characters.")]
+    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 
@@ -34,7 +34,7 @@ public class CreateCategoryDto
 
     [Required(ErrorMessage = "Code is required.")]
     [Unique("Category", ErrorMessage = "Category code is already in use.")]
-    [StringLength(3, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 3 characters.")]
+    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 
@@ -50,7 +50,7 @@ public class UpdateCategoryDto
 
     [Required(ErrorMessage = "Code is required.")]
     [Unique("Category", ErrorMessage = "Category code is already in use.")]
-    [StringLength(3, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 3 characters.")]
+    [StringLength(5, MinimumLength = 2, ErrorMessage = "Code must be between 2 and 5 characters.")]
     [RegularExpression("^[A-Z][A-Z0-9]*$", ErrorMessage = "Code must start with a letter and contain only uppercase alphanumeric characters.")]
     public required string Code { get; set; }
 

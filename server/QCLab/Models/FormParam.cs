@@ -27,9 +27,9 @@ public partial class FormParam
 
     public decimal? DefaultValue { get; set; }
 
-    public long NrOrd { get; set; }
-
     public long NrOrdCalc { get; set; }
+
+    public long NrOrd { get; set; }
 
     public virtual Form Form { get; set; } = null!;
 

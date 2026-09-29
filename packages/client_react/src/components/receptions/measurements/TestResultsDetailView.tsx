@@ -275,10 +275,10 @@ const TestResultsDetailView: React.FC<Props> = ({
               )}
             </DetailColumn>
             <DetailColumn>
-              {measurement.userUpdateTag && (
-                <DetailItem label="Last Updated By" value={measurement.userUpdateTag} />
+              {measurement.userUpdatedTag && (
+                <DetailItem label="Last Updated By" value={measurement.userUpdatedTag} />
               )}
-              <DetailItem label="Last Updated Date" value={formatDate(measurement.dateUpdate || '')} />
+              <DetailItem label="Last Updated Date" value={formatDate(measurement.dateUpdated || '')} />
               <DetailItem label="Is Reported" value={measurement.isReported ? "Yes" : "No"} />
               {measurement.isReported && measurement.userReportedTag && (
                 <DetailItem label="User Reported" value={measurement.userReportedTag} />

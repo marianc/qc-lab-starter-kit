@@ -125,10 +125,10 @@ const TestFormDetailView: React.FC<Props> = ({
         isReported: false,
         useDefaultEquipment: true,
         isReadonly: false,
-        userUpdateId: currentUser?.id || 0,
-        userUpdateTag: currentUser?.name || '',
+        userUpdatedId: currentUser?.id || 0,
+        userUpdatedTag: currentUser?.name || '',
         userReportedTag: null,
-        dateUpdate: new Date().toISOString(),
+        dateUpdated: new Date().toISOString(),
         comments: null,
         measurementData: {},
         calculatedResults: {},
@@ -430,10 +430,10 @@ const TestFormDetailView: React.FC<Props> = ({
               )}
             </DetailColumn>
             <DetailColumn>
-              {measurement.userUpdateTag && (
-                <DetailItem label="Last Updated By" value={measurement.userUpdateTag} />
+              {measurement.userUpdatedTag && (
+                <DetailItem label="Last Updated By" value={measurement.userUpdatedTag} />
               )}
-              <DetailItem label="Last Updated Date" value={formatDate(measurement.dateUpdate || '')} />
+              <DetailItem label="Last Updated Date" value={formatDate(measurement.dateUpdated || '')} />
               <DetailItem label="Is Reported" value={measurement.isReported ? "Yes" : "No"} />
               {measurement.isReported && measurement.userReportedTag && (
                 <DetailItem label="User Reported" value={measurement.userReportedTag} />

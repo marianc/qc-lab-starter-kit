@@ -155,7 +155,7 @@ public partial class QualityControlContext : DbContext
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
             entity.Property(e => e.Code)
-                .HasMaxLength(3)
+                .HasMaxLength(5)
                 .HasColumnName("code");
             entity.Property(e => e.CommentsObsolete).HasColumnName("comments_obsolete");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
@@ -711,7 +711,7 @@ public partial class QualityControlContext : DbContext
                 .HasColumnName("date_created");
             entity.Property(e => e.DateReadonly).HasColumnName("date_readonly");
             entity.Property(e => e.DateReported).HasColumnName("date_reported");
-            entity.Property(e => e.DateUpdate).HasColumnName("date_update");
+            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
             entity.Property(e => e.FormId).HasColumnName("form_id");
             entity.Property(e => e.IsReadonly).HasColumnName("is_readonly");
             entity.Property(e => e.IsReported).HasColumnName("is_reported");
@@ -721,7 +721,7 @@ public partial class QualityControlContext : DbContext
                 .HasColumnName("use_default_equipment");
             entity.Property(e => e.UserCreatedId).HasColumnName("user_created_id");
             entity.Property(e => e.UserReportedId).HasColumnName("user_reported_id");
-            entity.Property(e => e.UserUpdateId).HasColumnName("user_update_id");
+            entity.Property(e => e.UserUpdatedId).HasColumnName("user_updated_id");
 
             entity.HasOne(d => d.Form).WithMany(p => p.Measurements)
                 .HasForeignKey(d => d.FormId)
@@ -741,10 +741,9 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.UserReportedId)
                 .HasConstraintName("measurements_user_reported_id_fkey");
 
-            entity.HasOne(d => d.UserUpdate).WithMany(p => p.MeasurementUserUpdates)
-                .HasForeignKey(d => d.UserUpdateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("measurements_user_update_id_fkey");
+            entity.HasOne(d => d.UserUpdated).WithMany(p => p.MeasurementUserUpdateds)
+                .HasForeignKey(d => d.UserUpdatedId)
+                .HasConstraintName("measurements_user_updated_id_fkey");
 
             entity.HasMany(d => d.ControlCodes).WithMany(p => p.Measurements)
                 .UsingEntity<Dictionary<string, object>>(
@@ -811,7 +810,13 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.FormId).HasColumnName("form_id");
             entity.Property(e => e.TestId).HasColumnName("test_id");
             entity.Property(e => e.Idx).HasColumnName("idx");
-            entity.Property(e => e.ConditionValue).HasColumnName("condition_value");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
+            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
+            entity.Property(e => e.IsConformingCondition).HasColumnName("is_conforming_condition");
+            entity.Property(e => e.UserCreatedId).HasColumnName("user_created_id");
+            entity.Property(e => e.UserUpdatedId).HasColumnName("user_updated_id");
             entity.Property(e => e.Value).HasColumnName("value");
 
             entity.HasOne(d => d.Form).WithMany(p => p.MeasurementParams)
@@ -828,6 +833,15 @@ public partial class QualityControlContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurement_params_test_id_fkey");
 
+            entity.HasOne(d => d.UserCreated).WithMany(p => p.MeasurementParamUserCreateds)
+                .HasForeignKey(d => d.UserCreatedId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("measurement_params_user_created_id_fkey");
+
+            entity.HasOne(d => d.UserUpdated).WithMany(p => p.MeasurementParamUserUpdateds)
+                .HasForeignKey(d => d.UserUpdatedId)
+                .HasConstraintName("measurement_params_user_updated_id_fkey");
+
             entity.HasOne(d => d.FormParam).WithMany(p => p.MeasurementParams)
                 .HasForeignKey(d => new { d.FormId, d.TestId })
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -843,9 +857,15 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.MeasurementId).HasColumnName("measurement_id");
             entity.Property(e => e.TestId).HasColumnName("test_id");
             entity.Property(e => e.Idx).HasColumnName("idx");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("clock_timestamp()")
+                .HasColumnName("date_created");
+            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
             entity.Property(e => e.Note)
                 .HasMaxLength(20)
                 .HasColumnName("note");
+            entity.Property(e => e.UserCreatedId).HasColumnName("user_created_id");
+            entity.Property(e => e.UserUpdatedId).HasColumnName("user_updated_id");
             entity.Property(e => e.Value).HasColumnName("value");
 
             entity.HasOne(d => d.Measurement).WithMany(p => p.MeasurementTests)
@@ -856,6 +876,15 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("measurement_tests_test_id_fkey");
+
+            entity.HasOne(d => d.UserCreated).WithMany(p => p.MeasurementTestUserCreateds)
+                .HasForeignKey(d => d.UserCreatedId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("measurement_tests_user_created_id_fkey");
+
+            entity.HasOne(d => d.UserUpdated).WithMany(p => p.MeasurementTestUserUpdateds)
+                .HasForeignKey(d => d.UserUpdatedId)
+                .HasConstraintName("measurement_tests_user_updated_id_fkey");
         });
 
         modelBuilder.Entity<Norm>(entity =>
@@ -1192,6 +1221,7 @@ public partial class QualityControlContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("doc_code");
             entity.Property(e => e.NormId).HasColumnName("norm_id");
+            entity.Property(e => e.NrOrd).HasColumnName("nr_ord");
             entity.Property(e => e.Title)
                 .HasMaxLength(150)
                 .HasColumnName("title");

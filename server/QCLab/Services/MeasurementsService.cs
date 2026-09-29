@@ -23,7 +23,7 @@ public class MeasurementsService : IMeasurementsService
     private async Task<MeasurementTestDetailDto?> GetMeasurementTestData(long measurementId)
     {
         var measurement = await _context.Measurements
-            .Include(m => m.UserUpdate)
+            .Include(m => m.UserUpdated)
             .Include(m => m.UserReported)
             .FirstOrDefaultAsync(m => m.Id == measurementId);
 
@@ -37,10 +37,10 @@ public class MeasurementsService : IMeasurementsService
                 UseDefaultEquipment = measurement.UseDefaultEquipment,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
-                UserUpdateId = measurement.UserUpdateId,
-                UserUpdateTag = measurement.UserUpdate.Tag,
+                UserUpdatedId = measurement.UserUpdatedId,
+                UserUpdatedTag = measurement.UserUpdated?.Tag,
                 UserReportedTag = measurement.UserReported?.Tag,
-                DateUpdate = measurement.DateUpdate,
+                DateUpdated = measurement.DateUpdated,
                 Tests = new List<MeasurementTestDto>()
             };
 
@@ -83,7 +83,7 @@ public class MeasurementsService : IMeasurementsService
     private async Task<MeasurementParamDetailDto?> GetMeasurementParamData(long measurementId)
     {
         var measurement = await _context.Measurements
-            .Include(m => m.UserUpdate)
+            .Include(m => m.UserUpdated)
             .Include(m => m.UserReported)
             .FirstOrDefaultAsync(m => m.Id == measurementId);
 
@@ -98,10 +98,10 @@ public class MeasurementsService : IMeasurementsService
                 UseDefaultEquipment = measurement.UseDefaultEquipment,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
-                UserUpdateId = measurement.UserUpdateId,
-                UserUpdateTag = measurement.UserUpdate.Tag,
+                UserUpdatedId = measurement.UserUpdatedId,
+                UserUpdatedTag = measurement.UserUpdated?.Tag,
                 UserReportedTag = measurement.UserReported?.Tag,
-                DateUpdate = measurement.DateUpdate,
+                DateUpdated = measurement.DateUpdated,
                 MeasurementData = new Dictionary<string, object?>(),
                 CalculatedResults = new Dictionary<string, object?>()
             };
@@ -156,8 +156,9 @@ public class MeasurementsService : IMeasurementsService
                 IsReported = dto.IsReported,
                 FormId = dto.FormId,
                 UserCreatedId = userId,
-                UserUpdateId = userId,
-                DateUpdate = DateTime.UtcNow
+                DateCreated = DateTime.UtcNow,
+                UserUpdatedId = null,
+                DateUpdated = null
             };
 
             _context.Measurements.Add(measurement);
@@ -187,17 +188,20 @@ public class MeasurementsService : IMeasurementsService
             measurement.IsReported = false;
             measurement.UserReportedId = null;
             measurement.DateReported = null;
-            measurement.UserUpdateId = userId;
-            measurement.DateUpdate = DateTime.UtcNow;
+            measurement.UserUpdatedId = userId;
+            measurement.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
+            // Step 1: Read the data from the database for the corresponding measurement 'measurement_id' that is going to be changed (updated)
+            var existingTests = await _context.MeasurementTests
+                .Where(mt => mt.MeasurementId == id)
+                .ToListAsync();
+
+            var targetItems = new List<(long TestId, int Idx, decimal Value, string? Note)>();
+
             if (dto.Tests != null)
             {
-                var existingTests = await _context.MeasurementTests.Where(mt => mt.MeasurementId == id).ToListAsync();
-                _context.MeasurementTests.RemoveRange(existingTests);
-                await _context.SaveChangesAsync();
-
                 foreach (var testDto in dto.Tests)
                 {
                     var testInfo = await _context.Tests.FindAsync(testDto.TestId);
@@ -222,14 +226,7 @@ public class MeasurementsService : IMeasurementsService
 
                         for (int i = 0; i < values.Count; i++)
                         {
-                            _context.MeasurementTests.Add(new MeasurementTest
-                            {
-                                MeasurementId = id,
-                                TestId = testDto.TestId,
-                                Idx = i,
-                                Value = values[i],
-                                Note = testDto.Note
-                            });
+                            targetItems.Add((testDto.TestId, i, values[i], testDto.Note));
                         }
                     }
                     else if (!isArray && testDto.Value != null)
@@ -239,18 +236,63 @@ public class MeasurementsService : IMeasurementsService
                         else if (testDto.Value is JsonElement jes && jes.ValueKind == JsonValueKind.String) decimal.TryParse(jes.GetString(), out val);
                         else if (decimal.TryParse(testDto.Value.ToString(), out decimal parsedVal)) val = parsedVal;
 
-                        _context.MeasurementTests.Add(new MeasurementTest
-                        {
-                            MeasurementId = id,
-                            TestId = testDto.TestId,
-                            Idx = 0,
-                            Value = val,
-                            Note = testDto.Note
-                        });
+                        targetItems.Add((testDto.TestId, 0, val, testDto.Note));
                     }
                 }
-                await _context.SaveChangesAsync();
             }
+
+            var existingDict = existingTests.ToDictionary(mt => (mt.TestId, mt.Idx));
+            var targetDict = targetItems.ToDictionary(t => (t.TestId, t.Idx));
+
+            // Step 3 & 4: Analyze 'existing' records
+            foreach (var key in existingDict.Keys)
+            {
+                if (targetDict.TryGetValue(key, out var targetItem))
+                {
+                    var existingTest = existingDict[key];
+                    if (existingTest.Value != targetItem.Value || existingTest.Note != targetItem.Note)
+                    {
+                        existingTest.Value = targetItem.Value;
+                        existingTest.Note = targetItem.Note;
+                        existingTest.UserUpdatedId = userId;
+                        existingTest.DateUpdated = DateTime.UtcNow;
+                    }
+                }
+            }
+
+            // Step 6: 'deleted' records
+            foreach (var key in existingDict.Keys)
+            {
+                if (!targetDict.ContainsKey(key))
+                {
+                    var existingTest = existingDict[key];
+                    _context.MeasurementTests.Remove(existingTest);
+                }
+            }
+
+            // Step 5: 'added' records
+            foreach (var key in targetDict.Keys)
+            {
+                if (!existingDict.ContainsKey(key))
+                {
+                    var targetItem = targetDict[key];
+                    var newTest = new MeasurementTest
+                    {
+                        MeasurementId = id,
+                        TestId = targetItem.TestId,
+                        Idx = targetItem.Idx,
+                        Value = targetItem.Value,
+                        Note = targetItem.Note,
+                        UserCreatedId = userId,
+                        DateCreated = DateTime.UtcNow,
+                        UserUpdatedId = null,
+                        DateUpdated = null
+                    };
+                    _context.MeasurementTests.Add(newTest);
+                }
+            }
+
+            await _context.SaveChangesAsync();
 
             if (dto.UseDefaultEquipment)
             {
@@ -280,11 +322,11 @@ public class MeasurementsService : IMeasurementsService
             measurement.Comments = dto.Comments;
             measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
             measurement.IsReported = dto.IsReported;
-            measurement.UserUpdateId = userId;
-            measurement.DateUpdate = DateTime.UtcNow;
+            measurement.UserUpdatedId = userId;
+            measurement.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            await SaveMeasurementFormDataInternal(id, dto.MeasurementData);
+            await SaveMeasurementFormDataInternal(id, dto.MeasurementData, userId);
 
             if (dto.UseDefaultEquipment)
             {
@@ -378,7 +420,7 @@ public class MeasurementsService : IMeasurementsService
 
                 // Check for invalid condition values
                 var invalidConditionExists = await _context.MeasurementParams
-                    .Where(mp => mp.MeasurementId == id && mp.ConditionValue == 0)
+                    .Where(mp => mp.MeasurementId == id && !mp.IsConformingCondition)
                     .AnyAsync();
                 
                 if (invalidConditionExists)
@@ -402,7 +444,7 @@ public class MeasurementsService : IMeasurementsService
     }
 
     // POST /measurements/{id}/tests
-    public async Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto)
+    public async Task<IdDto> AddMeasurementTest(long id, AddMeasurementTestDto dto, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -441,7 +483,11 @@ public class MeasurementsService : IMeasurementsService
                         TestId = dto.TestId,
                         Idx = i,
                         Value = values[i],
-                        Note = dto.Note
+                        Note = dto.Note,
+                        UserCreatedId = userId,
+                        DateCreated = DateTime.UtcNow,
+                        UserUpdatedId = null,
+                        DateUpdated = null
                     });
                 }
             }
@@ -458,7 +504,11 @@ public class MeasurementsService : IMeasurementsService
                     TestId = dto.TestId,
                     Idx = 0,
                     Value = val,
-                    Note = dto.Note
+                    Note = dto.Note,
+                    UserCreatedId = userId,
+                    DateCreated = DateTime.UtcNow,
+                    UserUpdatedId = null,
+                    DateUpdated = null
                 });
             }
 
@@ -823,12 +873,12 @@ public class MeasurementsService : IMeasurementsService
     }
 
     // POST/PUT /measurements/{id}/form_data (Internal helper now)
-    private async Task SaveMeasurementFormData(long id, Dictionary<string, object?> data)
+    private async Task SaveMeasurementFormData(long id, Dictionary<string, object?> data, long userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            await SaveMeasurementFormDataInternal(id, data);
+            await SaveMeasurementFormDataInternal(id, data, userId);
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -838,7 +888,7 @@ public class MeasurementsService : IMeasurementsService
         }
     }
 
-    private async Task SaveMeasurementFormDataInternal(long id, Dictionary<string, object?> data)
+    private async Task SaveMeasurementFormDataInternal(long id, Dictionary<string, object?> data, long userId)
     {
         var measurement = await _context.Measurements.FindAsync(id);
         if (measurement == null || !measurement.FormId.HasValue)
@@ -874,51 +924,85 @@ public class MeasurementsService : IMeasurementsService
         // 3. Update database with results
         var flatResults = FormEvalMapper.MapDictToFlat(results!, formParamsSchema.Where(p => p.IsCalculated).ToList());
 
-        // Clear all existing params first
-        var allParams = await _context.MeasurementParams.Where(mp => mp.MeasurementId == id).ToListAsync();
-        _context.MeasurementParams.RemoveRange(allParams);
-        await _context.SaveChangesAsync();
+        var targetItems = new List<(long TestId, int Idx, decimal Value, bool IsConformingCondition)>();
 
-        // Save Inputs
         foreach (var item in flatInputs)
         {
-            var param = new MeasurementParam
-            {
-                MeasurementId = id,
-                FormId = formId,
-                TestId = item.TestId,
-                Idx = item.Idx,
-                Value = item.Value
-            };
-
+            bool isConforming = true;
             var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
             if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
             {
-                param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
             }
-
-            _context.MeasurementParams.Add(param);
+            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming));
         }
 
-        // Save Results
         foreach (var item in flatResults)
         {
-            var param = new MeasurementParam
-            {
-                MeasurementId = id,
-                FormId = formId,
-                TestId = item.TestId,
-                Idx = item.Idx,
-                Value = item.Value
-            };
-
+            bool isConforming = true;
             var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
             if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
             {
-                param.ConditionValue = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
             }
+            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming));
+        }
 
-            _context.MeasurementParams.Add(param);
+        // Step 1: Read the data from the database for the corresponding measurement 'measurement_id' that is going to be changed (updated)
+        var existingParams = await _context.MeasurementParams
+            .Where(mp => mp.MeasurementId == id)
+            .ToListAsync();
+
+        var existingDict = existingParams.ToDictionary(mp => (mp.TestId, mp.Idx));
+        var targetDict = targetItems.ToDictionary(t => (t.TestId, t.Idx));
+
+        // Step 3 & 4: Analyze 'existing' records
+        foreach (var key in existingDict.Keys)
+        {
+            if (targetDict.TryGetValue(key, out var targetItem))
+            {
+                var existingParam = existingDict[key];
+                if (existingParam.Value != targetItem.Value || existingParam.IsConformingCondition != targetItem.IsConformingCondition)
+                {
+                    existingParam.Value = targetItem.Value;
+                    existingParam.IsConformingCondition = targetItem.IsConformingCondition;
+                    existingParam.UserUpdatedId = userId;
+                    existingParam.DateUpdated = DateTime.UtcNow;
+                }
+            }
+        }
+
+        // Step 6: 'deleted' records
+        foreach (var key in existingDict.Keys)
+        {
+            if (!targetDict.ContainsKey(key))
+            {
+                var existingParam = existingDict[key];
+                _context.MeasurementParams.Remove(existingParam);
+            }
+        }
+
+        // Step 5: 'added' records
+        foreach (var key in targetDict.Keys)
+        {
+            if (!existingDict.ContainsKey(key))
+            {
+                var targetItem = targetDict[key];
+                var newParam = new MeasurementParam
+                {
+                    MeasurementId = id,
+                    FormId = formId,
+                    TestId = targetItem.TestId,
+                    Idx = targetItem.Idx,
+                    Value = targetItem.Value,
+                    IsConformingCondition = targetItem.IsConformingCondition,
+                    UserCreatedId = userId,
+                    DateCreated = DateTime.UtcNow,
+                    UserUpdatedId = null,
+                    DateUpdated = null
+                };
+                _context.MeasurementParams.Add(newParam);
+            }
         }
 
         await _context.SaveChangesAsync();

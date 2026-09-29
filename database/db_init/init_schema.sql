@@ -179,7 +179,7 @@ ALTER TABLE public.audit_logs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 CREATE TABLE public.categories (
     id bigint NOT NULL,
     name character varying(50) NOT NULL,
-    code character varying(3) NOT NULL,
+    code character varying(5) NOT NULL,
     description text,
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
@@ -502,8 +502,8 @@ CREATE TABLE public.form_groups (
     id bigint NOT NULL,
     name character varying(50) NOT NULL,
     description text,
-    nr_ord bigint DEFAULT 0 NOT NULL,
-    is_form_validated boolean DEFAULT false NOT NULL
+    is_form_validated boolean DEFAULT false NOT NULL,
+    nr_ord bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -539,8 +539,8 @@ CREATE TABLE public.form_params (
     condition_note character varying(150),
     is_required boolean DEFAULT false NOT NULL,
     default_value numeric,
-    nr_ord bigint DEFAULT 0 NOT NULL,
-    nr_ord_calc bigint DEFAULT 0 NOT NULL
+    nr_ord_calc bigint DEFAULT 0 NOT NULL,
+    nr_ord bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -647,13 +647,13 @@ CREATE TABLE public.measurements (
     form_id bigint,
     comments text,
     use_default_equipment boolean DEFAULT true NOT NULL,
-    user_update_id bigint NOT NULL,
-    date_update timestamp with time zone NOT NULL,
     is_reported boolean DEFAULT false NOT NULL,
     user_reported_id bigint,
     date_reported timestamp with time zone,
     is_readonly boolean DEFAULT false NOT NULL,
     date_readonly timestamp with time zone,
+    user_updated_id bigint,
+    date_updated timestamp with time zone,
     user_created_id bigint NOT NULL,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
@@ -697,7 +697,11 @@ CREATE TABLE public.measurement_params (
     test_id bigint NOT NULL,
     idx integer DEFAULT 0 NOT NULL,
     value numeric NOT NULL,
-    condition_value numeric
+    is_conforming_condition boolean DEFAULT false NOT NULL,
+    user_updated_id bigint,
+    date_updated timestamp with time zone,
+    user_created_id bigint NOT NULL,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -736,7 +740,11 @@ CREATE TABLE public.measurement_tests (
     test_id bigint NOT NULL,
     idx integer DEFAULT 0 NOT NULL,
     value numeric NOT NULL,
-    note character varying(20)
+    note character varying(20),
+    user_updated_id bigint,
+    date_updated timestamp with time zone,
+    user_created_id bigint NOT NULL,
+    date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
 
@@ -1027,6 +1035,7 @@ CREATE TABLE public.sops (
     doc_code character varying(50) NOT NULL,
     title character varying(150) NOT NULL,
     norm_id bigint,
+    nr_ord bigint DEFAULT 0 NOT NULL,
     date_created timestamp with time zone DEFAULT clock_timestamp() NOT NULL
 );
 
@@ -2226,6 +2235,22 @@ ALTER TABLE ONLY public.measurement_params
 
 
 --
+-- Name: measurement_params measurement_params_user_created_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_params
+    ADD CONSTRAINT measurement_params_user_created_id_fkey FOREIGN KEY (user_created_id) REFERENCES public.users(id);
+
+
+--
+-- Name: measurement_params measurement_params_user_updated_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_params
+    ADD CONSTRAINT measurement_params_user_updated_id_fkey FOREIGN KEY (user_updated_id) REFERENCES public.users(id);
+
+
+--
 -- Name: measurement_reagent_lots measurement_reagent_lots_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2274,6 +2299,22 @@ ALTER TABLE ONLY public.measurement_tests
 
 
 --
+-- Name: measurement_tests measurement_tests_user_created_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_tests
+    ADD CONSTRAINT measurement_tests_user_created_id_fkey FOREIGN KEY (user_created_id) REFERENCES public.users(id);
+
+
+--
+-- Name: measurement_tests measurement_tests_user_updated_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_tests
+    ADD CONSTRAINT measurement_tests_user_updated_id_fkey FOREIGN KEY (user_updated_id) REFERENCES public.users(id);
+
+
+--
 -- Name: measurements measurements_form_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2306,11 +2347,11 @@ ALTER TABLE ONLY public.measurements
 
 
 --
--- Name: measurements measurements_user_update_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: measurements measurements_user_updated_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.measurements
-    ADD CONSTRAINT measurements_user_update_id_fkey FOREIGN KEY (user_update_id) REFERENCES public.users(id);
+    ADD CONSTRAINT measurements_user_updated_id_fkey FOREIGN KEY (user_updated_id) REFERENCES public.users(id);
 
 
 --

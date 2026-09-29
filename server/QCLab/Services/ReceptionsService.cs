@@ -25,7 +25,7 @@ public class ReceptionsService : IReceptionsService
     private async Task<MeasurementTestDetailDto?> GetMeasurementTestData(long measurementId)
     {
         var measurement = await _context.Measurements
-            .Include(m => m.UserUpdate)
+            .Include(m => m.UserUpdated)
             .Include(m => m.UserReported)
             .FirstOrDefaultAsync(m => m.Id == measurementId);
 
@@ -38,10 +38,10 @@ public class ReceptionsService : IReceptionsService
                 Comments = measurement.Comments,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
-                UserUpdateId = measurement.UserUpdateId,
-                UserUpdateTag = measurement.UserUpdate.Tag,
+                UserUpdatedId = measurement.UserUpdatedId,
+                UserUpdatedTag = measurement.UserUpdated?.Tag,
                 UserReportedTag = measurement.UserReported?.Tag,
-                DateUpdate = measurement.DateUpdate,
+                DateUpdated = measurement.DateUpdated,
                 Tests = new List<MeasurementTestDto>()
             };
 
@@ -84,7 +84,7 @@ public class ReceptionsService : IReceptionsService
     private async Task<MeasurementParamDetailDto?> GetMeasurementParamData(long measurementId)
     {
         var measurement = await _context.Measurements
-            .Include(m => m.UserUpdate)
+            .Include(m => m.UserUpdated)
             .Include(m => m.UserReported)
             .FirstOrDefaultAsync(m => m.Id == measurementId);
 
@@ -98,10 +98,10 @@ public class ReceptionsService : IReceptionsService
                 Comments = measurement.Comments,
                 IsReported = measurement.IsReported,
                 IsReadonly = measurement.IsReadonly,
-                UserUpdateId = measurement.UserUpdateId,
-                UserUpdateTag = measurement.UserUpdate.Tag,
+                UserUpdatedId = measurement.UserUpdatedId,
+                UserUpdatedTag = measurement.UserUpdated?.Tag,
                 UserReportedTag = measurement.UserReported?.Tag,
-                DateUpdate = measurement.DateUpdate,
+                DateUpdated = measurement.DateUpdated,
                 MeasurementData = new Dictionary<string, object?>(),
                 CalculatedResults = new Dictionary<string, object?>()
             };
@@ -117,7 +117,7 @@ public class ReceptionsService : IReceptionsService
                 TestId = mp.TestId, 
                 Idx = mp.Idx, 
                 Value = mp.Value,
-                ConditionValue = mp.ConditionValue
+                IsConformingCondition = mp.IsConformingCondition
             }).ToList();
             var allDataDict = FormEvalMapper.MapFlatToDict(flatParams, formParamsSchema);
             var allConditionDict = FormEvalMapper.MapConditionToDict(flatParams, formParamsSchema);

@@ -592,7 +592,19 @@ namespace QCLab
                     return Results.BadRequest(new { msg = ex.Message });
                 }
             }).RequireLabPers();
-            apiGroup.MapPost("/measurements/{id}/tests", (long id, [FromBody] AddMeasurementTestDto dto, IMeasurementsService s) => s.AddMeasurementTest(id, dto)).RequireLabPers();
+            apiGroup.MapPost("/measurements/{id}/tests", async (long id, [FromBody] AddMeasurementTestDto dto, HttpContext httpContext, IMeasurementsService s) => 
+            {
+                try
+                {
+                    long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
+                    var res = await s.AddMeasurementTest(id, dto, userId);
+                    return Results.Ok(res);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            }).RequireLabPers();
 
             // Norms
             apiGroup.MapGet("/norms", (INormsService s) => s.GetAllNorms());

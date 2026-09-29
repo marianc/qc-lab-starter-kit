@@ -11,10 +11,10 @@ public class MeasurementDto
     public string? Comments { get; set; }
     public bool IsReported { get; set; }
     public bool IsReadonly { get; set; }
-    public long UserUpdateId { get; set; }
-    public string? UserUpdateTag { get; set; }
+    public long? UserUpdatedId { get; set; }
+    public string? UserUpdatedTag { get; set; }
     public string? UserReportedTag { get; set; }
-    public DateTime DateUpdate { get; set; }
+    public DateTime? DateUpdated { get; set; }
     public List<MeasurementTestDto>? Tests { get; set; }
     
     [JsonIgnore]
@@ -30,10 +30,10 @@ public class MeasurementTestDetailDto
     public bool UseDefaultEquipment { get; set; }
     public bool IsReported { get; set; }
     public bool IsReadonly { get; set; }
-    public long UserUpdateId { get; set; }
-    public string? UserUpdateTag { get; set; }
+    public long? UserUpdatedId { get; set; }
+    public string? UserUpdatedTag { get; set; }
     public string? UserReportedTag { get; set; }
-    public DateTime DateUpdate { get; set; }
+    public DateTime? DateUpdated { get; set; }
     public List<MeasurementTestDto> Tests { get; set; } = new();
 }
 
@@ -46,10 +46,10 @@ public class MeasurementParamDetailDto
     public bool UseDefaultEquipment { get; set; }
     public bool IsReported { get; set; }
     public bool IsReadonly { get; set; }
-    public long UserUpdateId { get; set; }
-    public string? UserUpdateTag { get; set; }
+    public long? UserUpdatedId { get; set; }
+    public string? UserUpdatedTag { get; set; }
     public string? UserReportedTag { get; set; }
-    public DateTime DateUpdate { get; set; }
+    public DateTime? DateUpdated { get; set; }
 
     [JsonIgnore]
     public List<MeasurementFormParamSchemaDto>? FormParamsSchema { get; set; }
