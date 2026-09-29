@@ -115,9 +115,17 @@ ALTER TABLE IF EXISTS ONLY public.certificate_tests DROP CONSTRAINT IF EXISTS ce
 ALTER TABLE IF EXISTS ONLY public.category_tests DROP CONSTRAINT IF EXISTS category_tests_test_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.category_tests DROP CONSTRAINT IF EXISTS category_tests_category_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_user_id_fkey;
+DROP TRIGGER IF EXISTS audit_specs_trigger ON public.specs;
+DROP TRIGGER IF EXISTS audit_spec_tests_trigger ON public.spec_tests;
+DROP TRIGGER IF EXISTS audit_reports_trigger ON public.reports;
+DROP TRIGGER IF EXISTS audit_report_tests_trigger ON public.report_tests;
 DROP TRIGGER IF EXISTS audit_measurements_trigger ON public.measurements;
 DROP TRIGGER IF EXISTS audit_measurement_tests_trigger ON public.measurement_tests;
 DROP TRIGGER IF EXISTS audit_measurement_params_trigger ON public.measurement_params;
+DROP TRIGGER IF EXISTS audit_forms_trigger ON public.forms;
+DROP TRIGGER IF EXISTS audit_form_params_trigger ON public.form_params;
+DROP TRIGGER IF EXISTS audit_certificates_trigger ON public.certificates;
+DROP TRIGGER IF EXISTS audit_certificate_tests_trigger ON public.certificate_tests;
 DROP INDEX IF EXISTS public.unq_single_active_sop_version;
 ALTER TABLE IF EXISTS ONLY public.value_types DROP CONSTRAINT IF EXISTS value_types_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tag_key;
@@ -3639,6 +3647,34 @@ CREATE UNIQUE INDEX unq_single_active_sop_version ON public.sop_versions USING b
 
 
 --
+-- Name: certificate_tests audit_certificate_tests_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_certificate_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.certificate_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: certificates audit_certificates_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_certificates_trigger AFTER INSERT OR DELETE OR UPDATE ON public.certificates FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: form_params audit_form_params_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_form_params_trigger AFTER INSERT OR DELETE OR UPDATE ON public.form_params FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: forms audit_forms_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_forms_trigger AFTER INSERT OR DELETE OR UPDATE ON public.forms FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
 -- Name: measurement_params audit_measurement_params_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -3657,6 +3693,34 @@ CREATE TRIGGER audit_measurement_tests_trigger AFTER INSERT OR DELETE OR UPDATE 
 --
 
 CREATE TRIGGER audit_measurements_trigger AFTER INSERT OR DELETE OR UPDATE ON public.measurements FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: report_tests audit_report_tests_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_report_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.report_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: reports audit_reports_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_reports_trigger AFTER INSERT OR DELETE OR UPDATE ON public.reports FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: spec_tests audit_spec_tests_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_spec_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.spec_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: specs audit_specs_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_specs_trigger AFTER INSERT OR DELETE OR UPDATE ON public.specs FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
 
 
 --

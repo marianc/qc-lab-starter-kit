@@ -1886,6 +1886,34 @@ CREATE UNIQUE INDEX unq_single_active_sop_version ON public.sop_versions USING b
 
 
 --
+-- Name: certificate_tests audit_certificate_tests_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_certificate_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.certificate_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: certificates audit_certificates_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_certificates_trigger AFTER INSERT OR DELETE OR UPDATE ON public.certificates FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: form_params audit_form_params_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_form_params_trigger AFTER INSERT OR DELETE OR UPDATE ON public.form_params FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: forms audit_forms_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_forms_trigger AFTER INSERT OR DELETE OR UPDATE ON public.forms FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
 -- Name: measurement_params audit_measurement_params_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1904,6 +1932,34 @@ CREATE TRIGGER audit_measurement_tests_trigger AFTER INSERT OR DELETE OR UPDATE 
 --
 
 CREATE TRIGGER audit_measurements_trigger AFTER INSERT OR DELETE OR UPDATE ON public.measurements FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: report_tests audit_report_tests_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_report_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.report_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: reports audit_reports_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_reports_trigger AFTER INSERT OR DELETE OR UPDATE ON public.reports FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: spec_tests audit_spec_tests_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_spec_tests_trigger AFTER INSERT OR DELETE OR UPDATE ON public.spec_tests FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+
+
+--
+-- Name: specs audit_specs_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER audit_specs_trigger AFTER INSERT OR DELETE OR UPDATE ON public.specs FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
 
 
 --

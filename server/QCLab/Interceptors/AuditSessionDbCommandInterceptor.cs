@@ -77,7 +77,8 @@ public class AuditSessionDbCommandInterceptor : DbCommandInterceptor
     private void EnsureSessionVariables(DbCommand command, CommandEventData eventData)
     {
         // Avoid setting session variables for queries that are already setting them
-        if (command.CommandText.StartsWith("SET LOCAL app.current_user_id", StringComparison.OrdinalIgnoreCase))
+        if (command.CommandText.StartsWith("SET LOCAL app.current_user_id", StringComparison.OrdinalIgnoreCase) ||
+            command.CommandText.StartsWith("SET app.current_user_id", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -94,9 +95,10 @@ public class AuditSessionDbCommandInterceptor : DbCommandInterceptor
         {
             setCmd.Transaction = command.Transaction;
         }
-        setCmd.CommandText = $"SET LOCAL app.current_user_id = '{userId}'; " +
-                             $"SET LOCAL app.reason_for_change = '{SanitizeSqlString(reason)}'; " +
-                             $"SET LOCAL app.client_ip = '{SanitizeSqlString(clientIp)}';";
+        var setKeyword = command.Transaction != null ? "SET LOCAL" : "SET";
+        setCmd.CommandText = $"{setKeyword} app.current_user_id = '{userId}'; " +
+                             $"{setKeyword} app.reason_for_change = '{SanitizeSqlString(reason)}'; " +
+                             $"{setKeyword} app.client_ip = '{SanitizeSqlString(clientIp)}';";
         
         if (setCmd.Connection.State != System.Data.ConnectionState.Open)
         {
