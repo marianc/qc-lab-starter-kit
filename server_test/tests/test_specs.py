@@ -50,18 +50,29 @@ def test_duplicate_spec_11(migrated_db, auth_session, base_url, db_session):
     db_s = db_session.query(Specs).filter(Specs.id == new_id).first()
     assert db_s.material_id == 5 # Spec 11 material
 
-def test_cancel_spec_1(migrated_db, auth_session, base_url, db_session):
+def test_cancel_spec_2(migrated_db, auth_session, base_url, db_session):
     """
-    PUT /api/specs/1/cancel.
+    PUT /api/specs/2/cancel.
     """
-    url = f"{base_url}/api/specs/1/cancel"
-    # Note: Payload was not provided in request, assuming empty or default action dto
+    url = f"{base_url}/api/specs/2/cancel"
     response = auth_session.put(url, json={"userId": 1})
     assert response.status_code == 200
     
     db_session.expire_all()
-    db_s = db_session.query(Specs).filter(Specs.id == 1).first()
+    db_s = db_session.query(Specs).filter(Specs.id == 2).first()
     assert db_s.is_cancelled is True
+
+def test_cancel_spec_1_fails(migrated_db, auth_session, base_url, db_session):
+    """
+    PUT /api/specs/1/cancel should fail because of ongoing certification tests.
+    """
+    url = f"{base_url}/api/specs/1/cancel"
+    response = auth_session.put(url, json={"userId": 1})
+    assert response.status_code == 400
+    
+    db_session.expire_all()
+    db_s = db_session.query(Specs).filter(Specs.id == 1).first()
+    assert db_s.is_cancelled is False
 
 def test_create_spec(migrated_db, auth_session, base_url, db_session):
     """

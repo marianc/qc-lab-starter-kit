@@ -266,17 +266,21 @@ public class SpecsService : ISpecsService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            var spec = await _context.Specs.FindAsync(id);
+            if (spec == null) throw new ArgumentException("Specification not found");
+
+            if (spec.IsSubmitted || spec.IsCancelled)
+            {
+                throw new InvalidOperationException("Only draft specifications can be deleted.");
+            }
+
             var evals = await _context.SpecTestEvals.Where(e => e.SpecId == id).ToListAsync();
             _context.SpecTestEvals.RemoveRange(evals);
 
             var tests = await _context.SpecTests.Where(st => st.SpecId == id).ToListAsync();
             _context.SpecTests.RemoveRange(tests);
 
-            var spec = await _context.Specs.FindAsync(id);
-            if (spec != null)
-            {
-                _context.Specs.Remove(spec);
-            }
+            _context.Specs.Remove(spec);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -299,6 +303,11 @@ public class SpecsService : ISpecsService
                 .Include(s => s.SpecTestEvals)
                 .FirstOrDefaultAsync(s => s.Id == id);
             if (spec == null) throw new ArgumentException("Specification not found");
+
+            if (spec.IsSubmitted || spec.IsCancelled)
+            {
+                throw new InvalidOperationException("Only draft specifications can be submitted.");
+            }
 
             if (spec.SpecTests == null || !spec.SpecTests.Any())
             {

@@ -226,9 +226,14 @@ const SpecificationDetailView: React.FC<Props> = ({
 
   const confirmDeleteSpec = async () => {
     if (spec) {
-      await specificationsService.deleteSpec(spec.id);
-      setShowConfirmDeleteSpec(false);
-      onClose(null);
+      try {
+        await specificationsService.deleteSpec(spec.id);
+        setShowConfirmDeleteSpec(false);
+        onClose(null);
+      } catch (err: any) {
+        setShowConfirmDeleteSpec(false);
+        setErrorMessage(err.message || 'Failed to delete specification');
+      }
     }
   };
 

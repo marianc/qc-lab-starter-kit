@@ -743,6 +743,11 @@ public class CertificatesService : ICertificatesService
             var certificate = await _context.Certificates.FindAsync(id);
             if (certificate == null) throw new ArgumentException("Certificate not found");
 
+            if (certificate.IsSubmitted || certificate.IsCancelled)
+            {
+                throw new InvalidOperationException("Certificate is already submitted or cancelled.");
+            }
+
             var existingValidCerts = await _context.Certificates
                 .Where(c => c.Id != id && c.ControlCodeId == certificate.ControlCodeId && c.IsSubmitted && !c.IsCancelled)
                 .OrderByDescending(c => c.Id)

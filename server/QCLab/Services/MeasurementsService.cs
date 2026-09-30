@@ -182,6 +182,7 @@ public class MeasurementsService : IMeasurementsService
         {
             var measurement = await _context.Measurements.FindAsync(id);
             if (measurement == null) throw new ArgumentException("Measurement not found");
+            if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
 
             measurement.Comments = dto.Comments;
             measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
@@ -318,6 +319,7 @@ public class MeasurementsService : IMeasurementsService
         {
             var measurement = await _context.Measurements.FindAsync(id);
             if (measurement == null) throw new ArgumentException("Measurement not found");
+            if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
 
             measurement.Comments = dto.Comments;
             measurement.UseDefaultEquipment = dto.UseDefaultEquipment;
@@ -351,17 +353,17 @@ public class MeasurementsService : IMeasurementsService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            var measurement = await _context.Measurements.FindAsync(id);
+            if (measurement == null) throw new ArgumentException("Measurement not found");
+            if (measurement.IsReadonly) throw new InvalidOperationException("Cannot delete a readonly measurement.");
+
             var tests = await _context.MeasurementTests.Where(mt => mt.MeasurementId == id).ToListAsync();
             _context.MeasurementTests.RemoveRange(tests);
 
             var params_ = await _context.MeasurementParams.Where(mp => mp.MeasurementId == id).ToListAsync();
             _context.MeasurementParams.RemoveRange(params_);
 
-            var measurement = await _context.Measurements.FindAsync(id);
-            if (measurement != null)
-            {
-                _context.Measurements.Remove(measurement);
-            }
+            _context.Measurements.Remove(measurement);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -449,6 +451,10 @@ public class MeasurementsService : IMeasurementsService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            var measurement = await _context.Measurements.FindAsync(id);
+            if (measurement == null) throw new ArgumentException("Measurement not found");
+            if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
+
             var testInfo = await _context.Tests.FindAsync(dto.TestId);
             var isArray = testInfo?.IsArray ?? false;
 
@@ -779,6 +785,7 @@ public class MeasurementsService : IMeasurementsService
     {
         var measurement = await _context.Measurements.Include(m => m.ControlCodes).FirstOrDefaultAsync(m => m.Id == id);
         if (measurement == null) throw new ArgumentException("Measurement not found");
+        if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
 
         measurement.ControlCodes.Clear();
 
@@ -844,6 +851,7 @@ public class MeasurementsService : IMeasurementsService
     {
         var measurement = await _context.Measurements.Include(m => m.Equipment).FirstOrDefaultAsync(m => m.Id == id);
         if (measurement == null) throw new ArgumentException("Measurement not found");
+        if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
 
         measurement.Equipment.Clear();
 
@@ -860,6 +868,7 @@ public class MeasurementsService : IMeasurementsService
     {
         var measurement = await _context.Measurements.Include(m => m.SopVersions).FirstOrDefaultAsync(m => m.Id == id);
         if (measurement == null) throw new ArgumentException("Measurement not found");
+        if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
 
         measurement.SopVersions.Clear();
 
@@ -895,6 +904,7 @@ public class MeasurementsService : IMeasurementsService
         {
             throw new ArgumentException("Form not associated with this measurement");
         }
+        if (measurement.IsReadonly) throw new InvalidOperationException("Cannot modify a readonly measurement.");
         var formId = measurement.FormId.Value;
 
         // Ensure is_reported is set to false, UserReportedId is cleared, and DateReported is cleared when saving measurement params

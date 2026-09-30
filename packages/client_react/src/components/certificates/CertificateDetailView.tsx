@@ -9,6 +9,7 @@ import {
 } from '@/components/common/ui';
 import CommentDialog from '@/components/common/CommentDialog';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
+import NotificationDialog from '@/components/common/NotificationDialog';
 import SpecificationDetailView from '@/components/specifications/SpecificationDetailView';
 import ReportDetailView from '@/components/reports/ReportDetailView';
 import CertificateSubmitDialog from './CertificateSubmitDialog';
@@ -149,8 +150,10 @@ const CertificateDetailView: React.FC<Props> = ({
       setAnalysisResultMessage(null);
       setSignatureRefreshKey(prev => prev + 1);
       await fetchCertificate();
-    } catch (err) {
-      console.error('Error submitting certificate:', err);
+    } catch (err: any) {
+      setShowSubmitDialog(false);
+      setShowConfirmReplace(false);
+      setErrorMessage(err.message || 'Error submitting certificate');
     }
   };
 
@@ -470,6 +473,13 @@ const CertificateDetailView: React.FC<Props> = ({
             breadcrumbs={[...breadcrumbs, `Certificate ${certificate?.id}`]}
           />
         )}
+
+        <NotificationDialog 
+          open={!!errorMessage}
+          title="Cannot Complete Operation"
+          message={errorMessage || ""}
+          onClose={() => setErrorMessage(null)}
+        />
       </DetailViewContent>
     </DetailView>
   );
