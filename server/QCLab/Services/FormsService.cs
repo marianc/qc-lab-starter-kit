@@ -940,7 +940,7 @@ public class FormsService : IFormsService
     }
 
     // PUT /forms/{id}/cancel
-    public async Task CancelForm(long id, FormActionDto dto, long userId)
+    public async Task CancelForm(long id, FormActionDto dto, long userId, string clientIp = "127.0.0.1")
     {
         if (userId <= 0) throw new ArgumentException("User ID is required for cancellation");
 
@@ -954,6 +954,14 @@ public class FormsService : IFormsService
         form.CommentsCancelled = dto.CommentsCancelled;
 
         await SaveChangesWithDetailedException();
+
+        await _signatureService.SignEntityAsync(
+            "forms",
+            id,
+            userId,
+            "Cancellation",
+            clientIp,
+            dto.CommentsCancelled);
     }
 
     // PUT /forms/{id}/reactivate

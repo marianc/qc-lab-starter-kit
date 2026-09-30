@@ -17,7 +17,7 @@ namespace QCLab.Client.Services.Interfaces
         Task DeleteFormParam(long id, long testId);
         Task SubmitForm(long id, FormActionDto dto, long userId);
         Task ValidateForm(long id, FormActionDto dto, long userId, string clientIp = "127.0.0.1");
-        Task CancelForm(long id, FormActionDto dto, long userId);
+        Task CancelForm(long id, FormActionDto dto, long userId, string clientIp = "127.0.0.1");
         Task ReactivateForm(long id);
         Task<IdDto> DuplicateForm(long id, FormActionDto dto, long userId);
         Task ValidateFormula(long formId, long testId, bool isCalculated, string? formula);

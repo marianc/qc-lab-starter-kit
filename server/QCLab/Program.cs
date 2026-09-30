@@ -389,7 +389,8 @@ namespace QCLab
             {
                 try {
                     long userId = QCLab.Utils.AuthUtils.GetCurrentUserId(httpContext);
-                    await s.CancelForm(id, dto, userId);
+                    var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    await s.CancelForm(id, dto, userId, clientIp);
                     return Results.Ok();
                 }
                 catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
