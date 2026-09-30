@@ -398,6 +398,9 @@ public class SpecsService : ISpecsService
     {
         var spec = await _context.Specs.FindAsync(id);
         if (spec == null) throw new ArgumentException("Specification not found");
+        if (spec.IsCancelled) throw new InvalidOperationException("Specification already cancelled");
+
+        await ValidateSpecCancellationAsync(spec);
 
         spec.IsCancelled = true;
         spec.UserCancelledId = userId;
@@ -413,6 +416,35 @@ public class SpecsService : ISpecsService
             "Cancellation",
             clientIp,
             dto.CommentsCancelled);
+    }
+
+    private async Task ValidateSpecCancellationAsync(Spec spec)
+    {
+        // 1. Check if the current specification is submitted (a draft specification can not be canceled)
+        if (!spec.IsSubmitted)
+        {
+            throw new InvalidOperationException("A draft specification cannot be canceled.");
+        }
+
+        // 2. Check if there is another valid specification for the same material.
+        var otherValidSpecExists = await _context.Specs
+            .AnyAsync(s => s.MaterialId == spec.MaterialId && s.Id != spec.Id && s.IsSubmitted && !s.IsCancelled);
+
+        if (otherValidSpecExists)
+        {
+            return;
+        }
+
+        // 3. Check if there is any reception of type_id = 1 (certification type), submitted and received,
+        // of any lot (control_code_id) from the current material, which does not have any valid certificate of analysis.
+        var ongoingReceptionExists = await _context.Receptions
+            .Where(r => r.TypeId == 1 && r.IsSubmitted && r.IsReceived && r.ControlCode != null && r.ControlCode.MaterialId == spec.MaterialId)
+            .AnyAsync(r => !_context.Certificates.Any(c => c.ControlCodeId == r.ControlCodeId && c.IsSubmitted && !c.IsCancelled));
+
+        if (ongoingReceptionExists)
+        {
+            throw new InvalidOperationException("Cannot cancel this specification because it is the only valid specification for this material and there are receptions with ongoing testing that require a valid specification to issue a certificate of analysis.");
+        }
     }
 
     // POST /specs/{id}/duplicate

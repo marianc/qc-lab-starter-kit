@@ -11,7 +11,7 @@ import {
   DialogContent,
   DialogFooter
 } from '@/components/common/ui';
-import { ConfirmationDialog, CommentDialog } from '@/components/common';
+import { ConfirmationDialog, CommentDialog, NotificationDialog } from '@/components/common';
 import SpecTestDialog from './SpecTestDialog';
 import SignatureManifestBlock from '@/components/common/SignatureManifestBlock';
 import styles from './SpecificationDetailView.module.css';
@@ -201,13 +201,18 @@ const SpecificationDetailView: React.FC<Props> = ({
 
   const handleCancelSpec = async (reason: string) => {
     if (!spec) return;
-    await specificationsService.cancelSpec(spec.id, { 
-      commentsCancelled: reason,
-      commentsSubmitted: null
-    });
-    setShowCancelDialog(false);
-    setSignatureRefreshKey(prev => prev + 1);
-    await loadData();
+    try {
+      await specificationsService.cancelSpec(spec.id, { 
+        commentsCancelled: reason,
+        commentsSubmitted: null
+      });
+      setShowCancelDialog(false);
+      setSignatureRefreshKey(prev => prev + 1);
+      await loadData();
+    } catch (err: any) {
+      setShowCancelDialog(false);
+      setErrorMessage(err.message || 'Failed to cancel specification');
+    }
   };
 
   const handleDuplicateSpec = async () => {
@@ -432,6 +437,13 @@ const SpecificationDetailView: React.FC<Props> = ({
           message="Are you sure you want to remove this test from the specification?"
           onConfirm={handleConfirmDeleteSpecTest}
           onCancel={() => setShowConfirmDeleteSpecTest(false)}
+        />
+
+        <NotificationDialog 
+          open={!!errorMessage}
+          title="Cannot Complete Operation"
+          message={errorMessage || ""}
+          onClose={() => setErrorMessage(null)}
         />
       </DetailViewContent>
     </DetailView>
