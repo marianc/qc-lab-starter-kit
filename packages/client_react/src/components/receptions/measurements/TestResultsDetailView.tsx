@@ -57,6 +57,8 @@ const TestResultsDetailView: React.FC<Props> = ({
   const [applicableSopVersions, setApplicableSopVersions] = useState<SopVersionSelectItem[]>([]);
   const [applicableReagentLots, setApplicableReagentLots] = useState<MeasurementApplicableReagentLotDto[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showConfirmDeleteTest, setShowConfirmDeleteTest] = useState(false);
+  const [testToDelete, setTestToDelete] = useState<MeasurementTestDto | null>(null);
   const [editableTest, setEditableTest] = useState<MeasurementTestDto | undefined>();
 
   useEffect(() => {
@@ -205,12 +207,13 @@ const TestResultsDetailView: React.FC<Props> = ({
     }
   };
 
-  const deleteTest = async (testToDelete: MeasurementTestDto) => {
-    if (!measurement || !currentUser) return;
-    if (measurement.tests?.length === 1) {
-      setShowDeleteConfirmation(true);
-      return;
-    }
+  const promptDeleteTest = (test: MeasurementTestDto) => {
+    setTestToDelete(test);
+    setShowConfirmDeleteTest(true);
+  };
+
+  const handleDeleteTestConfirm = async () => {
+    if (!measurement || !currentUser || !testToDelete) return;
 
     try {
       const newTests = measurement.tests?.filter(t => t.testId !== testToDelete.testId);
@@ -220,9 +223,13 @@ const TestResultsDetailView: React.FC<Props> = ({
         isReported: measurement.isReported,
         tests: newTests
       });
+      setShowConfirmDeleteTest(false);
+      setTestToDelete(null);
       fetchMeasurement();
     } catch (err) {
       console.error('Failed to delete test:', err);
+      setShowConfirmDeleteTest(false);
+      setTestToDelete(null);
     }
   };
 
@@ -314,7 +321,7 @@ const TestResultsDetailView: React.FC<Props> = ({
                   {!measurement.isReadonly && (
                     <td>
                       <button onClick={() => openEditDialog(test)} className="action-button edit-button small-button">Edit</button>
-                      <button onClick={() => deleteTest(test)} className="action-button delete-button small-button">Delete</button>
+                      <button onClick={() => promptDeleteTest(test)} className="action-button delete-button small-button">Delete</button>
                     </td>
                   )}
                 </tr>
@@ -448,6 +455,17 @@ const TestResultsDetailView: React.FC<Props> = ({
           message="Are you sure you want to delete this measurement and all its tests?"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteConfirmation(false)}
+        />
+
+        <ConfirmationDialog 
+          open={showConfirmDeleteTest}
+          title="Delete Test"
+          message="Are you sure you want to delete this test?"
+          onConfirm={handleDeleteTestConfirm}
+          onCancel={() => {
+            setShowConfirmDeleteTest(false);
+            setTestToDelete(null);
+          }}
         />
       </DetailViewContent>
     </DetailView>
