@@ -1,5 +1,6 @@
-.arrayItemList {
-    margin-bottom: 10px;
+.arrayItemList,
+ul.arrayItemList {
+    margin-bottom: 3px !important;
 }
 
 .arrayItem {

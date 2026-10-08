@@ -1,0 +1,68 @@
+.dialogWide {
+  width: 600px;
+  max-width: 95vw;
+}
+
+.testRow {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border, #eee);
+}
+
+.testRow:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  font-size: 0.95rem;
+  color: var(--color-text, #333);
+}
+
+.arrayItemList,
+ul.arrayItemList {
+  margin-bottom: 3px !important;
+}
+
+.arrayItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+}
+
+.arrayItemActions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.arrayInputContainer {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.arrayInput {
+  flex: 1;
+}
+
+.dragHandle {
+  cursor: grab;
+  user-select: none;
+  padding: 0 4px;
+}
+
+.dragging {
+  opacity: 0.5;
+}
+
+.noTestsMessage {
+  padding: 1rem 0;
+  color: var(--color-text-secondary, #666);
+  font-style: italic;
+}

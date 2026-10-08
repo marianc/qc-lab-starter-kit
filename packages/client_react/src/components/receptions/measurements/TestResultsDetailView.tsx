@@ -14,6 +14,7 @@ import SelectDialog from '@/components/common/SelectDialog';
 import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
 import SelectReagentLotsDialog from './SelectReagentLotsDialog';
 import MeasurementTestDialog from './MeasurementTestDialog';
+import MeasurementMultipleTestsDialog from './MeasurementMultipleTestsDialog';
 import type { TestDto, TestEquipmentDto } from '@/types/test';
 import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
@@ -50,6 +51,7 @@ const TestResultsDetailView: React.FC<Props> = ({
   const [associatedReagentLots, setAssociatedReagentLots] = useState<MeasurementReagentLotDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showMultipleDialog, setShowMultipleDialog] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
   const [showSopVersionsDialog, setShowSopVersionsDialog] = useState(false);
@@ -207,6 +209,32 @@ const TestResultsDetailView: React.FC<Props> = ({
     }
   };
 
+  const handleSaveMultipleTests = async (updatedTests: MeasurementTestDto[]) => {
+    if (!measurement || !currentUser) return;
+
+    try {
+      if (updatedTests.length === 0) {
+        // If all values were deleted/cleared, delete the entire measurement and close the detail view
+        await measurementsService.deleteMeasurement(measurement.id);
+        setShowMultipleDialog(false);
+        onClose();
+        return;
+      }
+
+      await measurementsService.updateMeasurementTest(measurement.id, {
+        comments: measurement.comments || null,
+        useDefaultEquipment: measurement.useDefaultEquipment,
+        isReported: measurement.isReported,
+        tests: updatedTests
+      });
+
+      setShowMultipleDialog(false);
+      fetchMeasurement();
+    } catch (err) {
+      console.error('Failed to save multiple tests:', err);
+    }
+  };
+
   const promptDeleteTest = (test: MeasurementTestDto) => {
     setTestToDelete(test);
     setShowConfirmDeleteTest(true);
@@ -216,7 +244,16 @@ const TestResultsDetailView: React.FC<Props> = ({
     if (!measurement || !currentUser || !testToDelete) return;
 
     try {
-      const newTests = measurement.tests?.filter(t => t.testId !== testToDelete.testId);
+      const newTests = measurement.tests?.filter(t => t.testId !== testToDelete.testId) || [];
+      if (newTests.length === 0) {
+        // On deleting the last test record, delete the entire measurement and close detail view
+        await measurementsService.deleteMeasurement(measurement.id);
+        setShowConfirmDeleteTest(false);
+        setTestToDelete(null);
+        onClose();
+        return;
+      }
+
       await measurementsService.updateMeasurementTest(measurement.id, {
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
@@ -295,7 +332,10 @@ const TestResultsDetailView: React.FC<Props> = ({
 
           <h2 className="section-title">Tests</h2>
           {!measurement.isReadonly && (
-            <button onClick={openAddDialog} className="action-button primary add-test-button">Add Test</button>
+            <div className={styles.testsButtonsContainer}>
+              <button onClick={openAddDialog} className="action-button primary">Add Test</button>
+              <button onClick={() => setShowMultipleDialog(true)} className="action-button primary">Edit Multiple Tests</button>
+            </div>
           )}
           <table className="data-table">
             <thead>
@@ -400,6 +440,18 @@ const TestResultsDetailView: React.FC<Props> = ({
             onSave={handleSaveTest}
             onClose={() => setShowDialog(false)}
             isEditMode={editableTest?.testId !== 0}
+          />
+        )}
+
+        {showMultipleDialog && (
+          <MeasurementMultipleTestsDialog
+            open={true}
+            applicableTests={applicableTests}
+            allTests={allTests}
+            existingTests={measurement.tests}
+            onSave={handleSaveMultipleTests}
+            onClose={() => setShowMultipleDialog(false)}
+            isEditMode={true}
           />
         )}
 

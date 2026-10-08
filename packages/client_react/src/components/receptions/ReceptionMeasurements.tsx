@@ -4,6 +4,7 @@ import Accordion from '@/components/common/ui/Accordion';
 import AccordionItem from '@/components/common/ui/AccordionItem';
 import NotificationDialog from '@/components/common/NotificationDialog';
 import MeasurementTestDialog from './measurements/MeasurementTestDialog';
+import MeasurementMultipleTestsDialog from './measurements/MeasurementMultipleTestsDialog';
 import TestResultsDetailView from './measurements/TestResultsDetailView';
 import TestFormDetailView from './measurements/TestFormDetailView';
 // Custom forms would be imported here
@@ -44,6 +45,7 @@ const ReceptionMeasurements: React.FC<Props> = ({
   const [applicableTests, setApplicableTests] = useState<{id: number, name: string}[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<number>(0);
   const [showAddTestDialog, setShowAddTestDialog] = useState(false);
+  const [showAddMultipleTestsDialog, setShowAddMultipleTestsDialog] = useState(false);
   const [detailViewConfig, setDetailViewConfig] = useState<DetailViewConfig | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -234,6 +236,36 @@ const ReceptionMeasurements: React.FC<Props> = ({
     }
   };
 
+  const handleSaveMultipleTests = async (tests: MeasurementTestDto[]) => {
+    if (!currentUser) return;
+    setErrorMessage(null);
+    if (tests.length === 0) {
+      setShowAddMultipleTestsDialog(false);
+      return;
+    }
+
+    try {
+      const res = await measurementsService.createMeasurement({
+        receptionId: reception.id,
+        isReported: false,
+        comments: null,
+        formId: null
+      });
+
+      await measurementsService.updateMeasurementTest(res.id, {
+        comments: null,
+        useDefaultEquipment: true,
+        isReported: false,
+        tests
+      });
+
+      setShowAddMultipleTestsDialog(false);
+      fetchMeasurements();
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    }
+  };
+
   const renderDetailView = () => {
     if (!detailViewConfig) return null;
 
@@ -272,7 +304,14 @@ const ReceptionMeasurements: React.FC<Props> = ({
   return (
     <div className={styles.receptionMeasurements}>
       <div className={styles.formGroup}>
-        <button onClick={() => { setErrorMessage(null); setShowAddTestDialog(true); }} className="action-button primary">Add Test Results</button>
+        <div className={styles.actionButtonsRow}>
+          <button onClick={() => { setErrorMessage(null); setShowAddTestDialog(true); }} className="action-button primary">
+            Add Test Results
+          </button>
+          <button onClick={() => { setErrorMessage(null); setShowAddMultipleTestsDialog(true); }} className="action-button primary">
+            Add Multiple Test Results
+          </button>
+        </div>
         <h3>Test Results</h3>
         {measurementTests.length > 0 ? (
           <table className="data-table">
@@ -505,6 +544,16 @@ const ReceptionMeasurements: React.FC<Props> = ({
           allTests={allTests}
           onSave={handleSaveNewTest}
           onClose={() => setShowAddTestDialog(false)}
+        />
+      )}
+
+      {showAddMultipleTestsDialog && (
+        <MeasurementMultipleTestsDialog
+          open={true}
+          applicableTests={applicableTests}
+          allTests={allTests}
+          onSave={handleSaveMultipleTests}
+          onClose={() => setShowAddMultipleTestsDialog(false)}
         />
       )}
 
