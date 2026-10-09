@@ -27,6 +27,11 @@ public partial class Test
 
     public decimal? DefaultCoverageFactorK { get; set; }
 
+    /// <summary>
+    /// Enforces that data entered into this template field during validation must map to an active CRM parameter row.
+    /// </summary>
+    public bool ForCertifiedReference { get; set; }
+
     public long? UnitId { get; set; }
 
     public long? NormId { get; set; }
@@ -62,6 +67,8 @@ public partial class Test
     public virtual ICollection<MeasurementTest> MeasurementTests { get; set; } = new List<MeasurementTest>();
 
     public virtual Norm? Norm { get; set; }
+
+    public virtual ICollection<ReagentSupplierLotCertTest> ReagentSupplierLotCertTests { get; set; } = new List<ReagentSupplierLotCertTest>();
 
     public virtual ICollection<ReportTest> ReportTests { get; set; } = new List<ReportTest>();
 

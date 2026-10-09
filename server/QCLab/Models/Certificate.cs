@@ -41,6 +41,8 @@ public partial class Certificate
 
     public virtual ICollection<Certificate> InverseCertificateReplaced { get; set; } = new List<Certificate>();
 
+    public virtual ICollection<MeasurementParam> MeasurementParams { get; set; } = new List<MeasurementParam>();
+
     public virtual Spec Spec { get; set; } = null!;
 
     public virtual User? UserCancelled { get; set; }

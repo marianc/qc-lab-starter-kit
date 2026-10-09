@@ -65,6 +65,8 @@ public partial class QualityControlContext : DbContext
 
     public virtual DbSet<ReagentSupplierLot> ReagentSupplierLots { get; set; }
 
+    public virtual DbSet<ReagentSupplierLotCertTest> ReagentSupplierLotCertTests { get; set; }
+
     public virtual DbSet<Reception> Receptions { get; set; }
 
     public virtual DbSet<ReceptionType> ReceptionTypes { get; set; }
@@ -664,6 +666,9 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateObsolete).HasColumnName("date_obsolete");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.IsCertifiedReference)
+                .HasComment("Flags whether this material requires strict metrological traceability and certificate validation (CRM vs generic reagent).")
+                .HasColumnName("is_certified_reference");
             entity.Property(e => e.IsObsolete).HasColumnName("is_obsolete");
             entity.Property(e => e.IsProduct).HasColumnName("is_product");
             entity.Property(e => e.IsRawMaterial).HasColumnName("is_raw_material");
@@ -810,6 +815,12 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.FormId).HasColumnName("form_id");
             entity.Property(e => e.TestId).HasColumnName("test_id");
             entity.Property(e => e.Idx).HasColumnName("idx");
+            entity.Property(e => e.CertifiedReferenceCertificateId)
+                .HasComment("Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.")
+                .HasColumnName("certified_reference_certificate_id");
+            entity.Property(e => e.CertifiedReferenceControlCodeId)
+                .HasComment("Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.")
+                .HasColumnName("certified_reference_control_code_id");
             entity.Property(e => e.DateCreated)
                 .HasDefaultValueSql("clock_timestamp()")
                 .HasColumnName("date_created");
@@ -818,6 +829,14 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.UserCreatedId).HasColumnName("user_created_id");
             entity.Property(e => e.UserUpdatedId).HasColumnName("user_updated_id");
             entity.Property(e => e.Value).HasColumnName("value");
+
+            entity.HasOne(d => d.CertifiedReferenceCertificate).WithMany(p => p.MeasurementParams)
+                .HasForeignKey(d => d.CertifiedReferenceCertificateId)
+                .HasConstraintName("measurement_params_certified_reference_certificate_id_fkey");
+
+            entity.HasOne(d => d.CertifiedReferenceControlCode).WithMany(p => p.MeasurementParams)
+                .HasForeignKey(d => d.CertifiedReferenceControlCodeId)
+                .HasConstraintName("measurement_params_certified_reference_control_code_id_fkey");
 
             entity.HasOne(d => d.Form).WithMany(p => p.MeasurementParams)
                 .HasForeignKey(d => d.FormId)
@@ -1033,6 +1052,8 @@ public partial class QualityControlContext : DbContext
             entity.Property(e => e.Comments)
                 .HasMaxLength(255)
                 .HasColumnName("comments");
+            entity.Property(e => e.DateReadonly).HasColumnName("date_readonly");
+            entity.Property(e => e.IsReadonly).HasColumnName("is_readonly");
             entity.Property(e => e.ManufacturerLotNumber)
                 .HasMaxLength(50)
                 .HasColumnName("manufacturer_lot_number");
@@ -1047,6 +1068,32 @@ public partial class QualityControlContext : DbContext
                 .HasForeignKey(d => d.SupplierId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reagent_supplier_lots_supplier_id_fkey");
+        });
+
+        modelBuilder.Entity<ReagentSupplierLotCertTest>(entity =>
+        {
+            entity.HasKey(e => e.ControlCodeId).HasName("reagent_supplier_lot_cert_tests_pkey");
+
+            entity.ToTable("reagent_supplier_lot_cert_tests");
+
+            entity.Property(e => e.ControlCodeId)
+                .ValueGeneratedNever()
+                .HasColumnName("control_code_id");
+            entity.Property(e => e.CoverageFactorK).HasColumnName("coverage_factor_k");
+            entity.Property(e => e.TestId).HasColumnName("test_id");
+            entity.Property(e => e.TraceabilityStatement).HasColumnName("traceability_statement");
+            entity.Property(e => e.UncertaintyValue).HasColumnName("uncertainty_value");
+            entity.Property(e => e.Value).HasColumnName("value");
+
+            entity.HasOne(d => d.ControlCode).WithOne(p => p.ReagentSupplierLotCertTest)
+                .HasForeignKey<ReagentSupplierLotCertTest>(d => d.ControlCodeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_supplier_lot_cert_tests_control_code_id_fkey");
+
+            entity.HasOne(d => d.Test).WithMany(p => p.ReagentSupplierLotCertTests)
+                .HasForeignKey(d => d.TestId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("reagent_supplier_lot_cert_tests_test_id_fkey");
         });
 
         modelBuilder.Entity<Reception>(entity =>
@@ -1389,6 +1436,9 @@ public partial class QualityControlContext : DbContext
                 .HasColumnName("default_coverage_factor_k");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ForCertification).HasColumnName("for_certification");
+            entity.Property(e => e.ForCertifiedReference)
+                .HasComment("Enforces that data entered into this template field during validation must map to an active CRM parameter row.")
+                .HasColumnName("for_certified_reference");
             entity.Property(e => e.ForEnvironmentalControl).HasColumnName("for_environmental_control");
             entity.Property(e => e.IsArray).HasColumnName("is_array");
             entity.Property(e => e.IsFormValidated).HasColumnName("is_form_validated");

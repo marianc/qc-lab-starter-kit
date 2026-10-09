@@ -21,6 +21,11 @@ public partial class Material
 
     public bool IsReagent { get; set; }
 
+    /// <summary>
+    /// Flags whether this material requires strict metrological traceability and certificate validation (CRM vs generic reagent).
+    /// </summary>
+    public bool IsCertifiedReference { get; set; }
+
     public string? CasNumber { get; set; }
 
     public DateTime DateCreated { get; set; }

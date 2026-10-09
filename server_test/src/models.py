@@ -343,6 +343,7 @@ class Materials(Base):
     is_product: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_raw_material: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     is_reagent: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    is_certified_reference: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'), comment='Flags whether this material requires strict metrological traceability and certificate validation (CRM vs generic reagent).')
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
     is_obsolete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     description: Mapped[Optional[str]] = mapped_column(Text)
@@ -507,6 +508,7 @@ class Tests(Base):
     is_param: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     for_environmental_control: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     for_certification: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
+    for_certified_reference: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'), comment='Enforces that data entered into this template field during validation must map to an active CRM parameter row.')
     is_form_validated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     nr_ord: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text('0'))
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
@@ -539,6 +541,7 @@ class Tests(Base):
     spec_test_evals: Mapped[list['SpecTestEvals']] = relationship('SpecTestEvals', back_populates='test')
     measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='test')
     measurement_tests: Mapped[list['MeasurementTests']] = relationship('MeasurementTests', back_populates='test')
+    reagent_supplier_lot_cert_tests: Mapped[list['ReagentSupplierLotCertTests']] = relationship('ReagentSupplierLotCertTests', back_populates='test')
     report_tests: Mapped[list['ReportTests']] = relationship('ReportTests', back_populates='test')
     certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='test')
 
@@ -585,6 +588,7 @@ class Certificates(Base):
     spec: Mapped['Specs'] = relationship('Specs', back_populates='certificates')
     user_cancelled: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_cancelled_id], back_populates='certificates_user_cancelled')
     user_submitted: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_submitted_id], back_populates='certificates_user_submitted')
+    measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='certified_reference_certificate')
     certificate_tests: Mapped[list['CertificateTests']] = relationship('CertificateTests', back_populates='certificate')
 
 
@@ -859,11 +863,14 @@ class ReagentSupplierLots(ReagentLots):
     control_code_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     supplier_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     manufacturer_lot_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     catalog_number: Mapped[Optional[str]] = mapped_column(String(50))
     certificate_of_analysis_ref: Mapped[Optional[str]] = mapped_column(String(255))
     comments: Mapped[Optional[str]] = mapped_column(String(255))
+    date_readonly: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
     supplier: Mapped['ReagentSuppliers'] = relationship('ReagentSuppliers', back_populates='reagent_supplier_lots')
+    measurement_params: Mapped[list['MeasurementParams']] = relationship('MeasurementParams', back_populates='certified_reference_control_code')
 
 
 t_reception_tests = Table(
@@ -943,6 +950,8 @@ t_measurement_equipments = Table(
 class MeasurementParams(Base):
     __tablename__ = 'measurement_params'
     __table_args__ = (
+        ForeignKeyConstraint(['certified_reference_certificate_id'], ['certificates.id'], name='measurement_params_certified_reference_certificate_id_fkey'),
+        ForeignKeyConstraint(['certified_reference_control_code_id'], ['reagent_supplier_lots.control_code_id'], name='measurement_params_certified_reference_control_code_id_fkey'),
         ForeignKeyConstraint(['form_id', 'test_id'], ['form_params.form_id', 'form_params.test_id'], name='measurement_params_form_id_test_id_fkey'),
         ForeignKeyConstraint(['form_id'], ['forms.id'], name='measurement_params_form_id_fkey'),
         ForeignKeyConstraint(['measurement_id'], ['measurements.id'], ondelete='CASCADE', name='measurement_params_measurement_id_fkey'),
@@ -960,9 +969,13 @@ class MeasurementParams(Base):
     is_conforming_condition: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     user_created_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('clock_timestamp()'))
+    certified_reference_certificate_id: Mapped[Optional[int]] = mapped_column(BigInteger, comment='Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.')
+    certified_reference_control_code_id: Mapped[Optional[int]] = mapped_column(BigInteger, comment='Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.')
     user_updated_id: Mapped[Optional[int]] = mapped_column(BigInteger)
     date_updated: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
 
+    certified_reference_certificate: Mapped[Optional['Certificates']] = relationship('Certificates', back_populates='measurement_params')
+    certified_reference_control_code: Mapped[Optional['ReagentSupplierLots']] = relationship('ReagentSupplierLots', back_populates='measurement_params')
     form_params: Mapped['FormParams'] = relationship('FormParams', back_populates='measurement_params')
     form: Mapped['Forms'] = relationship('Forms', back_populates='measurement_params')
     measurement: Mapped['Measurements'] = relationship('Measurements', back_populates='measurement_params')
@@ -1015,6 +1028,24 @@ class MeasurementTests(Base):
     test: Mapped['Tests'] = relationship('Tests', back_populates='measurement_tests')
     user_created: Mapped['Users'] = relationship('Users', foreign_keys=[user_created_id], back_populates='measurement_tests_user_created')
     user_updated: Mapped[Optional['Users']] = relationship('Users', foreign_keys=[user_updated_id], back_populates='measurement_tests_user_updated')
+
+
+class ReagentSupplierLotCertTests(ReagentSupplierLots):
+    __tablename__ = 'reagent_supplier_lot_cert_tests'
+    __table_args__ = (
+        ForeignKeyConstraint(['control_code_id'], ['reagent_supplier_lots.control_code_id'], name='reagent_supplier_lot_cert_tests_control_code_id_fkey'),
+        ForeignKeyConstraint(['test_id'], ['tests.id'], name='reagent_supplier_lot_cert_tests_test_id_fkey'),
+        PrimaryKeyConstraint('control_code_id', name='reagent_supplier_lot_cert_tests_pkey')
+    )
+
+    control_code_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    test_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    value: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    uncertainty_value: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    coverage_factor_k: Mapped[Optional[decimal.Decimal]] = mapped_column(Numeric)
+    traceability_statement: Mapped[Optional[str]] = mapped_column(Text)
+
+    test: Mapped['Tests'] = relationship('Tests', back_populates='reagent_supplier_lot_cert_tests')
 
 
 class ReportTests(Base):

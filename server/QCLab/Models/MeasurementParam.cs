@@ -17,6 +17,16 @@ public partial class MeasurementParam
 
     public bool IsConformingCondition { get; set; }
 
+    /// <summary>
+    /// Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.
+    /// </summary>
+    public long? CertifiedReferenceCertificateId { get; set; }
+
+    /// <summary>
+    /// Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.
+    /// </summary>
+    public long? CertifiedReferenceControlCodeId { get; set; }
+
     public long? UserUpdatedId { get; set; }
 
     public DateTime? DateUpdated { get; set; }
@@ -24,6 +34,10 @@ public partial class MeasurementParam
     public long UserCreatedId { get; set; }
 
     public DateTime DateCreated { get; set; }
+
+    public virtual Certificate? CertifiedReferenceCertificate { get; set; }
+
+    public virtual ReagentSupplierLot? CertifiedReferenceControlCode { get; set; }
 
     public virtual Form Form { get; set; } = null!;
 

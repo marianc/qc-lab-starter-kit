@@ -613,6 +613,7 @@ CREATE TABLE public.materials (
     is_product boolean DEFAULT false NOT NULL,
     is_raw_material boolean DEFAULT false NOT NULL,
     is_reagent boolean DEFAULT false NOT NULL,
+    is_certified_reference boolean DEFAULT false NOT NULL,
     cas_number character varying(20),
     date_created timestamp with time zone NOT NULL,
     is_obsolete boolean DEFAULT false NOT NULL,
@@ -622,6 +623,13 @@ CREATE TABLE public.materials (
 
 
 ALTER TABLE public.materials OWNER TO postgres;
+
+--
+-- Name: COLUMN materials.is_certified_reference; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.materials.is_certified_reference IS 'Flags whether this material requires strict metrological traceability and certificate validation (CRM vs generic reagent).';
+
 
 --
 -- Name: materials_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -698,6 +706,8 @@ CREATE TABLE public.measurement_params (
     idx integer DEFAULT 0 NOT NULL,
     value numeric NOT NULL,
     is_conforming_condition boolean DEFAULT false NOT NULL,
+    certified_reference_certificate_id bigint,
+    certified_reference_control_code_id bigint,
     user_updated_id bigint,
     date_updated timestamp with time zone,
     user_created_id bigint NOT NULL,
@@ -706,6 +716,20 @@ CREATE TABLE public.measurement_params (
 
 
 ALTER TABLE public.measurement_params OWNER TO postgres;
+
+--
+-- Name: COLUMN measurement_params.certified_reference_certificate_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.measurement_params.certified_reference_certificate_id IS 'Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.';
+
+
+--
+-- Name: COLUMN measurement_params.certified_reference_control_code_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.measurement_params.certified_reference_control_code_id IS 'Foreign key pointing to the certified parameter value pulled from the active CRM inventory lot for tracking.';
+
 
 --
 -- Name: measurement_reagent_lots; Type: TABLE; Schema: public; Owner: postgres
@@ -823,6 +847,22 @@ CREATE TABLE public.reagent_production_lots (
 ALTER TABLE public.reagent_production_lots OWNER TO postgres;
 
 --
+-- Name: reagent_supplier_lot_cert_tests; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reagent_supplier_lot_cert_tests (
+    control_code_id bigint NOT NULL,
+    test_id bigint NOT NULL,
+    value numeric NOT NULL,
+    uncertainty_value numeric,
+    coverage_factor_k numeric,
+    traceability_statement text
+);
+
+
+ALTER TABLE public.reagent_supplier_lot_cert_tests OWNER TO postgres;
+
+--
 -- Name: reagent_supplier_lots; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -832,7 +872,9 @@ CREATE TABLE public.reagent_supplier_lots (
     catalog_number character varying(50),
     manufacturer_lot_number character varying(50) NOT NULL,
     certificate_of_analysis_ref character varying(255),
-    comments character varying(255)
+    comments character varying(255),
+    is_readonly boolean DEFAULT false NOT NULL,
+    date_readonly timestamp with time zone
 );
 
 
@@ -1194,6 +1236,7 @@ CREATE TABLE public.tests (
     for_certification boolean DEFAULT false NOT NULL,
     relative_uncertainty_pct numeric(5,2),
     default_coverage_factor_k numeric(3,1),
+    for_certified_reference boolean DEFAULT false NOT NULL,
     unit_id bigint,
     norm_id bigint,
     norm_ref character varying(50),
@@ -1209,6 +1252,13 @@ CREATE TABLE public.tests (
 
 
 ALTER TABLE public.tests OWNER TO postgres;
+
+--
+-- Name: COLUMN tests.for_certified_reference; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.tests.for_certified_reference IS 'Enforces that data entered into this template field during validation must map to an active CRM parameter row.';
+
 
 --
 -- Name: tests_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -1644,6 +1694,14 @@ ALTER TABLE ONLY public.reagent_lots
 
 ALTER TABLE ONLY public.reagent_production_lots
     ADD CONSTRAINT reagent_production_lots_pkey PRIMARY KEY (control_code_id, ingredient_control_code_id);
+
+
+--
+-- Name: reagent_supplier_lot_cert_tests reagent_supplier_lot_cert_tests_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lot_cert_tests
+    ADD CONSTRAINT reagent_supplier_lot_cert_tests_pkey PRIMARY KEY (control_code_id);
 
 
 --
@@ -2259,6 +2317,22 @@ ALTER TABLE ONLY public.measurement_equipments
 
 
 --
+-- Name: measurement_params measurement_params_certified_reference_certificate_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_params
+    ADD CONSTRAINT measurement_params_certified_reference_certificate_id_fkey FOREIGN KEY (certified_reference_certificate_id) REFERENCES public.certificates(id) NOT VALID;
+
+
+--
+-- Name: measurement_params measurement_params_certified_reference_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.measurement_params
+    ADD CONSTRAINT measurement_params_certified_reference_control_code_id_fkey FOREIGN KEY (certified_reference_control_code_id) REFERENCES public.reagent_supplier_lots(control_code_id) NOT VALID;
+
+
+--
 -- Name: measurement_params measurement_params_form_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2456,6 +2530,22 @@ ALTER TABLE ONLY public.reagent_production_lots
 
 ALTER TABLE ONLY public.reagent_production_lots
     ADD CONSTRAINT reagent_production_lots_ingredient_control_code_id_fkey FOREIGN KEY (ingredient_control_code_id) REFERENCES public.reagent_lots(control_code_id);
+
+
+--
+-- Name: reagent_supplier_lot_cert_tests reagent_supplier_lot_cert_tests_control_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lot_cert_tests
+    ADD CONSTRAINT reagent_supplier_lot_cert_tests_control_code_id_fkey FOREIGN KEY (control_code_id) REFERENCES public.reagent_supplier_lots(control_code_id) NOT VALID;
+
+
+--
+-- Name: reagent_supplier_lot_cert_tests reagent_supplier_lot_cert_tests_test_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reagent_supplier_lot_cert_tests
+    ADD CONSTRAINT reagent_supplier_lot_cert_tests_test_id_fkey FOREIGN KEY (test_id) REFERENCES public.tests(id) NOT VALID;
 
 
 --
