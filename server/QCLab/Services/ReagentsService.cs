@@ -27,9 +27,10 @@ public class ReagentsService : IReagentsService
                 Name = m.Name,
                 Code = m.Code,
                 Description = m.Description,
-                CasNumber = m.CasNumber,
                 NormId = m.NormId,
                 NormName = m.Norm != null ? m.Norm.Name : null,
+                IsCertifiedReference = m.IsCertifiedReference,
+                CasNumber = m.CasNumber,
                 IsObsolete = m.IsObsolete,
                 DateCreated = m.DateCreated,
                 DateObsolete = m.DateObsolete,
@@ -52,9 +53,10 @@ public class ReagentsService : IReagentsService
                 Name = m.Name,
                 Code = m.Code,
                 Description = m.Description,
-                CasNumber = m.CasNumber,
                 NormId = m.NormId,
                 NormName = m.Norm != null ? m.Norm.Name : null,
+                IsCertifiedReference = m.IsCertifiedReference,
+                CasNumber = m.CasNumber,
                 IsObsolete = m.IsObsolete,
                 DateCreated = m.DateCreated,
                 DateObsolete = m.DateObsolete,
@@ -73,11 +75,12 @@ public class ReagentsService : IReagentsService
             Name = dto.Name,
             Code = dto.Code,
             Description = dto.Description,
-            CasNumber = dto.CasNumber,
             NormId = dto.NormId,
             IsProduct = false,
             IsRawMaterial = false,
             IsReagent = true,
+            IsCertifiedReference = dto.IsCertifiedReference,
+            CasNumber = dto.CasNumber,
             IsObsolete = dto.IsObsolete,
             DateCreated = DateTime.UtcNow
         };
@@ -103,6 +106,7 @@ public class ReagentsService : IReagentsService
         material.CasNumber = dto.CasNumber;
         material.NormId = dto.NormId;
         material.IsObsolete = dto.IsObsolete;
+        material.IsCertifiedReference = dto.IsCertifiedReference;
 
         await _context.SaveChangesAsync();
     }
@@ -389,11 +393,104 @@ public class ReagentsService : IReagentsService
             ManufacturerLotNumber = rl.ReagentSupplierLot?.ManufacturerLotNumber ?? string.Empty,
             CertificateOfAnalysisRef = rl.ReagentSupplierLot?.CertificateOfAnalysisRef,
             Comments = rl.ReagentSupplierLot?.Comments,
+            IsReadonly = rl.ReagentSupplierLot != null && rl.ReagentSupplierLot.IsReadonly,
+            DateReadonly = rl.ReagentSupplierLot?.DateReadonly,
+            IsCertifiedReference = rl.ControlCode.Material != null && rl.ControlCode.Material.IsCertifiedReference,
 
             IngredientControlCodeIds = rl.IngredientControlCodes.Select(i => i.ControlCodeId).ToList(),
             IngredientControlCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Code).ToList(),
             IngredientMaterialCodes = rl.IngredientControlCodes.Select(i => i.ControlCode.Material != null ? i.ControlCode.Material.Name : string.Empty).ToList()
         };
+    }
+
+    public async Task<ReagentSupplierLotCertTestDto?> GetSupplierLotCertTest(long controlCodeId)
+    {
+        var ct = await _context.ReagentSupplierLotCertTests
+            .Include(ct => ct.Test)
+            .ThenInclude(t => t.Unit)
+            .FirstOrDefaultAsync(ct => ct.ControlCodeId == controlCodeId);
+
+        if (ct == null) return null;
+
+        return new ReagentSupplierLotCertTestDto
+        {
+            ControlCodeId = ct.ControlCodeId,
+            TestId = ct.TestId,
+            TestName = ct.Test.Name,
+            TestCode = ct.Test.Code,
+            UnitName = ct.Test.Unit != null ? ct.Test.Unit.Name : null,
+            Value = ct.Value,
+            UncertaintyValue = ct.UncertaintyValue,
+            CoverageFactorK = ct.CoverageFactorK,
+            TraceabilityStatement = ct.TraceabilityStatement
+        };
+    }
+
+    public async Task UpsertSupplierLotCertTest(long controlCodeId, UpsertReagentSupplierLotCertTestDto dto)
+    {
+        var lot = await _context.ReagentSupplierLots
+            .FirstOrDefaultAsync(sl => sl.ControlCodeId == controlCodeId);
+
+        if (lot == null)
+        {
+            throw new ArgumentException($"Supplier lot with controlCodeId {controlCodeId} not found.");
+        }
+
+        if (lot.IsReadonly)
+        {
+            throw new InvalidOperationException("Cannot modify cert test because supplier lot is readonly.");
+        }
+
+        var test = await _context.Tests.FirstOrDefaultAsync(t => t.Id == dto.TestId);
+        if (test == null || !test.ForCertifiedReference)
+        {
+            throw new ArgumentException("Selected test is not valid for certified reference.");
+        }
+
+        var certTest = await _context.ReagentSupplierLotCertTests
+            .FirstOrDefaultAsync(ct => ct.ControlCodeId == controlCodeId);
+
+        if (certTest == null)
+        {
+            certTest = new ReagentSupplierLotCertTest
+            {
+                ControlCodeId = controlCodeId
+            };
+            _context.ReagentSupplierLotCertTests.Add(certTest);
+        }
+
+        certTest.TestId = dto.TestId;
+        certTest.Value = dto.Value;
+        certTest.UncertaintyValue = dto.UncertaintyValue;
+        certTest.CoverageFactorK = dto.CoverageFactorK;
+        certTest.TraceabilityStatement = dto.TraceabilityStatement;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteSupplierLotCertTest(long controlCodeId)
+    {
+        var lot = await _context.ReagentSupplierLots
+            .FirstOrDefaultAsync(sl => sl.ControlCodeId == controlCodeId);
+
+        if (lot == null)
+        {
+            throw new ArgumentException($"Supplier lot with controlCodeId {controlCodeId} not found.");
+        }
+
+        if (lot.IsReadonly)
+        {
+            throw new InvalidOperationException("Cannot delete cert test because supplier lot is readonly.");
+        }
+
+        var certTest = await _context.ReagentSupplierLotCertTests
+            .FirstOrDefaultAsync(ct => ct.ControlCodeId == controlCodeId);
+
+        if (certTest != null)
+        {
+            _context.ReagentSupplierLotCertTests.Remove(certTest);
+            await _context.SaveChangesAsync();
+        }
     }
 }
 

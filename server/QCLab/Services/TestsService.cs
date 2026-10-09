@@ -37,6 +37,7 @@ public class TestsService : ITestsService
             ForEnvironmentalControl = test.ForEnvironmentalControl,
             RelativeUncertaintyPct = test.RelativeUncertaintyPct,
             DefaultCoverageFactorK = test.DefaultCoverageFactorK,
+            ForCertifiedReference = test.ForCertifiedReference,
             UnitId = test.UnitId,
             UnitName = test.Unit?.Name,
             NormId = test.NormId,
@@ -66,6 +67,52 @@ public class TestsService : ITestsService
             .Where(t => t.ForCertification && !t.IsObsolete)
             .Select(t => t.Id)
             .ToListAsync();
+    }
+
+    public async Task<List<TestDto>> GetCertifiedReferenceTests()
+    {
+        var tests = await _context.Tests
+            .Include(t => t.Type)
+            .Include(t => t.Unit)
+            .Include(t => t.TestEnums)
+            .Where(t => t.ForCertifiedReference && !t.IsObsolete)
+            .OrderBy(t => t.Name)
+            .ToListAsync();
+
+        return tests.Select(test => new TestDto
+        {
+            Id = test.Id,
+            Name = test.Name,
+            Code = test.Code,
+            Description = test.Description,
+            TypeId = test.TypeId,
+            TypeName = test.Type.Name,
+            IsArray = test.IsArray,
+            IsParam = test.IsParam,
+            ForEnvironmentalControl = test.ForEnvironmentalControl,
+            ForCertification = test.ForCertification,
+            RelativeUncertaintyPct = test.RelativeUncertaintyPct,
+            DefaultCoverageFactorK = test.DefaultCoverageFactorK,
+            ForCertifiedReference = test.ForCertifiedReference,
+            UnitId = test.UnitId,
+            UnitName = test.Unit?.Name,
+            NormId = test.NormId,
+            NormRef = test.NormRef,
+            SopId = test.SopId,
+            IsFormValidated = test.IsFormValidated,
+            NrOrd = test.NrOrd,
+            IsObsolete = test.IsObsolete,
+            DateCreated = test.DateCreated,
+            DateObsolete = test.DateObsolete,
+            CommentsObsolete = test.CommentsObsolete,
+            Enums = test.TypeId == 4 ? test.TestEnums.Select(e => new TestEnumDto
+            {
+                TestId = e.TestId,
+                Value = e.Value,
+                Name = e.Name,
+                NrOrd = e.NrOrd
+            }).ToList() : null
+        }).ToList();
     }
 
     // GET /tests/check_code_uniqueness
@@ -108,6 +155,7 @@ public class TestsService : ITestsService
             ForCertification = test.ForCertification,
             RelativeUncertaintyPct = test.RelativeUncertaintyPct,
             DefaultCoverageFactorK = test.DefaultCoverageFactorK,
+            ForCertifiedReference = test.ForCertifiedReference,
             UnitId = test.UnitId,
             UnitName = test.Unit?.Name,
             NormId = test.NormId,
@@ -238,10 +286,11 @@ public class TestsService : ITestsService
             TypeId = newTest.TypeId,
             IsArray = newTest.IsArray,
             IsParam = newTest.IsParam,
-            ForCertification = newTest.ForCertification,
             ForEnvironmentalControl = newTest.IsParam ? false : newTest.ForEnvironmentalControl,
+            ForCertification = newTest.ForCertification,
             RelativeUncertaintyPct = newTest.ForCertification ? newTest.RelativeUncertaintyPct : null,
             DefaultCoverageFactorK = newTest.ForCertification ? newTest.DefaultCoverageFactorK : null,
+            ForCertifiedReference = (newTest.IsArray || newTest.IsParam || newTest.ForEnvironmentalControl) ? false : newTest.ForCertifiedReference,
             UnitId = newTest.UnitId,
             NormId = newTest.NormId,
             NormRef = newTest.NormRef,
@@ -309,10 +358,11 @@ public class TestsService : ITestsService
             test.TypeId = testData.TypeId;
             test.IsArray = testData.IsArray;
             test.IsParam = testData.IsParam;
-            test.ForCertification = testData.ForCertification;
             test.ForEnvironmentalControl = testData.IsParam ? false : testData.ForEnvironmentalControl;
+            test.ForCertification = testData.ForCertification;
             test.RelativeUncertaintyPct = testData.ForCertification ? testData.RelativeUncertaintyPct : null;
             test.DefaultCoverageFactorK = testData.ForCertification ? testData.DefaultCoverageFactorK : null;
+            test.ForCertifiedReference = (testData.IsArray || testData.IsParam || testData.ForEnvironmentalControl) ? false : testData.ForCertifiedReference;
             test.UnitId = testData.UnitId;
             test.NormId = testData.NormId;
             test.NormRef = testData.NormRef;

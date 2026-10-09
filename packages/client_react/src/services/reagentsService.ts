@@ -9,7 +9,9 @@ import type {
   CreateSupplierLotDto, 
   UpdateSupplierLotDto, 
   CreateProductionLotDto, 
-  UpdateProductionLotDto 
+  UpdateProductionLotDto,
+  ReagentSupplierLotCertTestDto,
+  UpsertReagentSupplierLotCertTestDto 
 } from '@/types/reagent';
 import type { IdDto } from '@/types/models';
 
@@ -83,6 +85,19 @@ const reagentsService = {
 
   updateProductionLot: async (controlCodeId: number, dto: UpdateProductionLotDto): Promise<void> => {
     await apiClient.put(`/api/reagents/production_lots/${controlCodeId}`, dto);
+  },
+
+  getSupplierLotCertTest: async (controlCodeId: number): Promise<ReagentSupplierLotCertTestDto | null> => {
+    const response = await apiClient.get<ReagentSupplierLotCertTestDto | null>(`/api/reagent_supplier_lots/${controlCodeId}/cert_test`);
+    return response.data;
+  },
+
+  upsertSupplierLotCertTest: async (controlCodeId: number, dto: UpsertReagentSupplierLotCertTestDto): Promise<void> => {
+    await apiClient.post(`/api/reagent_supplier_lots/${controlCodeId}/cert_test`, dto);
+  },
+
+  deleteSupplierLotCertTest: async (controlCodeId: number): Promise<void> => {
+    await apiClient.delete(`/api/reagent_supplier_lots/${controlCodeId}/cert_test`);
   },
 
   validateUniqueness: async (property: "Name" | "Code", value: string, id?: number): Promise<boolean> => {

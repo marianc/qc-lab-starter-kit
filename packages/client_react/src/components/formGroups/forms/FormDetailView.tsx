@@ -245,6 +245,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
         isParam: newTest.isParam,
         forEnvironmentalControl: newTest.forEnvironmentalControl,
         forCertification: newTest.forCertification,
+        forCertifiedReference: newTest.forCertifiedReference,
         unitId: newTest.unitId,
         normId: newTest.normId,
         normRef: newTest.normRef,

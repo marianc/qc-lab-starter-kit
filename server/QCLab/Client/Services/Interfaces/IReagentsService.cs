@@ -19,4 +19,7 @@ public interface IReagentsService
     Task UpdateSupplierLot(long controlCodeId, UpdateSupplierLotDto dto);
     Task<IdDto> CreateProductionLot(CreateProductionLotDto dto);
     Task UpdateProductionLot(long controlCodeId, UpdateProductionLotDto dto);
+    Task<ReagentSupplierLotCertTestDto?> GetSupplierLotCertTest(long controlCodeId);
+    Task UpsertSupplierLotCertTest(long controlCodeId, UpsertReagentSupplierLotCertTestDto dto);
+    Task DeleteSupplierLotCertTest(long controlCodeId);
 }

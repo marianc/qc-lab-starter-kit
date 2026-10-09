@@ -150,7 +150,7 @@ const ReagentsPage: React.FC = () => {
             <th>Code</th>
             <th>CAS Number</th>
             <th>Norm</th>
-            <th>Date Created</th>
+            <th>Is Certified Reference</th>
             <th>Is Obsolete</th>
             <th>Actions</th>
           </tr>
@@ -163,7 +163,11 @@ const ReagentsPage: React.FC = () => {
               <td>{reagent.code}</td>
               <td>{reagent.casNumber || "-"}</td>
               <td>{reagent.normName || "-"}</td>
-              <td>{formatDate(reagent.dateCreated)}</td>
+              <td>
+                <span className={`status-badge ${reagent.isCertifiedReference ? 'success' : 'secondary'}`}>
+                  {reagent.isCertifiedReference ? "Yes" : "No"}
+                </span>
+              </td>
               <td>
                 <span className={`status-badge ${reagent.isObsolete ? 'error' : 'success'}`}>
                   {reagent.isObsolete ? "Yes" : "No"}

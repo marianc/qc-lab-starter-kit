@@ -32,6 +32,7 @@ type TestFormValues = {
   forCertification: boolean;
   relativeUncertaintyPct: number | null;
   defaultCoverageFactorK: number | null;
+  forCertifiedReference: boolean;
   unitId: number | null;
   normId: number | null;
   normRef: string | null;
@@ -73,6 +74,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       forCertification: false,
       relativeUncertaintyPct: null,
       defaultCoverageFactorK: null,
+      forCertifiedReference: false,
       unitId: null,
       normId: null,
       normRef: null,
@@ -85,14 +87,19 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
   const watchNormId = watch('normId');
   const watchTypeId = watch('typeId');
   const watchId = watch('id');
+  const watchIsArray = watch('isArray');
   const watchForCertification = watch('forCertification');
   const watchForEnvironmentalControl = watch('forEnvironmentalControl');
+  const watchForCertifiedReference = watch('forCertifiedReference');
   const watchIsParam = watch('isParam');
 
   useEffect(() => {
     if (watchForEnvironmentalControl) {
       if (getValues('forCertification')) {
         setValue('forCertification', false);
+      }
+      if (getValues('forCertifiedReference')) {
+        setValue('forCertifiedReference', false);
       }
     }
   }, [watchForEnvironmentalControl, setValue, getValues]);
@@ -104,6 +111,28 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       }
     }
   }, [watchForCertification, setValue, getValues]);
+
+  useEffect(() => {
+    if (watchIsArray || watchIsParam || watchForEnvironmentalControl) {
+      if (getValues('forCertifiedReference')) {
+        setValue('forCertifiedReference', false);
+      }
+    }
+  }, [watchIsArray, watchIsParam, watchForEnvironmentalControl, setValue, getValues]);
+
+  useEffect(() => {
+    if (watchForCertifiedReference) {
+      if (getValues('forEnvironmentalControl')) {
+        setValue('forEnvironmentalControl', false);
+      }
+      if (getValues('isParam')) {
+        setValue('isParam', false);
+      }
+      if (getValues('isArray')) {
+        setValue('isArray', false);
+      }
+    }
+  }, [watchForCertifiedReference, setValue, getValues]);
 
   useEffect(() => {
     if (open) {
@@ -136,6 +165,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
               forCertification: testData.forCertification,
               relativeUncertaintyPct: testData.relativeUncertaintyPct ?? null,
               defaultCoverageFactorK: testData.defaultCoverageFactorK ?? null,
+              forCertifiedReference: testData.forCertifiedReference,
               unitId: testData.unitId || null,
               normId: testData.normId || null,
               normRef: testData.normRef || '',
@@ -162,6 +192,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             forCertification: false,
             relativeUncertaintyPct: null,
             defaultCoverageFactorK: null,
+            forCertifiedReference: false,
             unitId: null,
             normId: null,
             normRef: '',
@@ -339,14 +370,14 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             <label htmlFor="is_array">Is Array</label>
           </div>
 
-          {!watchForCertification && !watchForEnvironmentalControl && (
+          {!watchForCertification && !watchForEnvironmentalControl && !watchForCertifiedReference && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="is_param" {...register('isParam')} disabled={Boolean(testData?.isFormValidated)} />
               <label htmlFor="is_param">Is Parameter</label>
             </div>
           )}
 
-          {!watchIsParam && !watchForCertification && (
+          {!watchIsParam && !watchForCertification && !watchForCertifiedReference && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="for_environmental_control" {...register('forEnvironmentalControl')} />
               <label htmlFor="for_environmental_control">For Environmental Control</label>
@@ -384,6 +415,13 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
                 {errors.defaultCoverageFactorK && <span className="text-danger">{errors.defaultCoverageFactorK.message as string}</span>}
               </div>
             </>
+          )}
+
+          {!watchIsArray && !watchIsParam && !watchForEnvironmentalControl && (
+            <div className={`form-group ${styles.checkboxGroup}`}>
+              <input type="checkbox" id="for_certified_reference" {...register('forCertifiedReference')} />
+              <label htmlFor="for_certified_reference">For Certified Reference</label>
+            </div>
           )}
 
           <div className="form-group">

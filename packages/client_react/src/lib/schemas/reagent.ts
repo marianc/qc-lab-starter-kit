@@ -1,12 +1,13 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 export const reagentSchema = z.object({
   id: z.number(),
   name: z.string().min(3, "Name must be between 3 and 50 characters.").max(50, "Name must be between 3 and 50 characters."),
   code: z.string().min(2, "Code must be between 2 and 5 characters.").max(10, "Code must be between 2 and 10 characters.").regex(/^[A-Z][A-Z0-9]*$/, "Code must start with a letter and contain only uppercase alphanumeric characters."),
   description: z.string().optional().nullable(),
-  casNumber: z.string().max(20).optional().nullable(),
   normId: z.any(),
+  isCertifiedReference: z.boolean(),
+  casNumber: z.string().max(20).optional().nullable(),
   isObsolete: z.boolean(),
 });
 
@@ -35,4 +36,20 @@ export const productionLotSchema = z.object({
   unitId: z.any(),
   expirationDate: z.string().min(1, "Expiration date is required."),
   ingredientControlCodeIds: z.array(z.number()).min(1, "At least one reagent must be selected.")
+});
+
+export const supplierLotCertTestSchema = z.object({
+  testId: z.number().min(1, "Test is required."),
+  value: z.any().refine((val) => val !== undefined && val !== null && val !== '' && (typeof val !== 'number' || !isNaN(val)), {
+    message: "Value is required."
+  }),
+  uncertaintyValue: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null || (typeof val === 'number' && isNaN(val)) ? null : Number(val)),
+    z.number().nullable().optional()
+  ),
+  coverageFactorK: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null || (typeof val === 'number' && isNaN(val)) ? null : Number(val)),
+    z.number().nullable().optional()
+  ),
+  traceabilityStatement: z.string().max(500).optional().nullable(),
 });

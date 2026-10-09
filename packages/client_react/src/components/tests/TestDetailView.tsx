@@ -127,6 +127,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
         forCertification: updatedTest.forCertification,
         relativeUncertaintyPct: updatedTest.relativeUncertaintyPct,
         defaultCoverageFactorK: updatedTest.defaultCoverageFactorK,
+        forCertifiedReference: updatedTest.forCertifiedReference,
         unitId: updatedTest.unitId,
         normId: updatedTest.normId,
         normRef: updatedTest.normRef,
@@ -264,6 +265,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
                   <DetailItem label="Coverage Factor (k)" value={test.defaultCoverageFactorK ?? "-"} />
                 </>
               )}
+              <DetailItem label="For Certified Reference" value={test.forCertifiedReference ? "Yes" : "No"} />
             </DetailColumn>
             <DetailColumn>
               <DetailItem label="Unit" value={test.unitName || "-"} />

@@ -102,6 +102,7 @@ const TestsPage: React.FC = () => {
               isParam: testData.isParam,
               forEnvironmentalControl: testData.forEnvironmentalControl,
               forCertification: testData.forCertification,
+              forCertifiedReference: testData.forCertifiedReference,
               unitId: testData.unitId,
               normId: testData.normId,
               normRef: testData.normRef,

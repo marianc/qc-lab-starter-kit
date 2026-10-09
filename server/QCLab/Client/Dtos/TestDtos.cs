@@ -47,6 +47,7 @@ public class TestDto
     public bool ForCertification { get; set; }
     public decimal? RelativeUncertaintyPct { get; set; }
     public decimal? DefaultCoverageFactorK { get; set; }
+    public bool ForCertifiedReference { get; set; }
     public long? UnitId { get; set; }
     public string? UnitName { get; set; }
     public long? NormId { get; set; }
@@ -98,6 +99,7 @@ public class CreateTestDto
     public bool ForCertification { get; set; }
     public decimal? RelativeUncertaintyPct { get; set; }
     public decimal? DefaultCoverageFactorK { get; set; }
+    public bool ForCertifiedReference { get; set; }
     public long? UnitId { get; set; }
     public long? NormId { get; set; }
 

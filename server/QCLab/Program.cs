@@ -488,6 +488,17 @@ namespace QCLab
                 try { await s.UpdateProductionLot(controlCodeId, dto); return Results.Ok(); }
                 catch (ArgumentException ex) { return Results.BadRequest(new { msg = ex.Message }); }
             }).RequireLabOrQcPers();
+            apiGroup.MapGet("/reagent_supplier_lots/{controlCodeId}/cert_test", (long controlCodeId, IReagentsService s) => s.GetSupplierLotCertTest(controlCodeId));
+            apiGroup.MapPost("/reagent_supplier_lots/{controlCodeId}/cert_test", async (long controlCodeId, [FromBody] UpsertReagentSupplierLotCertTestDto dto, IReagentsService s) =>
+            {
+                try { await s.UpsertSupplierLotCertTest(controlCodeId, dto); return Results.Ok(); }
+                catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            }).RequireLabOrQcPers();
+            apiGroup.MapDelete("/reagent_supplier_lots/{controlCodeId}/cert_test", async (long controlCodeId, IReagentsService s) =>
+            {
+                try { await s.DeleteSupplierLotCertTest(controlCodeId); return Results.Ok(); }
+                catch (Exception ex) { return Results.BadRequest(new { msg = ex.Message }); }
+            }).RequireLabOrQcPers();
 
             // Materials
             apiGroup.MapGet("/materials", (HttpContext httpContext, IMaterialsService s) => 
@@ -849,6 +860,7 @@ namespace QCLab
             // Tests
             apiGroup.MapGet("/tests", (ITestsService s) => s.GetAllTests());
             apiGroup.MapGet("/tests/certified_ids", (ITestsService s) => s.GetCertifiedTestIds());
+            apiGroup.MapGet("/tests/certified_reference", (ITestsService s) => s.GetCertifiedReferenceTests());
             apiGroup.MapGet("/tests/check_code_uniqueness", (ITestsService s, string code, long? id) => s.CheckCodeUniqueness(code, id).ContinueWith(t => new { is_unique = t.Result }));
             apiGroup.MapGet("/tests/{id}", (long id, ITestsService s) => s.GetTest(id));
             apiGroup.MapGet("/tests/{id}/enums", (long id, ITestsService s) => s.GetTestEnums(id));

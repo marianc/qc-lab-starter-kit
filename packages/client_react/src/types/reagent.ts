@@ -3,9 +3,10 @@
   name: string;
   code: string;
   description?: string | null;
-  casNumber?: string | null;
   normId?: number | null;
   normName?: string | null;
+  isCertifiedReference: boolean;
+  casNumber?: string | null;
   isObsolete: boolean;
   dateCreated: string;
   dateObsolete?: string | null;
@@ -16,8 +17,9 @@ export interface CreateReagentDto {
   name: string;
   code: string;
   description?: string | null;
-  casNumber?: string | null;
   normId?: number | null;
+  isCertifiedReference: boolean;
+  casNumber?: string | null;
   isObsolete: boolean;
 }
 
@@ -56,6 +58,9 @@ export interface ReagentLotDto {
   manufacturerLotNumber?: string | null;
   certificateOfAnalysisRef?: string | null;
   comments?: string | null;
+  isReadonly: boolean;
+  dateReadonly?: string | null;
+  isCertifiedReference: boolean;
 
   // Production Lot fields
   ingredientControlCodeIds: number[];
@@ -107,4 +112,24 @@ export interface UpdateProductionLotDto {
   expirationDate: string;
   producedByUserId?: number | null;
   ingredientControlCodeIds: number[];
+}
+
+export interface ReagentSupplierLotCertTestDto {
+  controlCodeId: number;
+  testId: number;
+  testName: string;
+  testCode: string;
+  unitName?: string | null;
+  value: number;
+  uncertaintyValue?: number | null;
+  coverageFactorK?: number | null;
+  traceabilityStatement?: string | null;
+}
+
+export interface UpsertReagentSupplierLotCertTestDto {
+  testId: number;
+  value: number;
+  uncertaintyValue?: number | null;
+  coverageFactorK?: number | null;
+  traceabilityStatement?: string | null;
 }

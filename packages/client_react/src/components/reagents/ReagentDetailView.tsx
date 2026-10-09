@@ -159,7 +159,7 @@ const ReagentDetailView: React.FC<ReagentDetailViewProps> = ({
               <DetailItem label="CAS Number" value={reagent.casNumber || "-"} />
               <DetailItem label="Description" value={reagent.description || "-"} />
               <DetailItem label="Norm" value={reagent.normName || "N/A"} />
-              <DetailItem label="Date Created" value={formatDate(reagent.dateCreated)} />
+              <DetailItem label="Is Certified Reference" value={reagent.isCertifiedReference ? "Yes" : "No"} />
               <DetailItem label="Is Obsolete" value={reagent.isObsolete ? "Yes" : "No"} />
               <DetailItem label="Date Obsolete" value={formatDate(reagent.dateObsolete)} />
               {reagent.isObsolete && reagent.commentsObsolete && (

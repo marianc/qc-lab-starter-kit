@@ -20,6 +20,7 @@ export const testSchema = z.object({
   forCertification: z.boolean(),
   relativeUncertaintyPct: z.coerce.number().optional().nullable(),
   defaultCoverageFactorK: z.coerce.number().optional().nullable(),
+  forCertifiedReference: z.boolean(),
   unitId: z.any(),
   normId: z.any(),
   normRef: z.string().max(50).optional().nullable(),

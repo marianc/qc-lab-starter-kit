@@ -19,6 +19,7 @@ export interface TestDto {
   forCertification: boolean;
   relativeUncertaintyPct?: number | null;
   defaultCoverageFactorK?: number | null;
+  forCertifiedReference: boolean;
   unitId?: number | null;
   unitName?: string | null;
   normId?: number | null;
@@ -26,8 +27,8 @@ export interface TestDto {
   sopId?: number | null;
   isFormValidated: boolean;
   nrOrd: number;
-  isObsolete: boolean;
   dateCreated?: string | null;
+  isObsolete: boolean;
   dateObsolete?: string | null;
   commentsObsolete?: string | null;
   enums?: TestEnumDto[] | null;
@@ -51,6 +52,7 @@ export interface CreateTestDto {
   forCertification: boolean;
   relativeUncertaintyPct?: number | null;
   defaultCoverageFactorK?: number | null;
+  forCertifiedReference: boolean;
   unitId?: number | null;
   normId?: number | null;
   normRef?: string | null;

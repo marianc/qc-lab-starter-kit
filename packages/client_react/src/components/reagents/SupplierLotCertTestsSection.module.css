@@ -1,0 +1,57 @@
+.sectionContainer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeader h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-color, #1e293b);
+  margin: 0;
+}
+
+.emptyText {
+  color: var(--text-secondary, #64748b);
+  font-style: italic;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.certTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.certTable th,
+.certTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.certTable th {
+  background-color: var(--bg-secondary, #f8fafc);
+  font-weight: 600;
+  color: var(--text-color, #1e293b);
+}
+
+.certTable td button {
+  margin-right: 0.5rem;
+}
+
+.traceabilityCell {
+  white-space: pre-wrap;
+}

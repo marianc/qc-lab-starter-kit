@@ -90,6 +90,11 @@ const testsService = {
     await apiClient.put(`api/tests/${id}/reagents`, dto);
   },
 
+  async getCertifiedReferenceTests(): Promise<TestDto[]> {
+    const response = await apiClient.get<TestDto[]>('api/tests/certified_reference');
+    return response.data;
+  },
+
   async validateUniqueness(property: string, value: string, id?: number | null, entity: string = "Test", scopeId?: number): Promise<boolean> {
     let url = `api/validate/unique?entity=${entity}&property=${property}&value=${encodeURIComponent(value)}`;
     if (id !== undefined && id !== null) {

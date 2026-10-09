@@ -17,9 +17,10 @@ public class ReagentDto
     public required string Code { get; set; }
 
     public string? Description { get; set; }
-    public string? CasNumber { get; set; }
     public long? NormId { get; set; }
     public string? NormName { get; set; }
+    public bool IsCertifiedReference { get; set; }
+    public string? CasNumber { get; set; }
     public bool IsObsolete { get; set; }
     public DateTime DateCreated { get; set; }
     public DateTime? DateObsolete { get; set; }
@@ -38,8 +39,9 @@ public class CreateReagentDto
     public required string Code { get; set; }
 
     public string? Description { get; set; }
-    public string? CasNumber { get; set; }
     public long? NormId { get; set; }
+    public bool IsCertifiedReference { get; set; }
+    public string? CasNumber { get; set; }
     public bool IsObsolete { get; set; }
 }
 
@@ -88,11 +90,39 @@ public class ReagentLotDto
     public string? ManufacturerLotNumber { get; set; }
     public string? CertificateOfAnalysisRef { get; set; }
     public string? Comments { get; set; }
+    public bool IsReadonly { get; set; }
+    public DateTime? DateReadonly { get; set; }
+    public bool IsCertifiedReference { get; set; }
 
     // Production Lot details (if IsProduced)
     public List<long> IngredientControlCodeIds { get; set; } = new();
     public List<string> IngredientControlCodes { get; set; } = new();
     public List<string> IngredientMaterialCodes { get; set; } = new();
+}
+
+public class ReagentSupplierLotCertTestDto
+{
+    public long ControlCodeId { get; set; }
+    public long TestId { get; set; }
+    public required string TestName { get; set; }
+    public required string TestCode { get; set; }
+    public string? UnitName { get; set; }
+    public decimal Value { get; set; }
+    public decimal? UncertaintyValue { get; set; }
+    public decimal? CoverageFactorK { get; set; }
+    public string? TraceabilityStatement { get; set; }
+}
+
+public class UpsertReagentSupplierLotCertTestDto
+{
+    [Required]
+    public long TestId { get; set; }
+    [Required]
+    public decimal Value { get; set; }
+    public decimal? UncertaintyValue { get; set; }
+    public decimal? CoverageFactorK { get; set; }
+    [StringLength(500)]
+    public string? TraceabilityStatement { get; set; }
 }
 
 public class CreateSupplierLotDto

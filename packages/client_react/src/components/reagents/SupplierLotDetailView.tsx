@@ -12,6 +12,7 @@ import type { UnitDto } from '@/types/unit';
 import reagentsService from '@/services/reagentsService';
 import { formatDate } from '@/lib/utils';
 import SupplierLotDialog from './SupplierLotDialog';
+import SupplierLotCertTestsSection from './SupplierLotCertTestsSection';
 import styles from './ReagentDetailView.module.css';
 
 interface SupplierLotDetailViewProps {
@@ -98,6 +99,8 @@ const SupplierLotDetailView: React.FC<SupplierLotDetailViewProps> = ({
               Edit
             </button>
           </div>
+
+          <SupplierLotCertTestsSection lot={lot} onLotUpdated={fetchLot} />
         </div>
       </DetailViewContent>
 

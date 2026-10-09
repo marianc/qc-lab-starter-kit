@@ -20,8 +20,9 @@ type ReagentFormValues = {
   name: string;
   code: string;
   description?: string | null;
-  casNumber?: string | null;
   normId: any;
+  isCertifiedReference: boolean;
+  casNumber?: string | null;
   isObsolete: boolean;
 };
 
@@ -48,8 +49,9 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
       name: '',
       code: '',
       description: '',
-      casNumber: '',
       normId: null,
+      isCertifiedReference: false,
+      casNumber: '',
       isObsolete: false
     }
   });
@@ -73,8 +75,9 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
             name: data.name,
             code: data.code,
             description: data.description || '',
-            casNumber: data.casNumber || '',
             normId: data.normId || null,
+            isCertifiedReference: data.isCertifiedReference,
+            casNumber: data.casNumber || '',
             isObsolete: data.isObsolete
           });
         });
@@ -84,8 +87,9 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
           name: '',
           code: '',
           description: '',
-          casNumber: '',
           normId: null,
+          isCertifiedReference: false,
+          casNumber: '',
           isObsolete: false
         });
       }
@@ -130,8 +134,9 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
           name: values.name,
           code: values.code,
           description: values.description || null,
-          casNumber: values.casNumber || null,
           normId: parsedNormId,
+          isCertifiedReference: values.isCertifiedReference,
+          casNumber: values.casNumber || null,
           isObsolete: values.isObsolete
         });
         onClose(reagentId);
@@ -140,8 +145,9 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
           name: values.name,
           code: values.code,
           description: values.description || null,
-          casNumber: values.casNumber || null,
           normId: parsedNormId,
+          isCertifiedReference: values.isCertifiedReference,
+          casNumber: values.casNumber || null,
           isObsolete: values.isObsolete
         });
         onClose(result.id);
@@ -221,6 +227,18 @@ const ReagentDialog: React.FC<ReagentDialogProps> = ({
               ))}
             </select>
             {errors.normId && <span className="text-danger">{errors.normId.message as string}</span>}
+          </div>
+
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
+            <input 
+              type="checkbox" 
+              id="isCertifiedReferenceCheckbox"
+              {...register('isCertifiedReference')} 
+            />
+            <label htmlFor="isCertifiedReferenceCheckbox" style={{ marginBottom: 0, cursor: 'pointer' }}>
+              Is Certified Reference
+            </label>
+            {errors.isCertifiedReference && <span className="text-danger">{errors.isCertifiedReference.message}</span>}
           </div>
         </DialogContent>
         <DialogFooter>
