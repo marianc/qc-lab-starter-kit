@@ -115,6 +115,64 @@ public class TestsService : ITestsService
         }).ToList();
     }
 
+    public async Task<List<CertifiedReferenceValueDto>> GetCertifiedReferenceValues(long testId)
+    {
+        var test = await _context.Tests.FindAsync(testId);
+        if (test == null || !test.ForCertifiedReference)
+        {
+            return new List<CertifiedReferenceValueDto>();
+        }
+
+        var result = new List<CertifiedReferenceValueDto>();
+
+        // 1. From reagent_supplier_lot_cert_tests (Source = "Supplier")
+        var supplierLotCertTests = await _context.ReagentSupplierLotCertTests
+            .Include(rs => rs.ControlCode)
+                .ThenInclude(rl => rl.ControlCode)
+                    .ThenInclude(rl2 => rl2.ControlCode)
+                        .ThenInclude(cc => cc.Material)
+            .Where(rs => rs.TestId == testId && rs.ControlCode.ControlCode.ControlCode.Material.IsCertifiedReference)
+            .ToListAsync();
+
+        foreach (var rs in supplierLotCertTests)
+        {
+            result.Add(new CertifiedReferenceValueDto
+            {
+                MaterialName = rs.ControlCode.ControlCode.ControlCode.Material.Name,
+                LotCode = rs.ControlCode.ControlCode.ControlCode.Code,
+                Source = "Supplier",
+                Value = rs.Value,
+                CertificateId = null,
+                ControlCodeId = rs.ControlCodeId,
+                TestId = rs.TestId
+            });
+        }
+
+        // 2. From certificate_tests (Source = "Cert")
+        var certTests = await _context.CertificateTests
+            .Include(ct => ct.Certificate)
+                .ThenInclude(c => c.ControlCode)
+                    .ThenInclude(cc => cc.Material)
+            .Where(ct => ct.TestId == testId && !ct.Certificate.IsCancelled && ct.Certificate.ControlCode.Material.IsCertifiedReference)
+            .ToListAsync();
+
+        foreach (var ct in certTests)
+        {
+            result.Add(new CertifiedReferenceValueDto
+            {
+                MaterialName = ct.Certificate.ControlCode.Material.Name,
+                LotCode = ct.Certificate.ControlCode.Code,
+                Source = "Cert",
+                Value = ct.Value,
+                CertificateId = ct.CertificateId,
+                ControlCodeId = null,
+                TestId = ct.TestId
+            });
+        }
+
+        return result;
+    }
+
     // GET /tests/check_code_uniqueness
     public async Task<bool> CheckCodeUniqueness(string code, long? id)
     {

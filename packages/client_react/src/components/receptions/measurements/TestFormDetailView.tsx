@@ -14,14 +14,19 @@ import ArrayItemDialog from '@/components/common/ArrayItemDialog';
 import SelectDialog from '@/components/common/SelectDialog';
 import SelectSopVersionsDialog, { type SopVersionSelectItem } from './SelectSopVersionsDialog';
 import SelectReagentLotsDialog from './SelectReagentLotsDialog';
+import SelectCrmDialog from './SelectCrmDialog';
 import type { TestDto, TestEnumDto, TestEquipmentDto } from '@/types/test';
 import type { MeasurementSopVersionDto, SopDto } from '@/types/sop';
 import type { EquipmentDto } from '@/types/equipment';
 import type { FormDto, FormParamDto } from '@/types/form';
 import type { ReceptionDetailDto } from '@/types/reception';
-import type { MeasurementParamDetailDto, MeasurementReagentLotDto, MeasurementApplicableReagentLotDto } from '@/types/measurement';
+import type { MeasurementParamDetailDto, MeasurementReagentLotDto, MeasurementApplicableReagentLotDto, CrmValueItemDto, CrmSelectionDto } from '@/types/measurement';
 import measurementsService from '@/services/measurementsService';
+import testsService from '@/services/testsService';
 import equipmentsService from '@/services/equipmentsService';
+import reagentsService from '@/services/reagentsService';
+import CertificateDetailView from '@/components/certificates/CertificateDetailView';
+import SupplierLotDetailView from '@/components/reagents/SupplierLotDetailView';
 import { formatDate } from '@/lib/utils';
 import styles from './TestFormDetailView.module.css';
 
@@ -57,6 +62,9 @@ const TestFormDetailView: React.FC<Props> = ({
   const [associatedReagentLots, setAssociatedReagentLots] = useState<MeasurementReagentLotDto[]>([]);
   const [allEquipments, setAllEquipments] = useState<EquipmentDto[]>([]);
   
+  const [selectedCertificateId, setSelectedCertificateId] = useState<number | null>(null);
+  const [selectedSupplierLot, setSelectedSupplierLot] = useState<{ controlCodeId: number; reagentId: number } | null>(null);
+  
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showArrayItemDialog, setShowArrayItemDialog] = useState(false);
@@ -69,6 +77,42 @@ const TestFormDetailView: React.FC<Props> = ({
   const [groupedParamsForDialog, setGroupedParamsForDialog] = useState<FormParamDto[]>([]);
   const [editingArrayIndex, setEditingArrayIndex] = useState<number>(-1);
   const [initialArrayItemValue, setInitialArrayItemValue] = useState<Record<string, any>>({});
+  
+  const [crmSelections, setCrmSelections] = useState<Record<string, CrmSelectionDto>>({});
+  const [showCrmDialog, setShowCrmDialog] = useState(false);
+  const [activeCrmParam, setActiveCrmParam] = useState<FormParamDto | null>(null);
+  const [crmValues, setCrmValues] = useState<CrmValueItemDto[]>([]);
+  const [crmLoading, setCrmLoading] = useState(false);
+
+  const openCrmDialog = async (param: FormParamDto) => {
+    setActiveCrmParam(param);
+    setShowCrmDialog(true);
+    setCrmLoading(true);
+    try {
+      const values = await testsService.getCertifiedReferenceValues(param.testId);
+      setCrmValues(values);
+    } catch (err) {
+      console.error('Failed to load certified reference values:', err);
+      setCrmValues([]);
+    } finally {
+      setCrmLoading(false);
+    }
+  };
+
+  const handleSelectCrmValue = (item: CrmValueItemDto) => {
+    if (!activeCrmParam) return;
+    handleFormChange(activeCrmParam.code, item.value);
+    setCrmSelections(prev => ({
+      ...prev,
+      [activeCrmParam.code]: {
+        certifiedReferenceCertificateId: item.certificateId ?? null,
+        certifiedReferenceControlCodeId: item.controlCodeId ?? null,
+        lotCode: item.lotCode,
+        source: item.source
+      }
+    }));
+    setShowCrmDialog(false);
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -132,7 +176,8 @@ const TestFormDetailView: React.FC<Props> = ({
         comments: null,
         measurementData: {},
         calculatedResults: {},
-        conditionPass: {}
+        conditionPass: {},
+        crmSelections: {}
       });
       const initialData: Record<string, any> = {};
       params.forEach(p => {
@@ -144,6 +189,7 @@ const TestFormDetailView: React.FC<Props> = ({
       try {
         const data = await measurementsService.getMeasurementParam(measurementId);
         setMeasurement(data);
+        setCrmSelections(data.crmSelections || {});
         const combinedData = { ...data.measurementData, ...data.calculatedResults };
         
         // Ensure all array params have at least an empty array
@@ -276,7 +322,8 @@ const TestFormDetailView: React.FC<Props> = ({
         comments: measurement.comments || null,
         useDefaultEquipment: measurement.useDefaultEquipment,
         isReported: measurement.isReported,
-        measurementData: dataToSave
+        measurementData: dataToSave,
+        crmSelections: crmSelections
       });
       onClose();
     } catch (err) {
@@ -319,7 +366,7 @@ const TestFormDetailView: React.FC<Props> = ({
     return val.toString();
   };
 
-  const renderControl = (param: FormParamDto) => {
+  const renderControl = (param: FormParamDto, disabled: boolean = false) => {
     const value = formData[param.code] ?? '';
     const onChange = (e: React.ChangeEvent<any>) => {
       let val = e.target.value;
@@ -331,12 +378,12 @@ const TestFormDetailView: React.FC<Props> = ({
 
     switch (param.typeId) {
       case 1: // Integer
-        return <input type="number" step="1" value={value ?? ''} onChange={onChange} className="form-control" />;
+        return <input type="number" step="1" value={value ?? ''} onChange={onChange} disabled={disabled} className="form-control" />;
       case 2: // Real
-        return <input type="number" step="any" value={value ?? ''} onChange={onChange} className="form-control" />;
+        return <input type="number" step="any" value={value ?? ''} onChange={onChange} disabled={disabled} className="form-control" />;
       case 3: // Boolean
         return (
-          <select value={value ?? ''} onChange={onChange} className="form-control">
+          <select value={value ?? ''} onChange={onChange} disabled={disabled} className="form-control">
             <option value="">-- No Selection --</option>
             <option value="1">Yes</option>
             <option value="0">No</option>
@@ -344,7 +391,7 @@ const TestFormDetailView: React.FC<Props> = ({
         );
       case 4: // Enum
         return (
-          <select value={value ?? ''} onChange={onChange} className="form-control">
+          <select value={value ?? ''} onChange={onChange} disabled={disabled} className="form-control">
             <option value="">-- Select --</option>
             {allFormParamEnums.filter(e => e.testId === param.testId).map(e => (
               <option key={e.value} value={e.value}>{e.name}</option>
@@ -352,7 +399,7 @@ const TestFormDetailView: React.FC<Props> = ({
           </select>
         );
       default:
-        return <input type="text" value={value ?? ''} onChange={onChange} className="form-control" />;
+        return <input type="text" value={value ?? ''} onChange={onChange} disabled={disabled} className="form-control" />;
     }
   };
 
@@ -442,18 +489,72 @@ const TestFormDetailView: React.FC<Props> = ({
           </DetailContainer>
 
           <h2>Form Data</h2>
-          {nonArrayParams.map(param => (
-            <div key={param.testId} className="form-group">
-              <label htmlFor={param.code}>
-                {param.name}{param.unitName ? ` [${param.unitName}]` : ''}:
-              </label>
-              {measurement.isReadonly ? (
-                <p>{getDisplayValue(param, formData[param.code])}</p>
-              ) : (
-                renderControl(param)
-              )}
-            </div>
-          ))}
+          {nonArrayParams.map(param => {
+            const test = allTests.find(t => t.id === param.testId);
+            const isCrm = test?.forCertifiedReference;
+            return (
+              <div key={param.testId} className="form-group">
+                <label htmlFor={param.code}>
+                  {param.name}{param.unitName ? ` [${param.unitName}]` : ''}:
+                </label>
+                {measurement.isReadonly ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <p style={{ margin: 0 }}>{getDisplayValue(param, formData[param.code])}</p>
+                    {isCrm && (() => {
+                      const selection = crmSelections[param.code];
+                      if (!selection) return null;
+                      if (selection.certifiedReferenceCertificateId) {
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCertificateId(selection.certifiedReferenceCertificateId!)}
+                            className="action-button secondary small-button"
+                          >
+                            Certificate #{selection.certifiedReferenceCertificateId}
+                          </button>
+                        );
+                      }
+                      if (selection.certifiedReferenceControlCodeId) {
+                        const lotLabel = selection.lotCode ? `Supplier Lot ${selection.lotCode}` : `Supplier Lot ${selection.certifiedReferenceControlCodeId}`;
+                        return (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const lot = await reagentsService.getReagentLot(selection.certifiedReferenceControlCodeId!);
+                                setSelectedSupplierLot({ controlCodeId: lot.controlCodeId, reagentId: lot.materialId });
+                              } catch (err) {
+                                console.error('Failed to fetch supplier lot for CRM detail view', err);
+                              }
+                            }}
+                            className="action-button secondary small-button"
+                          >
+                            {lotLabel}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      {renderControl(param, Boolean(isCrm))}
+                    </div>
+                    {isCrm && (
+                      <button 
+                        type="button" 
+                        onClick={() => openCrmDialog(param)} 
+                        className="action-button secondary"
+                      >
+                        Get Value
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {standaloneArrayParams.map(param => (
             <div key={param.testId} className="form-group">
@@ -591,6 +692,17 @@ const TestFormDetailView: React.FC<Props> = ({
           />
         )}
 
+        <SelectCrmDialog
+          open={showCrmDialog}
+          activeCrmParam={activeCrmParam}
+          crmLoading={crmLoading}
+          crmValues={crmValues}
+          crmSelections={crmSelections}
+          onSelect={handleSelectCrmValue}
+          onClose={() => setShowCrmDialog(false)}
+          getDisplayValue={getDisplayValue}
+        />
+
         {showCommentDialog && (
           <MeasurementEditDialog 
             open={true}
@@ -644,6 +756,25 @@ const TestFormDetailView: React.FC<Props> = ({
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteConfirmation(false)}
         />
+
+        {selectedCertificateId && (
+          <CertificateDetailView
+            certificateId={selectedCertificateId}
+            onClose={() => setSelectedCertificateId(null)}
+            breadcrumbs={[...breadcrumbs, `Certificate #${selectedCertificateId}`]}
+            allTests={allTests}
+            currentUser={currentUser}
+          />
+        )}
+
+        {selectedSupplierLot && (
+          <SupplierLotDetailView
+            controlCodeId={selectedSupplierLot.controlCodeId}
+            reagentId={selectedSupplierLot.reagentId}
+            onClose={() => setSelectedSupplierLot(null)}
+            breadcrumbs={[...breadcrumbs, `Supplier Lot`]}
+          />
+        )}
       </DetailViewContent>
     </DetailView>
   );

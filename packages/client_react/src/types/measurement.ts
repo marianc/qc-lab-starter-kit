@@ -44,6 +44,24 @@ export interface MeasurementParamDetailDto {
   measurementData: Record<string, any>;
   calculatedResults: Record<string, any>;
   conditionPass: Record<string, any>;
+  crmSelections: Record<string, CrmSelectionDto>;
+}
+
+export interface CrmSelectionDto {
+  certifiedReferenceCertificateId?: number | null;
+  certifiedReferenceControlCodeId?: number | null;
+  lotCode?: string | null;
+  source?: 'Cert' | 'Supplier' | null;
+}
+
+export interface CrmValueItemDto {
+  materialName: string;
+  lotCode: string;
+  source: 'Cert' | 'Supplier';
+  value: any;
+  certificateId?: number | null;
+  controlCodeId?: number | null;
+  testId: number;
 }
 
 export interface MeasurementTestDto {
@@ -71,6 +89,7 @@ export interface UpdateMeasurementParamDto {
   useDefaultEquipment: boolean;
   isReported: boolean;
   measurementData: Record<string, any>;
+  crmSelections?: Record<string, CrmSelectionDto>;
 }
 
 export interface MeasurementFormParamSchemaDto {

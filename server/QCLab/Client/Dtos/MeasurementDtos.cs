@@ -56,6 +56,26 @@ public class MeasurementParamDetailDto
     public Dictionary<string, object?> MeasurementData { get; set; } = new();
     public Dictionary<string, object?> CalculatedResults { get; set; } = new();
     public Dictionary<string, object?> ConditionPass { get; set; } = new();
+    public Dictionary<string, CrmSelectionDto> CrmSelections { get; set; } = new();
+}
+
+public class CertifiedReferenceValueDto
+{
+    public required string MaterialName { get; set; }
+    public required string LotCode { get; set; }
+    public required string Source { get; set; }
+    public decimal Value { get; set; }
+    public long? CertificateId { get; set; }
+    public long? ControlCodeId { get; set; }
+    public long TestId { get; set; }
+}
+
+public class CrmSelectionDto
+{
+    public long? CertifiedReferenceCertificateId { get; set; }
+    public long? CertifiedReferenceControlCodeId { get; set; }
+    public string? LotCode { get; set; }
+    public string? Source { get; set; }
 }
 
 public class MeasurementTestDto
@@ -91,6 +111,7 @@ public class UpdateMeasurementParamDto
     public bool UseDefaultEquipment { get; set; }
     public bool IsReported { get; set; }
     public Dictionary<string, object?> MeasurementData { get; set; } = new();
+    public Dictionary<string, CrmSelectionDto> CrmSelections { get; set; } = new();
 }
 
 public class MeasurementFormParamSchemaDto

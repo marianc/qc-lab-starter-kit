@@ -861,6 +861,7 @@ namespace QCLab
             apiGroup.MapGet("/tests", (ITestsService s) => s.GetAllTests());
             apiGroup.MapGet("/tests/certified_ids", (ITestsService s) => s.GetCertifiedTestIds());
             apiGroup.MapGet("/tests/certified_reference", (ITestsService s) => s.GetCertifiedReferenceTests());
+            apiGroup.MapGet("/tests/{id}/certified_reference_values", (long id, ITestsService s) => s.GetCertifiedReferenceValues(id));
             apiGroup.MapGet("/tests/check_code_uniqueness", (ITestsService s, string code, long? id) => s.CheckCodeUniqueness(code, id).ContinueWith(t => new { is_unique = t.Result }));
             apiGroup.MapGet("/tests/{id}", (long id, ITestsService s) => s.GetTest(id));
             apiGroup.MapGet("/tests/{id}/enums", (long id, ITestsService s) => s.GetTestEnums(id));

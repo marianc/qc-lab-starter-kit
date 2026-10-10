@@ -94,7 +94,8 @@ const TestingFormA: React.FC<Props> = ({
         comments: null,
         measurementData: {},
         calculatedResults: {},
-        conditionPass: {}
+        conditionPass: {},
+        crmSelections: {}
       });
       setFormData({
         param_aa: null,

@@ -125,6 +125,24 @@ public class MeasurementsService : IMeasurementsService
                 else dto.MeasurementData[param.Code] = value;
             }
 
+            var crmSelections = new Dictionary<string, CrmSelectionDto>();
+            foreach (var mp in measurementParams)
+            {
+                if (mp.CertifiedReferenceCertificateId.HasValue || mp.CertifiedReferenceControlCodeId.HasValue)
+                {
+                    var paramSchema = formParamsSchema.FirstOrDefault(p => p.TestId == mp.TestId);
+                    if (paramSchema != null)
+                    {
+                        crmSelections[paramSchema.Code] = new CrmSelectionDto
+                        {
+                            CertifiedReferenceCertificateId = mp.CertifiedReferenceCertificateId,
+                            CertifiedReferenceControlCodeId = mp.CertifiedReferenceControlCodeId
+                        };
+                    }
+                }
+            }
+            dto.CrmSelections = crmSelections;
+
             return dto;
         }
         return null;
@@ -328,7 +346,7 @@ public class MeasurementsService : IMeasurementsService
             measurement.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            await SaveMeasurementFormDataInternal(id, dto.MeasurementData, userId);
+            await SaveMeasurementFormDataInternal(id, dto.MeasurementData, dto.CrmSelections, userId);
 
             if (dto.UseDefaultEquipment)
             {
@@ -887,7 +905,7 @@ public class MeasurementsService : IMeasurementsService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            await SaveMeasurementFormDataInternal(id, data, userId);
+            await SaveMeasurementFormDataInternal(id, data, null, userId);
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -898,6 +916,11 @@ public class MeasurementsService : IMeasurementsService
     }
 
     private async Task SaveMeasurementFormDataInternal(long id, Dictionary<string, object?> data, long userId)
+    {
+        await SaveMeasurementFormDataInternal(id, data, null, userId);
+    }
+
+    private async Task SaveMeasurementFormDataInternal(long id, Dictionary<string, object?> data, Dictionary<string, CrmSelectionDto>? crmSelections, long userId)
     {
         var measurement = await _context.Measurements.FindAsync(id);
         if (measurement == null || !measurement.FormId.HasValue)
@@ -934,28 +957,48 @@ public class MeasurementsService : IMeasurementsService
         // 3. Update database with results
         var flatResults = FormEvalMapper.MapDictToFlat(results!, formParamsSchema.Where(p => p.IsCalculated).ToList());
 
-        var targetItems = new List<(long TestId, int Idx, decimal Value, bool IsConformingCondition)>();
+        var targetItems = new List<(long TestId, int Idx, decimal Value, bool IsConformingCondition, long? CertId, long? ControlCodeId)>();
 
         foreach (var item in flatInputs)
         {
             bool isConforming = true;
+            long? certId = null;
+            long? controlCodeId = null;
             var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
-            if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+            if (formParam != null)
             {
-                isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                if (formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+                {
+                    isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                }
+                if (crmSelections != null && crmSelections.TryGetValue(formParam.Code, out var crmSel))
+                {
+                    certId = crmSel?.CertifiedReferenceCertificateId;
+                    controlCodeId = crmSel?.CertifiedReferenceControlCodeId;
+                }
             }
-            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming));
+            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming, certId, controlCodeId));
         }
 
         foreach (var item in flatResults)
         {
             bool isConforming = true;
+            long? certId = null;
+            long? controlCodeId = null;
             var formParam = formParamsSchema.FirstOrDefault(p => p.TestId == item.TestId);
-            if (formParam != null && formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+            if (formParam != null)
             {
-                isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                if (formParam.HasCondition && !string.IsNullOrEmpty(formParam.Condition))
+                {
+                    isConforming = QCLab.Utils.FormulaUtils.CalculateConditionValue(formParam.Condition, item.Value);
+                }
+                if (crmSelections != null && crmSelections.TryGetValue(formParam.Code, out var crmSel))
+                {
+                    certId = crmSel?.CertifiedReferenceCertificateId;
+                    controlCodeId = crmSel?.CertifiedReferenceControlCodeId;
+                }
             }
-            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming));
+            targetItems.Add((item.TestId, item.Idx, item.Value, isConforming, certId, controlCodeId));
         }
 
         // Step 1: Read the data from the database for the corresponding measurement 'measurement_id' that is going to be changed (updated)
@@ -972,10 +1015,15 @@ public class MeasurementsService : IMeasurementsService
             if (targetDict.TryGetValue(key, out var targetItem))
             {
                 var existingParam = existingDict[key];
-                if (existingParam.Value != targetItem.Value || existingParam.IsConformingCondition != targetItem.IsConformingCondition)
+                if (existingParam.Value != targetItem.Value || 
+                    existingParam.IsConformingCondition != targetItem.IsConformingCondition ||
+                    existingParam.CertifiedReferenceCertificateId != targetItem.CertId ||
+                    existingParam.CertifiedReferenceControlCodeId != targetItem.ControlCodeId)
                 {
                     existingParam.Value = targetItem.Value;
                     existingParam.IsConformingCondition = targetItem.IsConformingCondition;
+                    existingParam.CertifiedReferenceCertificateId = targetItem.CertId;
+                    existingParam.CertifiedReferenceControlCodeId = targetItem.ControlCodeId;
                     existingParam.UserUpdatedId = userId;
                     existingParam.DateUpdated = DateTime.UtcNow;
                 }
@@ -1006,6 +1054,8 @@ public class MeasurementsService : IMeasurementsService
                     Idx = targetItem.Idx,
                     Value = targetItem.Value,
                     IsConformingCondition = targetItem.IsConformingCondition,
+                    CertifiedReferenceCertificateId = targetItem.CertId,
+                    CertifiedReferenceControlCodeId = targetItem.ControlCodeId,
                     UserCreatedId = userId,
                     DateCreated = DateTime.UtcNow,
                     UserUpdatedId = null,

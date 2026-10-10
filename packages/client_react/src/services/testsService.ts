@@ -14,6 +14,7 @@ import type {
   UpdateTestReagentsDto,
   ValueTypeDto
 } from '../types/test';
+import type { CrmValueItemDto } from '../types/measurement';
 import type { IdDto, ToggleObsoleteDto } from '../types/models';
 
 
@@ -92,6 +93,11 @@ const testsService = {
 
   async getCertifiedReferenceTests(): Promise<TestDto[]> {
     const response = await apiClient.get<TestDto[]>('api/tests/certified_reference');
+    return response.data;
+  },
+
+  async getCertifiedReferenceValues(testId: number): Promise<CrmValueItemDto[]> {
+    const response = await apiClient.get<CrmValueItemDto[]>(`api/tests/${testId}/certified_reference_values`);
     return response.data;
   },
 
