@@ -692,12 +692,25 @@ public class FormsService : IFormsService
 
             // 2. Cannot delete if referenced by other formulas
             var allOtherParams = await _context.FormParams.Where(fp => fp.FormId == id && fp.TestId != testId && fp.IsCalculated && !string.IsNullOrEmpty(fp.Formula)).ToListAsync();
-            var searchCode = formParam.Test.IsArray ? $"[[{formParam.Test.Code}]]" : $"[{formParam.Test.Code}]";
+            string GetParameterKeyName(string code, bool isArray) => code + (isArray ? "__" : "");
+            var targetParamKey = GetParameterKeyName(formParam.Test.Code, formParam.Test.IsArray);
             foreach (var other in allOtherParams)
             {
-                if (other.Formula!.Contains(searchCode))
+                try
                 {
-                    throw new InvalidOperationException($"Cannot delete '{formParam.Test.Code}' because it is referenced in the formula of '{other.TestId}'.");
+                    var formulaParams = QCFormula.Formula.ExtractParameters(other.Formula!);
+                    if (formulaParams.Contains(targetParamKey))
+                    {
+                        throw new InvalidOperationException($"Cannot delete '{formParam.Test.Code}' because it is referenced in the formula of '{other.TestId}'.");
+                    }
+                }
+                catch (Exception ex) when (!(ex is InvalidOperationException))
+                {
+                    var searchCode = formParam.Test.IsArray ? $"[[{formParam.Test.Code}]]" : $"[{formParam.Test.Code}]";
+                    if (other.Formula!.Contains(searchCode))
+                    {
+                        throw new InvalidOperationException($"Cannot delete '{formParam.Test.Code}' because it is referenced in the formula of '{other.TestId}'.");
+                    }
                 }
             }
         }
@@ -883,7 +896,7 @@ public class FormsService : IFormsService
             {
                 try
                 {
-                    var deps = QCFormula.Formula.ExtractParameters(p.Formula);
+                    var deps = QCFormula.Formula.ExtractParameters(p.Formula!);
                     foreach (var d in deps) allUsedCodes.Add(d);
                 }
                 catch { /* Structural validation already covers syntax errors */ }
