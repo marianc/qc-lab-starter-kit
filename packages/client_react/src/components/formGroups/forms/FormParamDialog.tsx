@@ -76,7 +76,9 @@ const FormParamDialog: React.FC<FormParamDialogProps> = ({
   const watchHasCondition = watch('hasCondition');
 
   const selectedTest = allTests.find(t => t.id === Number(watchTestId));
-  const filteredAvailableTests = allTests.filter(t => !formParameters.some(p => p.testId === t.id) || (param && t.id === param.testId));
+  const filteredAvailableTests = allTests
+    .filter(t => !formParameters.some(p => p.testId === t.id) || (param && t.id === param.testId))
+    .sort((a, b) => a.nrOrd - b.nrOrd);
 
   const getTestName = (testId: number) => {
     const test = allTests.find(t => t.id === testId);
