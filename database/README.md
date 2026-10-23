@@ -138,6 +138,14 @@ On Windows, you can also use the shorthand batch script `mdb.bat`:
     ./mdb init_migrations quality_control 20260725134952
     ```
 
+9.  **Generate Database Dictionary Documentation** (`docs`):
+    Queries live table and column comments from the development database and regenerates `DATABASE_DICTIONARY.md` in `database/docs/`.
+    ```bash
+    .\mdb docs
+    # Or via python:
+    uv run python src/manage.py docs
+    ```
+
 ---
 
 ## Development Workflow

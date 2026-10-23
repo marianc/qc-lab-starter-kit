@@ -13,6 +13,7 @@ BACKUP_DIR="backups"
 usage() {
     echo "Usage: ./mdb restore [backup_filename]"
     echo "       ./mdb backup"
+    echo "       ./mdb docs"
     exit 1
 }
 
@@ -79,6 +80,9 @@ case "$1" in
         ;;
     backup)
         cmd_backup
+        ;;
+    docs)
+        uv run python src/manage.py docs
         ;;
     *)
         usage

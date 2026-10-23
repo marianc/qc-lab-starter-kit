@@ -62,6 +62,12 @@ def cmd_init(args):
     cmd = [sys.executable, os.path.join("src", "generate_init.py")]
     run_command(cmd, "Generating initialization SQL schema")
 
+def cmd_docs(args):
+    """Generate DATABASE_DICTIONARY.md from live database comments into database/docs."""
+    ensure_correct_dir()
+    cmd = [sys.executable, os.path.join("src", "generate_dictionary.py")]
+    run_command(cmd, "Generating database documentation dictionary")
+
 def cmd_test(args):
     """Test applying migrations on a dump snapshot database."""
     ensure_correct_dir()
@@ -118,6 +124,10 @@ def main():
     # init command
     parser_init = subparsers.add_parser("init", help="Export latest quality_control schema & seed data to init_schema.sql.")
     parser_init.set_defaults(func=cmd_init)
+
+    # docs command
+    parser_docs = subparsers.add_parser("docs", help="Regenerate DATABASE_DICTIONARY.md in database/docs from live database comments.")
+    parser_docs.set_defaults(func=cmd_docs)
 
     # diff command
     parser_diff = subparsers.add_parser("diff", help="Generate a new migration script comparing quality_control database to migrations.")
