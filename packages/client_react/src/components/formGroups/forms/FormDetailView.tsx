@@ -523,7 +523,9 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
                     <td>{param.codeRelatedArrays}</td>
                     <td>{param.isRequired ? "Yes" : "No"}</td>
                     <td>{getDefaultValueDisplay(param)}</td>
-                    <td>{param.hasCondition ? param.conditionNote : "-"}</td>
+                    <td onClick={() => { if(param.condition) { setSelectedFormula(param.condition); setShowFormulaDialog(true); } }} className={param.condition ? styles.clickable : ""}>
+                      {param.hasCondition ? param.conditionNote : "-"}
+                    </td>
                     <td>{param.nrOrd}</td>
                     {!form.isValidated && !form.isCancelled && (
                       <>
@@ -561,7 +563,7 @@ const FormDetailView: React.FC<FormDetailViewProps> = ({
                       {param.evals?.map((evalItem, i) => (
                         <tr key={`${param.testId}-${i}`}>
                           {i === 0 && <td rowSpan={param.evals.length}>{getTestName(param.testId)}</td>}
-                          <td>{evalItem.value}</td>
+                          <td>{evalItem.value !== null && evalItem.value !== undefined ? formatValue(evalItem.value, param.typeId, param.testId) : '-'}</td>
                           <td>{formatBoolean(evalItem.result)}</td>
                           <td>{formatBoolean(evalItem.expectedResult)}</td>
                           <td>

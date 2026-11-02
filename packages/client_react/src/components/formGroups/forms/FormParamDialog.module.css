@@ -46,3 +46,8 @@
 :global(.add-eval-button) {
     margin-top: 0.5rem;
 }
+
+.formulaTextarea {
+    white-space: pre;
+    overflow-x: auto;
+}

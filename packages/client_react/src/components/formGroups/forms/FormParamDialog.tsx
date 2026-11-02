@@ -338,8 +338,8 @@ const FormParamDialog: React.FC<FormParamDialogProps> = ({
               <textarea 
                 {...register('formula')} 
                 id="formula"
-                className="form-control" 
-                rows={5}
+                className={`form-control ${styles.formulaTextarea}`} 
+                rows={6}
                 onBlur={(e) => validateFormula(e.target.value, true, Number(watchTestId))}
               />
               {formulaError && <span className="text-danger">{formulaError}</span>}
@@ -405,21 +405,20 @@ const FormParamDialog: React.FC<FormParamDialogProps> = ({
                 <label htmlFor="condition">Condition:</label>
                 <input 
                   type="text" 
-                  {...register('condition')} 
+                  {...register('condition', { onBlur: handleConditionBlur })} 
                   id="condition" 
                   className={`form-control ${errors.condition ? 'invalid' : ''}`}
-                  onBlur={handleConditionBlur}
                 />
                 {errors.condition && <div className="text-danger">{errors.condition.message}</div>}
               </div>
 
               <div className="form-group">
                 <label htmlFor="condition_note">Condition Note:</label>
-                <textarea 
+                <input 
+                  type="text" 
                   {...register('conditionNote')} 
                   id="condition_note" 
                   className={`form-control ${errors.conditionNote ? 'invalid' : ''}`}
-                  rows={3}
                 />
                 {errors.conditionNote && <div className="text-danger">{errors.conditionNote.message}</div>}
               </div>

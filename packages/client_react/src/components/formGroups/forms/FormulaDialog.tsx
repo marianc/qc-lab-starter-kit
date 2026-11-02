@@ -9,7 +9,7 @@ interface FormulaDialogProps {
 
 const FormulaDialog: React.FC<FormulaDialogProps> = ({ formula, onClose }) => {
   return (
-    <Dialog open={!!formula} onClose={onClose}>
+    <Dialog open={!!formula} onClose={onClose} className={styles.formulaDialog}>
       <DialogHeader>
         Formula View
       </DialogHeader>
