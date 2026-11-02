@@ -1,0 +1,27 @@
+.wideDialog {
+    width: 700px;
+    max-width: 95vw;
+}
+
+.evalList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.radioItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radioItem input {
+    width: auto;
+}
+
+.radioItem label {
+    margin-bottom: 0;
+    cursor: pointer;
+}

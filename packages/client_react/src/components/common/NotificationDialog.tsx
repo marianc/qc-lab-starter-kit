@@ -4,7 +4,7 @@ import { Dialog, DialogHeader, DialogContent, DialogFooter } from './ui';
 interface Props {
   open: boolean;
   title?: string;
-  message?: string;
+  message?: string | React.ReactNode;
   onClose: () => void;
 }
 
@@ -20,7 +20,7 @@ const NotificationDialog: React.FC<Props> = ({
         <h3>{title}</h3>
       </DialogHeader>
       <DialogContent>
-        <p>{message}</p>
+        {typeof message === 'string' ? <p>{message}</p> : message}
       </DialogContent>
       <DialogFooter>
         <button onClick={onClose} className="action-button primary">OK</button>

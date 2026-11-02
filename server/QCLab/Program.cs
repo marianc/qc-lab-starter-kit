@@ -89,6 +89,7 @@ namespace QCLab
             builder.Services.AddTransient<IUsersService, UsersService>();
             builder.Services.AddTransient<IFormEvalsService, FormEvalsService>();
             builder.Services.AddTransient<IReagentsService, ReagentsService>();
+            builder.Services.AddTransient<IWorksheetService, WorksheetService>();
 
             builder.Services.AddCors(options =>
             {
@@ -971,6 +972,98 @@ namespace QCLab
 
             // Value Types
             apiGroup.MapGet("/value_types", (ITestsService s) => s.GetAllValueTypes());
+
+            // Worksheet Playground
+            apiGroup.MapPost("/worksheet/calculate", async ([FromBody] WorksheetCalculateRequestDto dto, IWorksheetService s) =>
+            {
+                try
+                {
+                    var calculated = await s.CalculateWorksheet(dto.Items);
+                    return Results.Ok(calculated);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapPost("/worksheet/calculate-worksheet", async ([FromBody] CalculateWorksheetRequestDto dto, IWorksheetService s) =>
+            {
+                try
+                {
+                    var calculated = await s.CalculateWorksheet(dto.Items);
+                    return Results.Ok(calculated);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapPost("/worksheet/calculate-values", async ([FromBody] WorksheetCalculateValuesRequestDto dto, IWorksheetService s) =>
+            {
+                try
+                {
+                    var calculated = await s.CalculateValues(dto.Items);
+                    return Results.Ok(calculated);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapPost("/worksheet/calculate-conformity", async ([FromBody] WorksheetCalculateConformityRequestDto dto, IWorksheetService s) =>
+            {
+                try
+                {
+                    var calculated = await s.CalculateConformity(dto.Items);
+                    return Results.Ok(calculated);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapPost("/worksheet/validate/formula", ([FromBody] WorksheetValidateFormulaRequestDto dto, IWorksheetService s) =>
+            {
+                try
+                {
+                    s.ValidateWorksheetFormula(dto.Formula, dto.CurrentCode, dto.IsArray, dto.Items);
+                    return Results.Ok(new { valid = true });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Ok(new { valid = false, msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapGet("/worksheet/importable-evals", async (IWorksheetService s) =>
+            {
+                try
+                {
+                    var evals = await s.GetImportableFormEvals();
+                    return Results.Ok(evals);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
+
+            apiGroup.MapGet("/worksheet/import/{formEvalId}", async (long formEvalId, IWorksheetService s) =>
+            {
+                try
+                {
+                    var items = await s.ImportFormEval(formEvalId);
+                    return Results.Ok(items);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { msg = ex.Message });
+                }
+            });
 
             app.Run();
         }

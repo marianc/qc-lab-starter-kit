@@ -1,0 +1,14 @@
+.subtitle {
+  color: var(--text-muted, #666);
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.emptyMessage {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted, #666);
+  background: var(--bg-card, #f9f9f9);
+  border-radius: 6px;
+  border: 1px dashed var(--border-color, #ddd);
+}

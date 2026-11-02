@@ -1,0 +1,66 @@
+.subtitle {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.actions {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.emptyRow {
+  text-align: center;
+  color: #888;
+  padding: 30px !important;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+}
+
+.passBadge {
+  background-color: #c6f6d5;
+  color: #22543d;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.failBadge {
+  background-color: #fed7d7;
+  color: #742a2a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.errorMessage {
+  background-color: #fed7d7;
+  color: #742a2a;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.textSuccess {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.textDanger {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #007bff;
+}

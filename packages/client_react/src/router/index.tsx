@@ -17,6 +17,7 @@ import ReagentsPage from '@/pages/reagents/ReagentsPage';
 import CertificatesPage from '@/pages/certificates/CertificatesPage';
 import ReceptionsPage from '@/pages/receptions/ReceptionsPage';
 import AuditLogsPage from '@/pages/audit/AuditLogsPage';
+import WorksheetPage from '@/pages/worksheet/WorksheetPage';
 import MainLayout from '@/components/layout/MainLayout';
 
 const router = createBrowserRouter([
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
           { path: '/equipment', element: <EquipmentsPage /> },
           { path: '/reagents', element: <ReagentsPage /> },
           { path: '/audit', element: <AuditLogsPage /> },
+          { path: '/worksheet', element: <WorksheetPage /> },
         ]
       },
       { path: '/login', element: <LoginPage /> },

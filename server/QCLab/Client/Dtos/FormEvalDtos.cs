@@ -28,3 +28,9 @@ public class UpdateFormEvalDto
     public Dictionary<string, object?> MeasurementData { get; set; } = new();
     public Dictionary<string, object?> ExpectedResults { get; set; } = new();
 }
+
+public class FormEvalImportOptionDto
+{
+    public long Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+}

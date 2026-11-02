@@ -70,7 +70,7 @@ const Sidebar: React.FC = () => {
                   to="/forms" 
                   className={({ isActive }) => isActive ? styles.active : undefined}
                 >
-                  Forms
+                  Forms (Worksheets)
                 </NavLink>
               </li>
             </>
@@ -136,6 +136,16 @@ const Sidebar: React.FC = () => {
                 Audit Logs
               </NavLink>
             </li>
+            {isQcPers && (
+              <li>
+                <NavLink 
+                  to="/worksheet" 
+                  className={({ isActive }) => isActive ? styles.active : undefined}
+                >
+                  Worksheet Playground
+                </NavLink>
+              </li>
+            )}
           </>
           {/* Other menu items will be added here later */}
         </ul>
