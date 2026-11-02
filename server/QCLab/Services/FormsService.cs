@@ -1299,15 +1299,30 @@ public class FormsService : IFormsService
 
         try
         {
-            var params_ = QCFormula.Formula.ExtractParameters(condition);
-            if (params_.Any(p => p != "value"))
+            var returnType = QCFormula.Formula.GetFormulaReturnType(condition);
+            if (returnType == FormulaReturnType.Array)
             {
-                throw new ArgumentException("Invalid condition: only scalar parameter 'value' is allowed.");
+                throw new ArgumentException("Condition formula must return a scalar value, but returns an array.");
             }
+
+            QCFormula.Formula.EvaluateFormula(condition, new Dictionary<string, decimal> { { "value", 1.0m } });
         }
-        catch (Exception ex) when (ex.Message.Contains("Syntax error") || ex.Message.Contains("Invalid syntax"))
+        catch (Exception ex)
         {
-            throw new ArgumentException($"Invalid formula syntax: {ex.Message}");
+            string msg = ex.Message;
+            if (msg.StartsWith("Condition formula must return") || msg.StartsWith("Invalid condition:"))
+            {
+                throw new ArgumentException(msg);
+            }
+            if (msg.Contains("Syntax error") || msg.Contains("Invalid syntax"))
+            {
+                throw new ArgumentException($"Invalid formula syntax: {msg}");
+            }
+            if (msg.StartsWith("Evaluation error:"))
+            {
+                throw new ArgumentException(msg);
+            }
+            throw new ArgumentException($"Evaluation error: {msg}");
         }
     }
 
