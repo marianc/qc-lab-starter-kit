@@ -336,6 +336,7 @@ public class TestsService : ITestsService
     // POST /tests
     public async Task<IdDto> CreateTest(CreateTestDto newTest)
     {
+        var isParam = newTest.ForEnvironmentalControl ? true : newTest.IsParam;
         var test = new Test
         {
             Name = newTest.Name,
@@ -343,12 +344,12 @@ public class TestsService : ITestsService
             Description = newTest.Description,
             TypeId = newTest.TypeId,
             IsArray = newTest.IsArray,
-            IsParam = newTest.IsParam,
-            ForEnvironmentalControl = newTest.IsParam ? false : newTest.ForEnvironmentalControl,
-            ForCertification = newTest.ForCertification,
-            RelativeUncertaintyPct = newTest.ForCertification ? newTest.RelativeUncertaintyPct : null,
-            DefaultCoverageFactorK = newTest.ForCertification ? newTest.DefaultCoverageFactorK : null,
-            ForCertifiedReference = (newTest.IsArray || newTest.IsParam || newTest.ForEnvironmentalControl) ? false : newTest.ForCertifiedReference,
+            IsParam = isParam,
+            ForEnvironmentalControl = newTest.ForEnvironmentalControl,
+            ForCertification = isParam ? false : newTest.ForCertification,
+            RelativeUncertaintyPct = (!isParam && newTest.ForCertification) ? newTest.RelativeUncertaintyPct : null,
+            DefaultCoverageFactorK = (!isParam && newTest.ForCertification) ? newTest.DefaultCoverageFactorK : null,
+            ForCertifiedReference = (newTest.IsArray || isParam || newTest.ForEnvironmentalControl) ? false : newTest.ForCertifiedReference,
             UnitId = newTest.UnitId,
             NormId = newTest.NormId,
             NormRef = newTest.NormRef,
@@ -410,17 +411,19 @@ public class TestsService : ITestsService
             var test = await _context.Tests.Include(t => t.TestEnums).FirstOrDefaultAsync(t => t.Id == id);
             if (test == null) throw new ArgumentException("Test not found");
 
+            var isParam = testData.ForEnvironmentalControl ? true : testData.IsParam;
+
             test.Name = testData.Name;
             test.Code = testData.Code;
             test.Description = testData.Description;
             test.TypeId = testData.TypeId;
             test.IsArray = testData.IsArray;
-            test.IsParam = testData.IsParam;
-            test.ForEnvironmentalControl = testData.IsParam ? false : testData.ForEnvironmentalControl;
-            test.ForCertification = testData.ForCertification;
-            test.RelativeUncertaintyPct = testData.ForCertification ? testData.RelativeUncertaintyPct : null;
-            test.DefaultCoverageFactorK = testData.ForCertification ? testData.DefaultCoverageFactorK : null;
-            test.ForCertifiedReference = (testData.IsArray || testData.IsParam || testData.ForEnvironmentalControl) ? false : testData.ForCertifiedReference;
+            test.IsParam = isParam;
+            test.ForEnvironmentalControl = testData.ForEnvironmentalControl;
+            test.ForCertification = isParam ? false : testData.ForCertification;
+            test.RelativeUncertaintyPct = (!isParam && testData.ForCertification) ? testData.RelativeUncertaintyPct : null;
+            test.DefaultCoverageFactorK = (!isParam && testData.ForCertification) ? testData.DefaultCoverageFactorK : null;
+            test.ForCertifiedReference = (testData.IsArray || isParam || testData.ForEnvironmentalControl) ? false : testData.ForCertifiedReference;
             test.UnitId = testData.UnitId;
             test.NormId = testData.NormId;
             test.NormRef = testData.NormRef;

@@ -891,6 +891,7 @@ public class FormsService : IFormsService
             }
 
             // 3. Check for orphan parameters (is_param = true but not used in any formula)
+            // Exception: parameters marked with for_environmental_control = true and has_condition = true are valid even if not used in any formula
             var allUsedCodes = new HashSet<string>();
             foreach (var p in formParams.Where(fp => fp.IsCalculated && !string.IsNullOrEmpty(fp.Formula)))
             {
@@ -905,7 +906,7 @@ public class FormsService : IFormsService
             string GetParameterKeyName(string code, bool isArray) => code + (isArray ? "__" : "");
             
             var orphanParams = formParams
-                .Where(p => p.Test.IsParam)
+                .Where(p => p.Test.IsParam && !(p.Test.ForEnvironmentalControl && p.HasCondition))
                 .Where(p => !allUsedCodes.Contains(GetParameterKeyName(p.Test.Code, p.Test.IsArray)))
                 .ToList();
 

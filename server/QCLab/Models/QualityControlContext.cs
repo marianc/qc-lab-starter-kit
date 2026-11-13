@@ -1975,7 +1975,7 @@ public partial class QualityControlContext : DbContext
                 .HasComment("Boolean flag enforcing strict metrological traceability. When true, during worksheet execution (SelectCrmDialog.tsx), the analyst cannot manually type an arbitrary numeric value; they must select an active, certified value from a Certified Reference Material (CRM) inventory lot or prior CRM certificate. In TestDialog.tsx, enabling this flag resets and disables is_array, is_param, and for_environmental_control.")
                 .HasColumnName("for_certified_reference");
             entity.Property(e => e.ForEnvironmentalControl)
-                .HasComment("Boolean flag designating this test for cleanroom and environmental monitoring (e.g., ambient temperature, relative humidity, air particulates). In TestDialog.tsx, enabling this flag enforces mutual exclusivity by automatically resetting for_certification, for_certified_reference, and is_param to false.")
+                .HasComment("Boolean flag designating this test for cleanroom and environmental monitoring (e.g., ambient temperature, relative humidity, air particulates). In TestDialog.tsx, enabling this flag enforces that is_param is always set to true, and resets for_certification and for_certified_reference to false.")
                 .HasColumnName("for_environmental_control");
             entity.Property(e => e.IsArray)
                 .HasComment("Boolean flag indicating whether the test yields multiple replicated measurement determinations (e.g., parallel injections, duplicate titrations) rather than a single scalar value. In formulas, arrays are referenced as [[code]]. In TestDialog.tsx, setting is_array to true automatically resets and disables for_certified_reference. Locked from editing if is_form_validated is true.")
@@ -1987,7 +1987,7 @@ public partial class QualityControlContext : DbContext
                 .HasComment("Soft-deletion flag. Under GxP requirements, test definitions cannot be physically removed if referenced in historical worksheets, specifications, or certificates. When true, hides the test from new templates and specifications.")
                 .HasColumnName("is_obsolete");
             entity.Property(e => e.IsParam)
-                .HasComment("Boolean flag designating this test as an intermediate calculation parameter or raw input (e.g. tare weight, sample mass, dilution factor) rather than a reportable specification test. In TestDialog.tsx, setting is_param to true resets and disables for_certification, for_environmental_control, and for_certified_reference. Locked from editing if is_form_validated is true.")
+                .HasComment("Boolean flag designating this test as an intermediate calculation parameter or raw input (e.g. tare weight, sample mass, dilution factor) rather than a reportable specification test. In TestDialog.tsx, setting is_param to true resets and disables for_certification and for_certified_reference; when for_environmental_control is true, is_param is always set to true. Locked from editing if is_form_validated is true.")
                 .HasColumnName("is_param");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)

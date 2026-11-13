@@ -101,6 +101,9 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
       if (getValues('forCertifiedReference')) {
         setValue('forCertifiedReference', false);
       }
+      if (!getValues('isParam')) {
+        setValue('isParam', true);
+      }
     }
   }, [watchForEnvironmentalControl, setValue, getValues]);
 
@@ -247,16 +250,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
     if (watchIsParam && watchForCertification) {
       setValue('forCertification', false);
     }
-    if (watchIsParam && watchForEnvironmentalControl) {
-      setValue('forEnvironmentalControl', false);
-    }
-    if (watchIsParam) {
-      setValue('forEnvironmentalControl', false);
-    }
-    if (watchForEnvironmentalControl) {
-      setValue('isParam', false);
-    }
-  }, [watchIsParam, watchForCertification, watchForEnvironmentalControl, setValue]);
+  }, [watchIsParam, watchForCertification, setValue]);
 
   const validateUniqueness = async (property: "Code"): Promise<boolean> => {
     const value = getValues(property.toLowerCase() as any);
@@ -377,7 +371,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ open, testData, onSave, onClose
             </div>
           )}
 
-          {!watchIsParam && !watchForCertification && !watchForCertifiedReference && (
+          {!watchForCertification && !watchForCertifiedReference && (
             <div className={`form-group ${styles.checkboxGroup}`}>
               <input type="checkbox" id="for_environmental_control" {...register('forEnvironmentalControl')} />
               <label htmlFor="for_environmental_control">For Environmental Control</label>

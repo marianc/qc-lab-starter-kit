@@ -3967,14 +3967,14 @@ COMMENT ON COLUMN public.tests.is_array IS 'Boolean flag indicating whether the 
 -- Name: COLUMN tests.is_param; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tests.is_param IS 'Boolean flag designating this test as an intermediate calculation parameter or raw input (e.g. tare weight, sample mass, dilution factor) rather than a reportable specification test. In TestDialog.tsx, setting is_param to true resets and disables for_certification, for_environmental_control, and for_certified_reference. Locked from editing if is_form_validated is true.';
+COMMENT ON COLUMN public.tests.is_param IS 'Boolean flag designating this test as an intermediate calculation parameter or raw input (e.g. tare weight, sample mass, dilution factor) rather than a reportable specification test. In TestDialog.tsx, setting is_param to true resets and disables for_certification and for_certified_reference; when for_environmental_control is true, is_param is always set to true. Locked from editing if is_form_validated is true.';
 
 
 --
 -- Name: COLUMN tests.for_environmental_control; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tests.for_environmental_control IS 'Boolean flag designating this test for cleanroom and environmental monitoring (e.g., ambient temperature, relative humidity, air particulates). In TestDialog.tsx, enabling this flag enforces mutual exclusivity by automatically resetting for_certification, for_certified_reference, and is_param to false.';
+COMMENT ON COLUMN public.tests.for_environmental_control IS 'Boolean flag designating this test for cleanroom and environmental monitoring (e.g., ambient temperature, relative humidity, air particulates). In TestDialog.tsx, enabling this flag enforces that is_param is always set to true, and resets for_certification and for_certified_reference to false.';
 
 
 --
