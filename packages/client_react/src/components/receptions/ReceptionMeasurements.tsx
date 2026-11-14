@@ -422,9 +422,9 @@ const ReceptionMeasurements: React.FC<Props> = ({
                               <div className={styles.cardItemValue}>
                                 {getDisplayValues(m, p).map((v, vidx) => (
                                   <div key={vidx}>
-                                    {v.value}
+                                    <div>{v.value}</div>
                                     {v.conditionPass === false && p.conditionNote && (
-                                      <span className={styles.conditionNote}> {p.conditionNote}</span>
+                                      <div className={styles.conditionNote}>{p.conditionNote}</div>
                                     )}
                                   </div>
                                 ))}
@@ -481,9 +481,9 @@ const ReceptionMeasurements: React.FC<Props> = ({
                               <td key={m.id} className={styles.tableMeasurementCol}>
                                 {getDisplayValues(m, p).map((v, vidx) => (
                                   <div key={vidx}>
-                                    {v.value}
+                                    <div>{v.value}</div>
                                     {v.conditionPass === false && p.conditionNote && (
-                                      <span className={styles.conditionNote}> {p.conditionNote}</span>
+                                      <div className={styles.conditionNote}>{p.conditionNote}</div>
                                     )}
                                   </div>
                                 ))}
