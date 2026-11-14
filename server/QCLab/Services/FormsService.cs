@@ -930,8 +930,11 @@ public class FormsService : IFormsService
                 var tests = await _context.Tests.Where(t => testIds.Contains(t.Id)).ToListAsync();
                 foreach (var t in tests)
                 {
-                    t.IsFormValidated = true;
-                    t.DateFormValidated = DateTime.UtcNow;
+                    if (!t.IsFormValidated)
+                    {
+                        t.IsFormValidated = true;
+                        t.DateFormValidated = DateTime.UtcNow;
+                    }
                 }
             }
 
