@@ -26,6 +26,7 @@ export interface TestDto {
   normRef?: string | null;
   sopId?: number | null;
   isFormValidated: boolean;
+  dateFormValidated?: string | null;
   nrOrd: number;
   dateCreated?: string | null;
   isObsolete: boolean;

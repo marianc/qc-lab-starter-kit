@@ -58,6 +58,7 @@ public class TestDto
     public long? SopId { get; set; }
 
     public bool IsFormValidated { get; set; }
+    public DateTime? DateFormValidated { get; set; }
     public long NrOrd { get; set; }
     public bool IsObsolete { get; set; }
     public DateTime? DateCreated { get; set; }

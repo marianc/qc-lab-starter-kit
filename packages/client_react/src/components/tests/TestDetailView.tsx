@@ -273,6 +273,7 @@ const TestDetailView: React.FC<TestDetailViewProps> = ({
               <DetailItem label="Norm Ref" value={test.normRef || "-"} />
               <DetailItem label="SOP" value={sops.find(s => s.id === test.sopId) ? `${sops.find(s => s.id === test.sopId)?.docCode} - ${sops.find(s => s.id === test.sopId)?.title}` : "-"} />
               <DetailItem label="Is Form Validated" value={test.isFormValidated ? "Yes" : "No"} />
+              <DetailItem label="Date Form Validated" value={formatDate(test.dateFormValidated)} />
               <DetailItem label="Order" value={test.nrOrd} />
               <DetailItem label="Date Created" value={formatDate(test.dateCreated)} />
               <DetailItem label="Is Obsolete" value={test.isObsolete ? "Yes" : "No"} />
